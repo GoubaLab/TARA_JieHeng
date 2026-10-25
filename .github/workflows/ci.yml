@@ -1,0 +1,36 @@
+name: Source checks
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  go:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: next/server/go.mod
+          cache-dependency-path: next/server/go.sum
+      - run: go test ./...
+        working-directory: next/server
+      - run: go vet ./...
+        working-directory: next/server
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: next/client/package-lock.json
+      - run: npm ci --prefix next/client
+      - run: npm run build --prefix next/client
+      - run: node --test next/tests/*.mjs next/tests/*.cjs
+  source-scope:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 next/tools/test_public_release.py

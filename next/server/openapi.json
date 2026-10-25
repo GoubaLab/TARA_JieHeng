@@ -1,0 +1,5729 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "界衡威胁建模工作产品 API",
+    "version": "2.1.0",
+    "description": "通用威胁建模工作产品，汽车领域以 ISO/SAE 21434 为参考流程。Go 本地服务；版本前缀 /api/v1。写入使用 If-Match 与 Idempotency-Key；错误采用 RFC 9457。字段以 snake_case 为主，已有架构 entityType/sourceSide/targetSide/labelOffset 为兼容而保留。应用领域不自动决定法规适用性或评分算法。"
+  },
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
+  "tags": [
+    {
+      "name": "工作区"
+    },
+    {
+      "name": "参考资料"
+    },
+    {
+      "name": "服务"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "服务能力与运行状态",
+        "operationId": "getHealth",
+        "tags": [
+          "服务"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/workspaces": {
+      "get": {
+        "summary": "分页查询项目",
+        "operationId": "listWorkspaces",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Offset"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspacePage"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      },
+      "post": {
+        "summary": "创建项目",
+        "operationId": "createWorkspace",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Workspace"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpenWorkspace"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{id}": {
+      "get": {
+        "summary": "读取项目与修订",
+        "operationId": "getWorkspace",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Workspace"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/review": {
+      "get": {
+        "summary": "检查工作产品完整性",
+        "operationId": "getReview",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Review"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/events": {
+      "get": {
+        "summary": "分页读取变更记录",
+        "operationId": "listEvents",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "$ref": "#/components/parameters/Offset"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventPage"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/recommendations": {
+      "get": {
+        "summary": "预览可引用的参考知识",
+        "operationId": "getRecommendations",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "name": "asset_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "reference",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^systems:[0-9]+$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Recommendations"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "description": "当前返回空候选和资料不可用提示，不生成历史资料内容。"
+      }
+    },
+    "/workspaces/{id}/item": {
+      "put": {
+        "summary": "更新相关项定义",
+        "operationId": "replaceItem",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutationResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Item"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "读取工作产品资源",
+        "operationId": "getItem",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/architecture": {
+      "put": {
+        "summary": "更新实体架构",
+        "operationId": "replaceArchitecture",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutationResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Architecture"
+              }
+            }
+          }
+        },
+        "description": "实体支持操作系统；软件与存储为内部组成；数据流只连接不同实体。communication为可选语义字段，几何标签偏移不参与评估摘要。"
+      },
+      "get": {
+        "summary": "读取工作产品资源",
+        "operationId": "getArchitecture",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Architecture"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/assessment-method": {
+      "put": {
+        "summary": "更新评估方法",
+        "operationId": "replaceAssessmentMethod",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutationResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Method"
+              }
+            }
+          }
+        },
+        "description": "影响0–3、可行性1–4、风险1–5。maximum取四维最高值且要求全部完整；weighted_mean按正权重归一并向上取整，零权重维度不参与、可缺评分，总权重须>0。场景取各路径最高风险；残余风险使用同算法。缺省扩展字段由运行时补默认值，不改写旧摘要。方法改动触发决策复核，冻结基线不变。 系数模式 coefficient_sum：SFOP总分=Σ(各维0..3×系数)，不归一不取整；只允许product，风险分值=总分×可行性，无+1。评估返回原始impact与score；残余impact接受小数，不能超过3×系数和。"
+      },
+      "get": {
+        "summary": "读取工作产品资源",
+        "operationId": "getAssessmentMethod",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Method"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/regulation-references": {
+      "put": {
+        "summary": "更新项目法规引用",
+        "operationId": "replaceRegulationReferences",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutationResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegulationSelection"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "读取工作产品资源",
+        "operationId": "getRegulationReferences",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegulationSelection"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/assets": {
+      "post": {
+        "summary": "创建资产",
+        "operationId": "createAsset",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutationResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssetCreate"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/assets/{asset_id}": {
+      "put": {
+        "summary": "更新资产",
+        "operationId": "replaceAsset",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutationResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssetUpdate"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "读取单条记录",
+        "operationId": "getAsset",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetRecord"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/scenarios": {
+      "post": {
+        "summary": "创建风险场景",
+        "operationId": "createScenario",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutationResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScenarioCreate"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/scenarios/{scenario_id}": {
+      "put": {
+        "summary": "更新风险场景",
+        "operationId": "replaceScenario",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "name": "scenario_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutationResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScenarioUpdate"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "读取单条记录",
+        "operationId": "getScenario",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "name": "scenario_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioRecord"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/requirements": {
+      "post": {
+        "summary": "创建安全需求",
+        "operationId": "createRequirement",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutationResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequirementCreate"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/requirements/{requirement_id}": {
+      "put": {
+        "summary": "更新安全需求",
+        "operationId": "replaceRequirement",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "name": "requirement_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutationResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequirementUpdate"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "读取单条记录",
+        "operationId": "getRequirement",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "name": "requirement_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequirementRecord"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/scenarios/{scenario_id}/treatment": {
+      "get": {
+        "summary": "读取风险处置决策",
+        "operationId": "getTreatment",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "name": "scenario_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionRecord"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      },
+      "put": {
+        "summary": "记录或重新确认风险处置",
+        "operationId": "replaceTreatment",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "name": "scenario_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutationResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TreatmentInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/evidence": {
+      "post": {
+        "summary": "新增不可覆盖的验证记录",
+        "operationId": "createEvidence",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutationResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvidenceCreate"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/evidence/{evidence_id}": {
+      "get": {
+        "summary": "读取验证记录",
+        "operationId": "getEvidence",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "name": "evidence_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidenceRecord"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/baselines": {
+      "post": {
+        "summary": "冻结已评审基线",
+        "operationId": "createBaseline",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutationResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SealBaseline"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/baselines/{baseline_id}": {
+      "get": {
+        "summary": "读取冻结基线快照",
+        "operationId": "getBaseline",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "name": "baseline_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Workspace"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/reference-imports": {
+      "get": {
+        "summary": "分页读取已选用的参考知识",
+        "operationId": "listReferenceImports",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "$ref": "#/components/parameters/Offset"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferenceImportPage"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      },
+      "post": {
+        "summary": "选用参考知识生成草稿",
+        "operationId": "createReferenceImport",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutationResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReferenceSelection"
+              }
+            }
+          }
+        },
+        "description": "当前未配置可用参考资料，调用返回422；接口保留供二次开发接入自有资料。"
+      }
+    },
+    "/workspaces/{id}/reports": {
+      "get": {
+        "summary": "导出工作版本或冻结基线",
+        "operationId": "exportReport",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "json",
+                "html",
+                "xlsx"
+              ],
+              "default": "json"
+            }
+          },
+          {
+            "name": "baseline_id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "description": "基线 ID，1–100 字节。"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkProductsExport"
+                }
+              },
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/catalog": {
+      "get": {
+        "summary": "本地知识库分类与数量",
+        "operationId": "getKnowledgeCatalog",
+        "tags": [
+          "参考资料"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeCatalog"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/catalog/{category}/entries": {
+      "get": {
+        "summary": "分页搜索知识条目",
+        "operationId": "listReferences",
+        "tags": [
+          "参考资料"
+        ],
+        "parameters": [
+          {
+            "name": "category",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Query"
+          },
+          {
+            "$ref": "#/components/parameters/Offset"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 24
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferencePage"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/references/{key}": {
+      "get": {
+        "summary": "读取知识或法规引用详情",
+        "operationId": "getReference",
+        "tags": [
+          "参考资料"
+        ],
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Reference"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/regulations": {
+      "get": {
+        "summary": "列出本地法规版本及核对边界",
+        "operationId": "listRegulationVersions",
+        "tags": [
+          "参考资料"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegulationCatalog"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/regulations/{document_id}/clauses": {
+      "get": {
+        "summary": "分页搜索指定版本条款",
+        "operationId": "listRegulationClauses",
+        "tags": [
+          "参考资料"
+        ],
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Query"
+          },
+          {
+            "$ref": "#/components/parameters/Offset"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClausePage"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/regulations/{document_id}/sources/{index}": {
+      "get": {
+        "summary": "查看本地 PDF 原件",
+        "operationId": "getRegulationSource",
+        "tags": [
+          "参考资料"
+        ],
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "index",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "Range",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Range",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Modified-Since",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "206": {
+            "description": "HTTP 文件范围响应",
+            "headers": {
+              "Content-Range": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Accept-Ranges": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "multipart/byteranges": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "文件未修改；无响应正文"
+          },
+          "416": {
+            "description": "文件范围无法满足（标准 HTTP 文件响应）",
+            "headers": {
+              "Content-Range": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/openapi.json": {
+      "get": {
+        "summary": "读取本接口契约",
+        "operationId": "getOpenAPI",
+        "tags": [
+          "服务"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/docs": {
+      "get": {
+        "summary": "查看本地接口文档",
+        "operationId": "getAPIDocumentation",
+        "tags": [
+          "服务"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Item": {
+        "additionalProperties": false,
+        "properties": {
+          "purpose": {
+            "default": "",
+            "maxLength": 10000,
+            "title": "Purpose",
+            "type": "string"
+          },
+          "boundary": {
+            "default": "",
+            "maxLength": 10000,
+            "title": "Boundary",
+            "type": "string"
+          },
+          "environment": {
+            "default": "",
+            "maxLength": 10000,
+            "title": "Environment",
+            "type": "string"
+          },
+          "assumptions": {
+            "default": "",
+            "maxLength": 10000,
+            "title": "Assumptions",
+            "type": "string"
+          },
+          "owner": {
+            "default": "",
+            "maxLength": 200,
+            "title": "Owner",
+            "type": "string"
+          },
+          "lifecycle": {
+            "default": "概念阶段",
+            "maxLength": 100,
+            "title": "Lifecycle",
+            "type": "string"
+          },
+          "domain": {
+            "type": "string",
+            "enum": [
+              "general",
+              "automotive",
+              "robotics",
+              "iot",
+              "charging",
+              "internet"
+            ],
+            "description": "省略的旧项目按 automotive 展示，不自动改写存储。"
+          }
+        },
+        "title": "Item",
+        "type": "object"
+      },
+      "EntityAttribute": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "value": {
+            "default": "",
+            "maxLength": 4000,
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "EntityAttribute",
+        "type": "object"
+      },
+      "EntityChild": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "software",
+              "store"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "description": {
+            "default": "",
+            "maxLength": 4000,
+            "title": "Description",
+            "type": "string"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reference"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "kind"
+        ],
+        "title": "EntityChild",
+        "type": "object"
+      },
+      "Flow": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "target": {
+            "title": "Target",
+            "type": "string"
+          },
+          "sourceSide": {
+            "anyOf": [
+              {
+                "enum": [
+                  "top",
+                  "right",
+                  "bottom",
+                  "left"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Sourceside"
+          },
+          "targetSide": {
+            "anyOf": [
+              {
+                "enum": [
+                  "top",
+                  "right",
+                  "bottom",
+                  "left"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Targetside"
+          },
+          "labelOffset": {
+            "$ref": "#/components/schemas/LabelOffset"
+          },
+          "protocol": {
+            "default": "",
+            "maxLength": 200,
+            "title": "Protocol",
+            "type": "string"
+          },
+          "description": {
+            "default": "",
+            "maxLength": 4000,
+            "title": "Description",
+            "type": "string"
+          },
+          "communication": {
+            "$ref": "#/components/schemas/Communication"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "source",
+          "target"
+        ],
+        "title": "Flow",
+        "type": "object"
+      },
+      "LabelOffset": {
+        "additionalProperties": false,
+        "properties": {
+          "x": {
+            "default": 0,
+            "maximum": 10000,
+            "minimum": -10000,
+            "title": "X",
+            "type": "number"
+          },
+          "y": {
+            "default": 0,
+            "maximum": 10000,
+            "minimum": -10000,
+            "title": "Y",
+            "type": "number"
+          }
+        },
+        "title": "LabelOffset",
+        "type": "object"
+      },
+      "Node": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "kind": {
+            "default": "entity",
+            "enum": [
+              "entity",
+              "process",
+              "external",
+              "store",
+              "boundary"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "entityType": {
+            "anyOf": [
+              {
+                "enum": [
+                  "ecu",
+                  "external",
+                  "service",
+                  "device",
+                  "application",
+                  "cloud",
+                  "actor"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entitytype",
+            "description": "实体省略时按 kind 推导（默认 ecu，旧 external 推导 external）；实体不能显式为 null，信任边界必须省略或为 null。"
+          },
+          "children": {
+            "items": {
+              "$ref": "#/components/schemas/EntityChild"
+            },
+            "maxItems": 200,
+            "title": "Children",
+            "type": "array"
+          },
+          "attributes": {
+            "items": {
+              "$ref": "#/components/schemas/EntityAttribute"
+            },
+            "maxItems": 100,
+            "title": "Attributes",
+            "type": "array"
+          },
+          "x": {
+            "maximum": 10000,
+            "minimum": -10000,
+            "title": "X",
+            "type": "number"
+          },
+          "y": {
+            "maximum": 10000,
+            "minimum": -10000,
+            "title": "Y",
+            "type": "number"
+          },
+          "width": {
+            "default": 180,
+            "maximum": 3000,
+            "minimum": 60,
+            "title": "Width",
+            "type": "number"
+          },
+          "height": {
+            "default": 80,
+            "maximum": 3000,
+            "minimum": 40,
+            "title": "Height",
+            "type": "number"
+          },
+          "description": {
+            "default": "",
+            "maxLength": 4000,
+            "title": "Description",
+            "type": "string"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reference"
+          },
+          "operating_system": {
+            "$ref": "#/components/schemas/OperatingSystem"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "x",
+          "y"
+        ],
+        "title": "Node",
+        "type": "object",
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "kind": {
+                  "enum": [
+                    "entity",
+                    "process",
+                    "external"
+                  ]
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "entityType": {
+                  "enum": [
+                    "ecu",
+                    "external",
+                    "service",
+                    "device",
+                    "application",
+                    "cloud",
+                    "actor"
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "kind": {
+                  "enum": [
+                    "boundary",
+                    "store"
+                  ]
+                }
+              },
+              "required": [
+                "kind"
+              ]
+            },
+            "then": {
+              "properties": {
+                "entityType": {
+                  "type": "null"
+                },
+                "attributes": {
+                  "maxItems": 0
+                },
+                "children": {
+                  "maxItems": 0
+                }
+              },
+              "not": {
+                "required": [
+                  "operating_system"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "Architecture": {
+        "additionalProperties": false,
+        "properties": {
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/Node"
+            },
+            "maxItems": 200,
+            "title": "Nodes",
+            "type": "array"
+          },
+          "flows": {
+            "items": {
+              "$ref": "#/components/schemas/Flow"
+            },
+            "maxItems": 400,
+            "title": "Flows",
+            "type": "array"
+          },
+          "equal_spacing": {
+            "default": true,
+            "title": "Equal Spacing",
+            "type": "boolean"
+          }
+        },
+        "title": "Architecture",
+        "type": "object"
+      },
+      "Asset": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Id"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "description": {
+            "default": "",
+            "maxLength": 6000,
+            "title": "Description",
+            "type": "string"
+          },
+          "node_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Node Ids",
+            "type": "array"
+          },
+          "properties": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "confidentiality",
+                "integrity",
+                "availability",
+                "authenticity",
+                "authorization",
+                "non_repudiation"
+              ],
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Properties"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reference"
+          }
+        },
+        "required": [
+          "name",
+          "properties"
+        ],
+        "title": "Asset",
+        "type": "object"
+      },
+      "AttackPath": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "steps": {
+            "default": "",
+            "maxLength": 10000,
+            "title": "Steps",
+            "type": "string"
+          },
+          "feasibility": {
+            "anyOf": [
+              {
+                "maximum": 4,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Feasibility"
+          },
+          "rationale": {
+            "default": "",
+            "maxLength": 6000,
+            "title": "Rationale",
+            "type": "string"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reference"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "AttackPath",
+        "type": "object"
+      },
+      "Impact": {
+        "additionalProperties": false,
+        "properties": {
+          "safety": {
+            "anyOf": [
+              {
+                "maximum": 3,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Safety"
+          },
+          "financial": {
+            "anyOf": [
+              {
+                "maximum": 3,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Financial"
+          },
+          "operational": {
+            "anyOf": [
+              {
+                "maximum": 3,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Operational"
+          },
+          "privacy": {
+            "anyOf": [
+              {
+                "maximum": 3,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Privacy"
+          },
+          "rationale": {
+            "default": "",
+            "maxLength": 6000,
+            "title": "Rationale",
+            "type": "string"
+          }
+        },
+        "title": "Impact",
+        "type": "object"
+      },
+      "Scenario": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Id"
+          },
+          "title": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "asset_id": {
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "property": {
+            "enum": [
+              "confidentiality",
+              "integrity",
+              "availability",
+              "authenticity",
+              "authorization",
+              "non_repudiation"
+            ],
+            "title": "Property",
+            "type": "string"
+          },
+          "damage": {
+            "maxLength": 10000,
+            "minLength": 1,
+            "title": "Damage",
+            "type": "string"
+          },
+          "threat": {
+            "maxLength": 10000,
+            "minLength": 1,
+            "title": "Threat",
+            "type": "string"
+          },
+          "impact": {
+            "$ref": "#/components/schemas/Impact"
+          },
+          "paths": {
+            "items": {
+              "$ref": "#/components/schemas/AttackPath"
+            },
+            "maxItems": 100,
+            "title": "Paths",
+            "type": "array"
+          },
+          "references": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "References",
+            "type": "array"
+          }
+        },
+        "required": [
+          "title",
+          "asset_id",
+          "property",
+          "damage",
+          "threat"
+        ],
+        "title": "Scenario",
+        "type": "object"
+      },
+      "Decision": {
+        "additionalProperties": false,
+        "properties": {
+          "scenario_id": {
+            "title": "Scenario Id",
+            "type": "string"
+          },
+          "treatment": {
+            "enum": [
+              "reduce",
+              "avoid",
+              "share",
+              "retain"
+            ],
+            "title": "Treatment",
+            "type": "string"
+          },
+          "rationale": {
+            "maxLength": 8000,
+            "minLength": 1,
+            "title": "Rationale",
+            "type": "string"
+          },
+          "owner": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Owner",
+            "type": "string"
+          },
+          "goal": {
+            "default": "",
+            "maxLength": 8000,
+            "title": "Goal",
+            "type": "string"
+          },
+          "claim": {
+            "default": "",
+            "maxLength": 8000,
+            "title": "Claim",
+            "type": "string"
+          },
+          "residual_impact": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "依项目方法校验：普通方法整数0..3；系数法为原始SFOP总分，允许小数且不大于3×系数和。"
+          },
+          "residual_feasibility": {
+            "anyOf": [
+              {
+                "maximum": 4,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Residual Feasibility"
+          },
+          "residual_rationale": {
+            "default": "",
+            "maxLength": 8000,
+            "title": "Residual Rationale",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scenario_id",
+          "treatment",
+          "rationale",
+          "owner"
+        ],
+        "title": "Decision",
+        "type": "object"
+      },
+      "Requirement": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Id"
+          },
+          "scenario_id": {
+            "title": "Scenario Id",
+            "type": "string"
+          },
+          "statement": {
+            "maxLength": 10000,
+            "minLength": 1,
+            "title": "Statement",
+            "type": "string"
+          },
+          "allocation": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Allocation",
+            "type": "string"
+          },
+          "verification": {
+            "maxLength": 8000,
+            "minLength": 1,
+            "title": "Verification",
+            "type": "string"
+          },
+          "standard_refs": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 500,
+            "title": "Standard Refs",
+            "type": "array"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reference"
+          }
+        },
+        "required": [
+          "scenario_id",
+          "statement",
+          "allocation",
+          "verification"
+        ],
+        "title": "Requirement",
+        "type": "object"
+      },
+      "Evidence": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Id"
+          },
+          "requirement_id": {
+            "title": "Requirement Id",
+            "type": "string"
+          },
+          "result": {
+            "enum": [
+              "pass",
+              "fail",
+              "pending"
+            ],
+            "title": "Result",
+            "type": "string"
+          },
+          "reference": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Reference",
+            "type": "string"
+          },
+          "summary": {
+            "maxLength": 10000,
+            "minLength": 1,
+            "title": "Summary",
+            "type": "string"
+          },
+          "reviewer": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Reviewer",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requirement_id",
+          "result",
+          "reference",
+          "summary",
+          "reviewer"
+        ],
+        "title": "Evidence",
+        "type": "object"
+      },
+      "Method": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "rationale": {
+            "maxLength": 6000,
+            "minLength": 1,
+            "title": "Rationale",
+            "type": "string"
+          },
+          "matrix": {
+            "type": "array",
+            "minItems": 4,
+            "maxItems": 4,
+            "items": {
+              "type": "array",
+              "minItems": 4,
+              "maxItems": 4,
+              "items": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5
+              }
+            },
+            "description": "4 × 4 组织风险矩阵；沿影响或可行性增加的方向，风险值不得降低。"
+          },
+          "impact_aggregation": {
+            "type": "string",
+            "enum": [
+              "maximum",
+              "weighted_mean",
+              "coefficient_sum"
+            ],
+            "default": "maximum"
+          },
+          "impact_weights": {
+            "$ref": "#/components/schemas/ImpactWeights"
+          },
+          "impact_dimensions": {
+            "$ref": "#/components/schemas/ImpactDimensions"
+          },
+          "risk_calculation": {
+            "type": "string",
+            "enum": [
+              "matrix",
+              "product"
+            ],
+            "default": "matrix"
+          },
+          "product_thresholds": {
+            "type": "array",
+            "minItems": 4,
+            "maxItems": 4,
+            "items": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 4800
+            },
+            "default": [
+              3,
+              6,
+              9,
+              12
+            ],
+            "description": "四个严格递增的风险分值上限（含等号）。coefficient_sum允许小数0..4800，风险分值=SFOP原始总分×可行性；其他模式保持整数1..15，风险分值=(影响等级+1)×可行性。默认[3,6,9,12]为组织示例。"
+          },
+          "impact_levels": {
+            "type": "array",
+            "minItems": 4,
+            "maxItems": 4,
+            "items": {
+              "$ref": "#/components/schemas/LevelDefinition"
+            }
+          },
+          "feasibility_levels": {
+            "type": "array",
+            "minItems": 4,
+            "maxItems": 4,
+            "items": {
+              "$ref": "#/components/schemas/LevelDefinition"
+            }
+          },
+          "risk_levels": {
+            "type": "array",
+            "minItems": 5,
+            "maxItems": 5,
+            "items": {
+              "$ref": "#/components/schemas/LevelDefinition"
+            }
+          },
+          "impact_coefficients": {
+            "$ref": "#/components/schemas/ImpactCoefficients"
+          }
+        },
+        "required": [
+          "name",
+          "rationale",
+          "matrix"
+        ],
+        "title": "Method",
+        "type": "object",
+        "description": "影响0–3、可行性1–4、风险1–5。maximum取四维最高值且要求全部完整；weighted_mean按正权重归一并向上取整，零权重维度不参与、可缺评分，总权重须>0。场景取各路径最高风险；残余风险使用同算法。缺省扩展字段由运行时补默认值，不改写旧摘要。方法改动触发决策复核，冻结基线不变。 系数模式 coefficient_sum：SFOP总分=Σ(各维0..3×系数)，不归一不取整；只允许product，风险分值=总分×可行性，无+1。评估返回原始impact与score；残余impact接受小数，不能超过3×系数和。",
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "impact_aggregation": {
+                  "const": "coefficient_sum"
+                }
+              },
+              "required": [
+                "impact_aggregation"
+              ]
+            },
+            "then": {
+              "properties": {
+                "risk_calculation": {
+                  "const": "product"
+                }
+              },
+              "required": [
+                "risk_calculation"
+              ]
+            },
+            "else": {
+              "properties": {
+                "product_thresholds": {
+                  "items": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 15
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "RegulationSelection": {
+        "additionalProperties": false,
+        "properties": {
+          "references": {
+            "items": {
+              "maxLength": 250,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 2000,
+            "title": "References",
+            "type": "array"
+          }
+        },
+        "title": "RegulationSelection",
+        "type": "object"
+      },
+      "ReferenceSelection": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "reference": {
+            "pattern": "^systems:[0-9]+$",
+            "title": "Reference",
+            "type": "string"
+          },
+          "relationship_keys": {
+            "items": {
+              "type": "string",
+              "pattern": "^relationships:"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Relationship Keys",
+            "type": "array",
+            "uniqueItems": true
+          },
+          "include_controls": {
+            "default": true,
+            "title": "Include Controls",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "asset_id",
+          "reference",
+          "relationship_keys"
+        ],
+        "title": "ReferenceSelection",
+        "type": "object"
+      },
+      "AssetCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "description": {
+            "default": "",
+            "maxLength": 6000,
+            "title": "Description",
+            "type": "string"
+          },
+          "node_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Node Ids",
+            "type": "array"
+          },
+          "properties": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "confidentiality",
+                "integrity",
+                "availability",
+                "authenticity",
+                "authorization",
+                "non_repudiation"
+              ],
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Properties"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reference"
+          }
+        },
+        "required": [
+          "name",
+          "properties"
+        ],
+        "title": "Asset",
+        "type": "object"
+      },
+      "ScenarioCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "title": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "asset_id": {
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "property": {
+            "enum": [
+              "confidentiality",
+              "integrity",
+              "availability",
+              "authenticity",
+              "authorization",
+              "non_repudiation"
+            ],
+            "title": "Property",
+            "type": "string"
+          },
+          "damage": {
+            "maxLength": 10000,
+            "minLength": 1,
+            "title": "Damage",
+            "type": "string"
+          },
+          "threat": {
+            "maxLength": 10000,
+            "minLength": 1,
+            "title": "Threat",
+            "type": "string"
+          },
+          "impact": {
+            "$ref": "#/components/schemas/Impact"
+          },
+          "paths": {
+            "items": {
+              "$ref": "#/components/schemas/AttackPath"
+            },
+            "maxItems": 100,
+            "title": "Paths",
+            "type": "array"
+          },
+          "references": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "References",
+            "type": "array"
+          }
+        },
+        "required": [
+          "title",
+          "asset_id",
+          "property",
+          "damage",
+          "threat"
+        ],
+        "title": "Scenario",
+        "type": "object"
+      },
+      "RequirementCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "scenario_id": {
+            "title": "Scenario Id",
+            "type": "string"
+          },
+          "statement": {
+            "maxLength": 10000,
+            "minLength": 1,
+            "title": "Statement",
+            "type": "string"
+          },
+          "allocation": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Allocation",
+            "type": "string"
+          },
+          "verification": {
+            "maxLength": 8000,
+            "minLength": 1,
+            "title": "Verification",
+            "type": "string"
+          },
+          "standard_refs": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 500,
+            "title": "Standard Refs",
+            "type": "array"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reference"
+          }
+        },
+        "required": [
+          "scenario_id",
+          "statement",
+          "allocation",
+          "verification"
+        ],
+        "title": "Requirement",
+        "type": "object"
+      },
+      "EvidenceCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "requirement_id": {
+            "title": "Requirement Id",
+            "type": "string"
+          },
+          "result": {
+            "enum": [
+              "pass",
+              "fail",
+              "pending"
+            ],
+            "title": "Result",
+            "type": "string"
+          },
+          "reference": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Reference",
+            "type": "string"
+          },
+          "summary": {
+            "maxLength": 10000,
+            "minLength": 1,
+            "title": "Summary",
+            "type": "string"
+          },
+          "reviewer": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Reviewer",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requirement_id",
+          "result",
+          "reference",
+          "summary",
+          "reviewer"
+        ],
+        "title": "Evidence",
+        "type": "object"
+      },
+      "TreatmentInput": {
+        "additionalProperties": false,
+        "properties": {
+          "treatment": {
+            "enum": [
+              "reduce",
+              "avoid",
+              "share",
+              "retain"
+            ],
+            "title": "Treatment",
+            "type": "string"
+          },
+          "rationale": {
+            "maxLength": 8000,
+            "minLength": 1,
+            "title": "Rationale",
+            "type": "string"
+          },
+          "owner": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Owner",
+            "type": "string"
+          },
+          "goal": {
+            "default": "",
+            "maxLength": 8000,
+            "title": "Goal",
+            "type": "string"
+          },
+          "claim": {
+            "default": "",
+            "maxLength": 8000,
+            "title": "Claim",
+            "type": "string"
+          },
+          "residual_impact": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "依项目方法校验：普通方法整数0..3；系数法为原始SFOP总分，允许小数且不大于3×系数和。"
+          },
+          "residual_feasibility": {
+            "anyOf": [
+              {
+                "maximum": 4,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Residual Feasibility"
+          },
+          "residual_rationale": {
+            "default": "",
+            "maxLength": 8000,
+            "title": "Residual Rationale",
+            "type": "string"
+          }
+        },
+        "required": [
+          "treatment",
+          "rationale",
+          "owner"
+        ],
+        "title": "Decision",
+        "type": "object"
+      },
+      "OpenWorkspace": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 4000,
+            "default": ""
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "additionalProperties": false
+      },
+      "SealBaseline": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "reviewer": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "note": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10000
+          }
+        },
+        "required": [
+          "name",
+          "reviewer",
+          "note"
+        ],
+        "additionalProperties": false
+      },
+      "MutationResult": {
+        "type": "object",
+        "properties": {
+          "workspace_id": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "entity_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "workspace_id",
+          "revision",
+          "entity_id"
+        ],
+        "additionalProperties": false
+      },
+      "Problem": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "type": "string"
+          },
+          "request_id": {
+            "type": "string"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "field": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "field",
+                "message"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "detail",
+          "instance",
+          "request_id"
+        ],
+        "additionalProperties": false
+      },
+      "AssetRecord": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "description": {
+            "default": "",
+            "maxLength": 6000,
+            "title": "Description",
+            "type": "string"
+          },
+          "node_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Node Ids",
+            "type": "array"
+          },
+          "properties": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "confidentiality",
+                "integrity",
+                "availability",
+                "authenticity",
+                "authorization",
+                "non_repudiation"
+              ],
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Properties"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reference"
+          }
+        },
+        "required": [
+          "name",
+          "properties",
+          "id"
+        ],
+        "title": "Asset",
+        "type": "object"
+      },
+      "ScenarioRecord": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "asset_id": {
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "property": {
+            "enum": [
+              "confidentiality",
+              "integrity",
+              "availability",
+              "authenticity",
+              "authorization",
+              "non_repudiation"
+            ],
+            "title": "Property",
+            "type": "string"
+          },
+          "damage": {
+            "maxLength": 10000,
+            "minLength": 1,
+            "title": "Damage",
+            "type": "string"
+          },
+          "threat": {
+            "maxLength": 10000,
+            "minLength": 1,
+            "title": "Threat",
+            "type": "string"
+          },
+          "impact": {
+            "$ref": "#/components/schemas/Impact"
+          },
+          "paths": {
+            "items": {
+              "$ref": "#/components/schemas/AttackPath"
+            },
+            "maxItems": 100,
+            "title": "Paths",
+            "type": "array"
+          },
+          "references": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "References",
+            "type": "array"
+          }
+        },
+        "required": [
+          "title",
+          "asset_id",
+          "property",
+          "damage",
+          "threat",
+          "id"
+        ],
+        "title": "Scenario",
+        "type": "object"
+      },
+      "RequirementRecord": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "scenario_id": {
+            "title": "Scenario Id",
+            "type": "string"
+          },
+          "statement": {
+            "maxLength": 10000,
+            "minLength": 1,
+            "title": "Statement",
+            "type": "string"
+          },
+          "allocation": {
+            "maxLength": 500,
+            "title": "Allocation",
+            "type": "string",
+            "description": "自动选用参考知识产生的草稿允许为空；人工确认需求时必须补全。"
+          },
+          "verification": {
+            "maxLength": 8000,
+            "title": "Verification",
+            "type": "string",
+            "description": "自动选用参考知识产生的草稿允许为空；人工确认需求时必须补全。"
+          },
+          "standard_refs": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 500,
+            "title": "Standard Refs",
+            "type": "array"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reference"
+          }
+        },
+        "required": [
+          "scenario_id",
+          "statement",
+          "allocation",
+          "verification",
+          "id"
+        ],
+        "title": "Requirement",
+        "type": "object"
+      },
+      "EvidenceRecord": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "requirement_id": {
+            "title": "Requirement Id",
+            "type": "string"
+          },
+          "result": {
+            "enum": [
+              "pass",
+              "fail",
+              "pending"
+            ],
+            "title": "Result",
+            "type": "string"
+          },
+          "reference": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Reference",
+            "type": "string"
+          },
+          "summary": {
+            "maxLength": 10000,
+            "minLength": 1,
+            "title": "Summary",
+            "type": "string"
+          },
+          "reviewer": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Reviewer",
+            "type": "string"
+          },
+          "requirement_hash": {
+            "type": "string"
+          },
+          "recorded_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "requirement_id",
+          "result",
+          "reference",
+          "summary",
+          "reviewer",
+          "id"
+        ],
+        "title": "Evidence",
+        "type": "object"
+      },
+      "DecisionRecord": {
+        "additionalProperties": false,
+        "properties": {
+          "scenario_id": {
+            "title": "Scenario Id",
+            "type": "string"
+          },
+          "treatment": {
+            "enum": [
+              "reduce",
+              "avoid",
+              "share",
+              "retain"
+            ],
+            "title": "Treatment",
+            "type": "string"
+          },
+          "rationale": {
+            "maxLength": 8000,
+            "minLength": 1,
+            "title": "Rationale",
+            "type": "string"
+          },
+          "owner": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Owner",
+            "type": "string"
+          },
+          "goal": {
+            "default": "",
+            "maxLength": 8000,
+            "title": "Goal",
+            "type": "string"
+          },
+          "claim": {
+            "default": "",
+            "maxLength": 8000,
+            "title": "Claim",
+            "type": "string"
+          },
+          "residual_impact": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "依项目方法校验：普通方法整数0..3；系数法为原始SFOP总分，允许小数且不大于3×系数和。"
+          },
+          "residual_feasibility": {
+            "anyOf": [
+              {
+                "maximum": 4,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Residual Feasibility"
+          },
+          "residual_rationale": {
+            "default": "",
+            "maxLength": 8000,
+            "title": "Residual Rationale",
+            "type": "string"
+          },
+          "assessment_hash": {
+            "type": "string"
+          },
+          "decided_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "scenario_id",
+          "treatment",
+          "rationale",
+          "owner"
+        ],
+        "title": "Decision",
+        "type": "object"
+      },
+      "BaselineRecord": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "reviewer": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "note": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10000
+          },
+          "id": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer"
+          },
+          "sealed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "content_hash": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "reviewer",
+          "note",
+          "revision",
+          "sealed_at",
+          "content_hash"
+        ],
+        "additionalProperties": false
+      },
+      "Workspace": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "item": {
+            "$ref": "#/components/schemas/Item"
+          },
+          "architecture": {
+            "$ref": "#/components/schemas/Architecture"
+          },
+          "assets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssetRecord"
+            }
+          },
+          "scenarios": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScenarioRecord"
+            }
+          },
+          "decisions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DecisionRecord"
+            }
+          },
+          "requirements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RequirementRecord"
+            }
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EvidenceRecord"
+            }
+          },
+          "method": {
+            "$ref": "#/components/schemas/Method"
+          },
+          "method_confirmed": {
+            "type": "boolean"
+          },
+          "baselines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BaselineRecord"
+            }
+          },
+          "reference_imports": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "regulation_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "revision",
+          "created_at",
+          "updated_at",
+          "item",
+          "architecture",
+          "assets",
+          "scenarios",
+          "decisions",
+          "requirements",
+          "evidence",
+          "method",
+          "method_confirmed",
+          "baselines"
+        ],
+        "additionalProperties": false
+      },
+      "WorkspaceSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer"
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "assets": {
+            "type": "integer"
+          },
+          "scenarios": {
+            "type": "integer"
+          },
+          "baselines": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "revision",
+          "updated_at",
+          "assets",
+          "scenarios",
+          "baselines"
+        ],
+        "additionalProperties": false
+      },
+      "Event": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "workspace_id": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer"
+          },
+          "action": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "body": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "id",
+          "workspace_id",
+          "revision",
+          "action",
+          "at",
+          "body"
+        ],
+        "additionalProperties": false
+      },
+      "Review": {
+        "type": "object",
+        "properties": {
+          "ready": {
+            "type": "boolean"
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "stage": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "reference": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "stage",
+                "message",
+                "reference"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "evaluations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "requirements": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "stages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "complete": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "key",
+                "complete"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "ready",
+          "issues",
+          "evaluations",
+          "requirements",
+          "stages"
+        ],
+        "additionalProperties": false
+      },
+      "Health": {
+        "type": "object",
+        "properties": {
+          "application": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "backend": {
+            "type": "string"
+          },
+          "outbound_connections": {
+            "type": "boolean"
+          },
+          "excel_export": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "application",
+          "mode",
+          "version",
+          "outbound_connections",
+          "excel_export"
+        ],
+        "additionalProperties": false
+      },
+      "Reference": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "facts": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "provenance": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "withdrawn": {
+            "type": "boolean"
+          },
+          "citable": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "key",
+          "title",
+          "description"
+        ],
+        "additionalProperties": true
+      },
+      "RegulationVersion": {
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "title",
+          "edition",
+          "coverage",
+          "clause_count",
+          "source_url"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "edition": {
+            "type": "string"
+          },
+          "coverage": {
+            "enum": [
+              "metadata_only",
+              "partial",
+              "complete_for_edition"
+            ]
+          },
+          "clause_count": {
+            "type": "integer"
+          },
+          "source_url": {
+            "type": "string"
+          },
+          "source_note": {
+            "type": "string"
+          },
+          "coverage_note": {
+            "type": "string"
+          },
+          "editorial_notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "artifacts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        },
+        "additionalProperties": true
+      },
+      "RegulationClause": {
+        "type": "object",
+        "required": [
+          "key",
+          "document_id",
+          "number",
+          "body",
+          "source_url"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "document_id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "parent": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "page": {
+            "type": "integer"
+          },
+          "page_end": {
+            "type": "integer"
+          },
+          "document_title": {
+            "type": "string"
+          },
+          "parent_label": {
+            "type": "string"
+          },
+          "source_file": {
+            "type": "string"
+          },
+          "source_url": {
+            "type": "string"
+          },
+          "source_note": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      },
+      "WorkspacePage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceSummary"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "offset",
+          "limit"
+        ],
+        "additionalProperties": false
+      },
+      "EventPage": {
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Event"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "entries",
+          "total",
+          "offset",
+          "limit"
+        ],
+        "additionalProperties": false
+      },
+      "ReferencePage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Reference"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "offset",
+          "limit"
+        ],
+        "additionalProperties": true
+      },
+      "ClausePage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RegulationClause"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "document": {
+            "$ref": "#/components/schemas/RegulationVersion"
+          },
+          "document_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "offset",
+          "limit"
+        ],
+        "additionalProperties": false
+      },
+      "RegulationCatalog": {
+        "type": "object",
+        "properties": {
+          "documents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RegulationVersion"
+            }
+          },
+          "verified_at": {
+            "type": "string"
+          },
+          "network_sync": {
+            "const": false
+          },
+          "total_clauses": {
+            "type": "integer"
+          },
+          "coverage_note": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "documents",
+          "total_clauses",
+          "network_sync"
+        ],
+        "additionalProperties": true
+      },
+      "KnowledgeCatalog": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "withdrawn": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Recommendations": {
+        "type": "object",
+        "required": [
+          "workspace_id",
+          "revision",
+          "asset",
+          "reference",
+          "items",
+          "summary"
+        ],
+        "properties": {
+          "workspace_id": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer"
+          },
+          "asset": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "reference": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "summary": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer"
+              },
+              "available": {
+                "type": "integer"
+              },
+              "already_applied": {
+                "type": "integer"
+              },
+              "blocked": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "total",
+              "available",
+              "already_applied",
+              "blocked"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "WorkProductsExport": {
+        "type": "object",
+        "properties": {
+          "schema": {
+            "const": "jieheng.work-products/1"
+          },
+          "workspace": {
+            "$ref": "#/components/schemas/Workspace"
+          },
+          "review": {
+            "$ref": "#/components/schemas/Review"
+          }
+        },
+        "required": [
+          "schema",
+          "workspace",
+          "review"
+        ],
+        "additionalProperties": false
+      },
+      "AssetUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "可省略；若提供，必须与路径中的记录 ID 一致。"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "description": {
+            "default": "",
+            "maxLength": 6000,
+            "title": "Description",
+            "type": "string"
+          },
+          "node_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Node Ids",
+            "type": "array"
+          },
+          "properties": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "confidentiality",
+                "integrity",
+                "availability",
+                "authenticity",
+                "authorization",
+                "non_repudiation"
+              ],
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Properties"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reference"
+          }
+        },
+        "required": [
+          "name",
+          "properties"
+        ],
+        "title": "Asset",
+        "type": "object"
+      },
+      "ScenarioUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "可省略；若提供，必须与路径中的记录 ID 一致。"
+          },
+          "title": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "asset_id": {
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "property": {
+            "enum": [
+              "confidentiality",
+              "integrity",
+              "availability",
+              "authenticity",
+              "authorization",
+              "non_repudiation"
+            ],
+            "title": "Property",
+            "type": "string"
+          },
+          "damage": {
+            "maxLength": 10000,
+            "minLength": 1,
+            "title": "Damage",
+            "type": "string"
+          },
+          "threat": {
+            "maxLength": 10000,
+            "minLength": 1,
+            "title": "Threat",
+            "type": "string"
+          },
+          "impact": {
+            "$ref": "#/components/schemas/Impact"
+          },
+          "paths": {
+            "items": {
+              "$ref": "#/components/schemas/AttackPath"
+            },
+            "maxItems": 100,
+            "title": "Paths",
+            "type": "array"
+          },
+          "references": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "References",
+            "type": "array"
+          }
+        },
+        "required": [
+          "title",
+          "asset_id",
+          "property",
+          "damage",
+          "threat"
+        ],
+        "title": "Scenario",
+        "type": "object"
+      },
+      "RequirementUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "可省略；若提供，必须与路径中的记录 ID 一致。"
+          },
+          "scenario_id": {
+            "title": "Scenario Id",
+            "type": "string"
+          },
+          "statement": {
+            "maxLength": 10000,
+            "minLength": 1,
+            "title": "Statement",
+            "type": "string"
+          },
+          "allocation": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Allocation",
+            "type": "string"
+          },
+          "verification": {
+            "maxLength": 8000,
+            "minLength": 1,
+            "title": "Verification",
+            "type": "string"
+          },
+          "standard_refs": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 500,
+            "title": "Standard Refs",
+            "type": "array"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reference"
+          }
+        },
+        "required": [
+          "scenario_id",
+          "statement",
+          "allocation",
+          "verification"
+        ],
+        "title": "Requirement",
+        "type": "object"
+      },
+      "ReferenceImportPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "offset",
+          "limit"
+        ],
+        "additionalProperties": false
+      },
+      "OperatingSystem": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "family": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "bare_metal",
+              "rtos",
+              "linux",
+              "qnx",
+              "windows",
+              "android",
+              "ios",
+              "macos",
+              "other"
+            ],
+            "default": "unknown"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "default": ""
+          },
+          "version": {
+            "type": "string",
+            "maxLength": 200,
+            "default": ""
+          },
+          "architecture": {
+            "type": "string",
+            "maxLength": 100,
+            "default": ""
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 4000,
+            "default": ""
+          }
+        }
+      },
+      "Communication": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "medium": {
+            "type": "string",
+            "enum": [
+              "unspecified",
+              "wired",
+              "wireless",
+              "logical"
+            ],
+            "default": "unspecified"
+          },
+          "technology": {
+            "type": "string",
+            "maxLength": 200,
+            "default": ""
+          },
+          "range": {
+            "type": "string",
+            "enum": [
+              "unspecified",
+              "near_field",
+              "local",
+              "wide_area"
+            ],
+            "default": "unspecified"
+          },
+          "purpose": {
+            "type": "string",
+            "maxLength": 4000,
+            "default": ""
+          },
+          "security_properties": {
+            "type": "array",
+            "maxItems": 6,
+            "items": {
+              "type": "string",
+              "enum": [
+                "confidentiality",
+                "integrity",
+                "availability",
+                "authenticity",
+                "authorization",
+                "non_repudiation"
+              ]
+            },
+            "default": [],
+            "description": "显式选择安全需求；不从技术或用途推断。输入去重。"
+          }
+        }
+      },
+      "ImpactWeights": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "safety": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "default": 25
+          },
+          "financial": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "default": 25
+          },
+          "operational": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "default": 25
+          },
+          "privacy": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "default": 25
+          }
+        }
+      },
+      "ImpactDimensions": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "safety": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "default": "安全"
+          },
+          "financial": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "default": "财务"
+          },
+          "operational": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "default": "运行"
+          },
+          "privacy": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "default": "隐私"
+          }
+        }
+      },
+      "LevelDefinition": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000,
+            "default": ""
+          }
+        },
+        "required": [
+          "label"
+        ]
+      },
+      "ImpactCoefficients": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "safety": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "default": 1
+          },
+          "financial": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "default": 1
+          },
+          "operational": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "default": 0.1
+          },
+          "privacy": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "default": 0.1
+          }
+        },
+        "description": "系数直接求和，不归一化。至少一项大于零；零系数维度不要求评分。"
+      }
+    },
+    "parameters": {
+      "WorkspaceID": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "IfMatch": {
+        "name": "If-Match",
+        "in": "header",
+        "required": true,
+        "description": "项目当前 ETag，如 \"4\"。缺少返回 428，格式错误返回 400，过期返回 412。相同 Idempotency-Key 的成功重试优先重放。",
+        "schema": {
+          "type": "string",
+          "pattern": "^\"(0|[1-9][0-9]*)\"$"
+        },
+        "example": "\"4\""
+      },
+      "IdempotencyKey": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "required": true,
+        "description": "8–100 个字符。同一操作的网络重试必须复用；同 key 不同内容返回 409。作用域为工作区，创建项目单独作用域。",
+        "schema": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 100,
+          "pattern": "^[!-~]{8,100}$"
+        },
+        "example": "d5dd63a5-06a1-4b05-87ea-82d5b2f6e3c2"
+      },
+      "Client": {
+        "name": "X-Workspace-Client",
+        "in": "header",
+        "required": true,
+        "description": "本地写入边界标识，不是身份凭据。",
+        "schema": {
+          "const": "jieheng"
+        }
+      },
+      "Offset": {
+        "name": "offset",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        }
+      },
+      "Limit": {
+        "name": "limit",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 20
+        }
+      },
+      "Query": {
+        "name": "q",
+        "in": "query",
+        "schema": {
+          "type": "string",
+          "maxLength": 200,
+          "default": ""
+        }
+      }
+    },
+    "responses": {
+      "Problem": {
+        "description": "请求未完成。400 请求格式或标识无效；403 来源边界；404 资源不存在；405 方法不允许；409 幂等键冲突；412 项目修订冲突；413 超过 2 MB；415 非 JSON；422 内容/规则校验失败；428 缺少 If-Match；500 内部错误。",
+        "headers": {
+          "X-Request-ID": {
+            "description": "本次请求的追踪标识。",
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      }
+    }
+  }
+}

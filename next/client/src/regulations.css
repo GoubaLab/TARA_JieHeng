@@ -1,0 +1,97 @@
+.regulation-explorer {
+  display: grid;
+  grid-template-columns: 255px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.regulation-documents {
+  border-right: 1px solid #e5e8ee;
+  padding-right: 12px;
+}
+.regulation-list-title {
+  font-weight: 600;
+  padding: 6px 12px 20px;
+  color: #434b57;
+}
+.regulation-list-title .anticon {
+  margin-right: 8px;
+}
+.regulation-documents .ant-menu-item {
+  height: auto !important;
+  line-height: 1.5 !important;
+  padding: 12px !important;
+  white-space: normal !important;
+}
+.regulation-document-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 2px 0;
+}
+.regulation-document-item > span {
+  font-size: 12px;
+  color: #687281;
+}
+.regulation-document-item .ant-tag {
+  margin-right: 4px;
+  font-size: 11px;
+}
+.regulation-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+.regulation-heading h4 {
+  margin-top: 0 !important;
+  margin-bottom: 8px !important;
+}
+.regulation-heading > a {
+  white-space: nowrap;
+  margin-top: 5px;
+}
+.regulation-clauses {
+  min-width: 0;
+}
+.regulation-clause-detail {
+  padding: 16px 8px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.regulation-clause-detail .ant-descriptions {
+  margin-bottom: 14px;
+}
+.regulation-clause-detail .pre-wrap {
+  line-height: 1.9;
+  max-height: 480px;
+  overflow-y: auto;
+}
+.regulation-clauses .ant-alert {
+  line-height: 1.7;
+}
+@media (max-width: 1000px) {
+  .regulation-explorer {
+    grid-template-columns: 210px minmax(0, 1fr);
+    gap: 16px;
+  }
+  .regulation-heading {
+    flex-direction: column;
+    gap: 6px;
+  }
+}
+@media (max-width: 720px) {
+  .regulation-explorer {
+    grid-template-columns: 1fr;
+  }
+  .regulation-documents {
+    border-right: 0;
+    padding: 0;
+    border-bottom: 1px solid #e5e8ee;
+    max-height: 220px;
+    overflow-y: auto;
+  }
+  .regulation-list-title {
+    padding-bottom: 8px;
+  }
+}

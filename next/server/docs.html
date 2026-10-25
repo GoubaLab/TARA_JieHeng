@@ -1,0 +1,5447 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>界衡 API 文档</title><style>body{font:15px/1.7 system-ui,sans-serif;max-width:1100px;margin:40px auto;padding:0 24px;color:#172b4d;background:#f6f8fb}section{padding:20px;margin:16px 0;background:white;border:1px solid #e3e8ef;border-radius:8px}h2{font-size:18px;overflow-wrap:anywhere}pre{overflow:auto;background:#f6f8fb;padding:16px;font-size:13px}a{color:#1769ce}summary{cursor:pointer;font-weight:600}</style><h1>界衡 · 工作产品 API</h1><p>版本化接口：/api/v1。<a href="/api/v1/openapi.json">下载 OpenAPI 3.1.1</a> · <a href="/">返回应用</a></p><p>写入使用 X-Workspace-Client: jieheng 与 Idempotency-Key（8–100 个可见 ASCII 字符）。项目内写入另带当前 ETag 作为 If-Match。旧版本 412，缺少版本 428，同一幂等键不同内容 409，校验错误 422。错误为 application/problem+json，含 request_id。本地标识不是身份认证。</p><p>新增资源 201，替换资源 200。所有操作采用事务，运行数据库不随交付包分发。当前为单机工具；自有参考资料接入、流程步骤及报告二次开发请参阅 EXTENDING.md。</p><section><h2><code>GET /api/v1/health</code></h2><h3>服务能力与运行状态</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;服务能力与运行状态&quot;,
+  &quot;operationId&quot;: &quot;getHealth&quot;,
+  &quot;tags&quot;: [
+    &quot;服务&quot;
+  ],
+  &quot;parameters&quot;: [],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/Health&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/workspaces</code></h2><h3>分页查询项目</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;分页查询项目&quot;,
+  &quot;operationId&quot;: &quot;listWorkspaces&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Offset&quot;
+    },
+    {
+      &quot;name&quot;: &quot;limit&quot;,
+      &quot;in&quot;: &quot;query&quot;,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;integer&quot;,
+        &quot;minimum&quot;: 1,
+        &quot;maximum&quot;: 100,
+        &quot;default&quot;: 100
+      }
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/WorkspacePage&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>POST /api/v1/workspaces</code></h2><h3>创建项目</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;创建项目&quot;,
+  &quot;operationId&quot;: &quot;createWorkspace&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;201&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/Workspace&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/OpenWorkspace&quot;
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/workspaces/{id}</code></h2><h3>读取项目与修订</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;读取项目与修订&quot;,
+  &quot;operationId&quot;: &quot;getWorkspace&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/Workspace&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/workspaces/{id}/review</code></h2><h3>检查工作产品完整性</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;检查工作产品完整性&quot;,
+  &quot;operationId&quot;: &quot;getReview&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/Review&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/workspaces/{id}/events</code></h2><h3>分页读取变更记录</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;分页读取变更记录&quot;,
+  &quot;operationId&quot;: &quot;listEvents&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Offset&quot;
+    },
+    {
+      &quot;name&quot;: &quot;limit&quot;,
+      &quot;in&quot;: &quot;query&quot;,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;integer&quot;,
+        &quot;minimum&quot;: 1,
+        &quot;maximum&quot;: 100,
+        &quot;default&quot;: 100
+      }
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/EventPage&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/workspaces/{id}/recommendations</code></h2><h3>预览可引用的参考知识</h3><p>当前返回空候选和资料不可用提示，不生成历史资料内容。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;预览可引用的参考知识&quot;,
+  &quot;operationId&quot;: &quot;getRecommendations&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;name&quot;: &quot;asset_id&quot;,
+      &quot;in&quot;: &quot;query&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 100
+      }
+    },
+    {
+      &quot;name&quot;: &quot;reference&quot;,
+      &quot;in&quot;: &quot;query&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;pattern&quot;: &quot;^systems:[0-9]+$&quot;
+      }
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/Recommendations&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;description&quot;: &quot;当前返回空候选和资料不可用提示，不生成历史资料内容。&quot;
+}</pre></details></section><section><h2><code>PUT /api/v1/workspaces/{id}/item</code></h2><h3>更新相关项定义</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;更新相关项定义&quot;,
+  &quot;operationId&quot;: &quot;replaceItem&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/MutationResult&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/Item&quot;
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/workspaces/{id}/item</code></h2><h3>读取工作产品资源</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;读取工作产品资源&quot;,
+  &quot;operationId&quot;: &quot;getItem&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/Item&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>PUT /api/v1/workspaces/{id}/architecture</code></h2><h3>更新实体架构</h3><p>实体支持操作系统；软件与存储为内部组成；数据流只连接不同实体。communication为可选语义字段，几何标签偏移不参与评估摘要。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;更新实体架构&quot;,
+  &quot;operationId&quot;: &quot;replaceArchitecture&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/MutationResult&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/Architecture&quot;
+        }
+      }
+    }
+  },
+  &quot;description&quot;: &quot;实体支持操作系统；软件与存储为内部组成；数据流只连接不同实体。communication为可选语义字段，几何标签偏移不参与评估摘要。&quot;
+}</pre></details></section><section><h2><code>GET /api/v1/workspaces/{id}/architecture</code></h2><h3>读取工作产品资源</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;读取工作产品资源&quot;,
+  &quot;operationId&quot;: &quot;getArchitecture&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/Architecture&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>PUT /api/v1/workspaces/{id}/assessment-method</code></h2><h3>更新评估方法</h3><p>影响0–3、可行性1–4、风险1–5。maximum取四维最高值且要求全部完整；weighted_mean按正权重归一并向上取整，零权重维度不参与、可缺评分，总权重须&gt;0。场景取各路径最高风险；残余风险使用同算法。缺省扩展字段由运行时补默认值，不改写旧摘要。方法改动触发决策复核，冻结基线不变。 系数模式 coefficient_sum：SFOP总分=Σ(各维0..3×系数)，不归一不取整；只允许product，风险分值=总分×可行性，无+1。评估返回原始impact与score；残余impact接受小数，不能超过3×系数和。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;更新评估方法&quot;,
+  &quot;operationId&quot;: &quot;replaceAssessmentMethod&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/MutationResult&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/Method&quot;
+        }
+      }
+    }
+  },
+  &quot;description&quot;: &quot;影响0–3、可行性1–4、风险1–5。maximum取四维最高值且要求全部完整；weighted_mean按正权重归一并向上取整，零权重维度不参与、可缺评分，总权重须&gt;0。场景取各路径最高风险；残余风险使用同算法。缺省扩展字段由运行时补默认值，不改写旧摘要。方法改动触发决策复核，冻结基线不变。 系数模式 coefficient_sum：SFOP总分=Σ(各维0..3×系数)，不归一不取整；只允许product，风险分值=总分×可行性，无+1。评估返回原始impact与score；残余impact接受小数，不能超过3×系数和。&quot;
+}</pre></details></section><section><h2><code>GET /api/v1/workspaces/{id}/assessment-method</code></h2><h3>读取工作产品资源</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;读取工作产品资源&quot;,
+  &quot;operationId&quot;: &quot;getAssessmentMethod&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/Method&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>PUT /api/v1/workspaces/{id}/regulation-references</code></h2><h3>更新项目法规引用</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;更新项目法规引用&quot;,
+  &quot;operationId&quot;: &quot;replaceRegulationReferences&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/MutationResult&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/RegulationSelection&quot;
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/workspaces/{id}/regulation-references</code></h2><h3>读取工作产品资源</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;读取工作产品资源&quot;,
+  &quot;operationId&quot;: &quot;getRegulationReferences&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/RegulationSelection&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>POST /api/v1/workspaces/{id}/assets</code></h2><h3>创建资产</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;创建资产&quot;,
+  &quot;operationId&quot;: &quot;createAsset&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;201&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/MutationResult&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/AssetCreate&quot;
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>PUT /api/v1/workspaces/{id}/assets/{asset_id}</code></h2><h3>更新资产</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;更新资产&quot;,
+  &quot;operationId&quot;: &quot;replaceAsset&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;name&quot;: &quot;asset_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1
+      }
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/MutationResult&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/AssetUpdate&quot;
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/workspaces/{id}/assets/{asset_id}</code></h2><h3>读取单条记录</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;读取单条记录&quot;,
+  &quot;operationId&quot;: &quot;getAsset&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;name&quot;: &quot;asset_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1
+      }
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/AssetRecord&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>POST /api/v1/workspaces/{id}/scenarios</code></h2><h3>创建风险场景</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;创建风险场景&quot;,
+  &quot;operationId&quot;: &quot;createScenario&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;201&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/MutationResult&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/ScenarioCreate&quot;
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>PUT /api/v1/workspaces/{id}/scenarios/{scenario_id}</code></h2><h3>更新风险场景</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;更新风险场景&quot;,
+  &quot;operationId&quot;: &quot;replaceScenario&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;name&quot;: &quot;scenario_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1
+      }
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/MutationResult&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/ScenarioUpdate&quot;
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/workspaces/{id}/scenarios/{scenario_id}</code></h2><h3>读取单条记录</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;读取单条记录&quot;,
+  &quot;operationId&quot;: &quot;getScenario&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;name&quot;: &quot;scenario_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1
+      }
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/ScenarioRecord&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>POST /api/v1/workspaces/{id}/requirements</code></h2><h3>创建安全需求</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;创建安全需求&quot;,
+  &quot;operationId&quot;: &quot;createRequirement&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;201&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/MutationResult&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/RequirementCreate&quot;
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>PUT /api/v1/workspaces/{id}/requirements/{requirement_id}</code></h2><h3>更新安全需求</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;更新安全需求&quot;,
+  &quot;operationId&quot;: &quot;replaceRequirement&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;name&quot;: &quot;requirement_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1
+      }
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/MutationResult&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/RequirementUpdate&quot;
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/workspaces/{id}/requirements/{requirement_id}</code></h2><h3>读取单条记录</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;读取单条记录&quot;,
+  &quot;operationId&quot;: &quot;getRequirement&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;name&quot;: &quot;requirement_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1
+      }
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/RequirementRecord&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/workspaces/{id}/scenarios/{scenario_id}/treatment</code></h2><h3>读取风险处置决策</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;读取风险处置决策&quot;,
+  &quot;operationId&quot;: &quot;getTreatment&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;name&quot;: &quot;scenario_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1
+      }
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/DecisionRecord&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>PUT /api/v1/workspaces/{id}/scenarios/{scenario_id}/treatment</code></h2><h3>记录或重新确认风险处置</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;记录或重新确认风险处置&quot;,
+  &quot;operationId&quot;: &quot;replaceTreatment&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;name&quot;: &quot;scenario_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1
+      }
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/MutationResult&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/TreatmentInput&quot;
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>POST /api/v1/workspaces/{id}/evidence</code></h2><h3>新增不可覆盖的验证记录</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;新增不可覆盖的验证记录&quot;,
+  &quot;operationId&quot;: &quot;createEvidence&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;201&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/MutationResult&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/EvidenceCreate&quot;
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/workspaces/{id}/evidence/{evidence_id}</code></h2><h3>读取验证记录</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;读取验证记录&quot;,
+  &quot;operationId&quot;: &quot;getEvidence&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;name&quot;: &quot;evidence_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1
+      }
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/EvidenceRecord&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>POST /api/v1/workspaces/{id}/baselines</code></h2><h3>冻结已评审基线</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;冻结已评审基线&quot;,
+  &quot;operationId&quot;: &quot;createBaseline&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;201&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/MutationResult&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/SealBaseline&quot;
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/workspaces/{id}/baselines/{baseline_id}</code></h2><h3>读取冻结基线快照</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;读取冻结基线快照&quot;,
+  &quot;operationId&quot;: &quot;getBaseline&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;name&quot;: &quot;baseline_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1
+      }
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/Workspace&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/workspaces/{id}/reference-imports</code></h2><h3>分页读取已选用的参考知识</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;分页读取已选用的参考知识&quot;,
+  &quot;operationId&quot;: &quot;listReferenceImports&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Offset&quot;
+    },
+    {
+      &quot;name&quot;: &quot;limit&quot;,
+      &quot;in&quot;: &quot;query&quot;,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;integer&quot;,
+        &quot;minimum&quot;: 1,
+        &quot;maximum&quot;: 100,
+        &quot;default&quot;: 100
+      }
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/ReferenceImportPage&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>POST /api/v1/workspaces/{id}/reference-imports</code></h2><h3>选用参考知识生成草稿</h3><p>当前未配置可用参考资料，调用返回422；接口保留供二次开发接入自有资料。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;选用参考知识生成草稿&quot;,
+  &quot;operationId&quot;: &quot;createReferenceImport&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;201&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/MutationResult&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/ReferenceSelection&quot;
+        }
+      }
+    }
+  },
+  &quot;description&quot;: &quot;当前未配置可用参考资料，调用返回422；接口保留供二次开发接入自有资料。&quot;
+}</pre></details></section><section><h2><code>GET /api/v1/workspaces/{id}/reports</code></h2><h3>导出工作版本或冻结基线</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;导出工作版本或冻结基线&quot;,
+  &quot;operationId&quot;: &quot;exportReport&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;name&quot;: &quot;format&quot;,
+      &quot;in&quot;: &quot;query&quot;,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;enum&quot;: [
+          &quot;json&quot;,
+          &quot;html&quot;,
+          &quot;xlsx&quot;
+        ],
+        &quot;default&quot;: &quot;json&quot;
+      }
+    },
+    {
+      &quot;name&quot;: &quot;baseline_id&quot;,
+      &quot;in&quot;: &quot;query&quot;,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 100
+      },
+      &quot;description&quot;: &quot;基线 ID，1–100 字节。&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/WorkProductsExport&quot;
+          }
+        },
+        &quot;text/html&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;,
+            &quot;format&quot;: &quot;binary&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/catalog</code></h2><h3>本地知识库分类与数量</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;本地知识库分类与数量&quot;,
+  &quot;operationId&quot;: &quot;getKnowledgeCatalog&quot;,
+  &quot;tags&quot;: [
+    &quot;参考资料&quot;
+  ],
+  &quot;parameters&quot;: [],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/KnowledgeCatalog&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/catalog/{category}/entries</code></h2><h3>分页搜索知识条目</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;分页搜索知识条目&quot;,
+  &quot;operationId&quot;: &quot;listReferences&quot;,
+  &quot;tags&quot;: [
+    &quot;参考资料&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;name&quot;: &quot;category&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1
+      }
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Query&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Offset&quot;
+    },
+    {
+      &quot;name&quot;: &quot;limit&quot;,
+      &quot;in&quot;: &quot;query&quot;,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;integer&quot;,
+        &quot;minimum&quot;: 1,
+        &quot;maximum&quot;: 100,
+        &quot;default&quot;: 24
+      }
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/ReferencePage&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/references/{key}</code></h2><h3>读取知识或法规引用详情</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;读取知识或法规引用详情&quot;,
+  &quot;operationId&quot;: &quot;getReference&quot;,
+  &quot;tags&quot;: [
+    &quot;参考资料&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;name&quot;: &quot;key&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1
+      }
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/Reference&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/regulations</code></h2><h3>列出本地法规版本及核对边界</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;列出本地法规版本及核对边界&quot;,
+  &quot;operationId&quot;: &quot;listRegulationVersions&quot;,
+  &quot;tags&quot;: [
+    &quot;参考资料&quot;
+  ],
+  &quot;parameters&quot;: [],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/RegulationCatalog&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/regulations/{document_id}/clauses</code></h2><h3>分页搜索指定版本条款</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;分页搜索指定版本条款&quot;,
+  &quot;operationId&quot;: &quot;listRegulationClauses&quot;,
+  &quot;tags&quot;: [
+    &quot;参考资料&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;name&quot;: &quot;document_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1
+      }
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Query&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Offset&quot;
+    },
+    {
+      &quot;name&quot;: &quot;limit&quot;,
+      &quot;in&quot;: &quot;query&quot;,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;integer&quot;,
+        &quot;minimum&quot;: 1,
+        &quot;maximum&quot;: 100,
+        &quot;default&quot;: 20
+      }
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/ClausePage&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/regulations/{document_id}/sources/{index}</code></h2><h3>查看本地 PDF 原件</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;查看本地 PDF 原件&quot;,
+  &quot;operationId&quot;: &quot;getRegulationSource&quot;,
+  &quot;tags&quot;: [
+    &quot;参考资料&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;name&quot;: &quot;document_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1
+      }
+    },
+    {
+      &quot;name&quot;: &quot;index&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;integer&quot;,
+        &quot;minimum&quot;: 0
+      }
+    },
+    {
+      &quot;name&quot;: &quot;Range&quot;,
+      &quot;in&quot;: &quot;header&quot;,
+      &quot;required&quot;: false,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      }
+    },
+    {
+      &quot;name&quot;: &quot;If-Range&quot;,
+      &quot;in&quot;: &quot;header&quot;,
+      &quot;required&quot;: false,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      }
+    },
+    {
+      &quot;name&quot;: &quot;If-Modified-Since&quot;,
+      &quot;in&quot;: &quot;header&quot;,
+      &quot;required&quot;: false,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      }
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/pdf&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;,
+            &quot;format&quot;: &quot;binary&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    },
+    &quot;206&quot;: {
+      &quot;description&quot;: &quot;HTTP 文件范围响应&quot;,
+      &quot;headers&quot;: {
+        &quot;Content-Range&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Accept-Ranges&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/pdf&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;,
+            &quot;format&quot;: &quot;binary&quot;
+          }
+        },
+        &quot;multipart/byteranges&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;,
+            &quot;format&quot;: &quot;binary&quot;
+          }
+        }
+      }
+    },
+    &quot;304&quot;: {
+      &quot;description&quot;: &quot;文件未修改；无响应正文&quot;
+    },
+    &quot;416&quot;: {
+      &quot;description&quot;: &quot;文件范围无法满足（标准 HTTP 文件响应）&quot;,
+      &quot;headers&quot;: {
+        &quot;Content-Range&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;text/plain&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/openapi.json</code></h2><h3>读取本接口契约</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;读取本接口契约&quot;,
+  &quot;operationId&quot;: &quot;getOpenAPI&quot;,
+  &quot;tags&quot;: [
+    &quot;服务&quot;
+  ],
+  &quot;parameters&quot;: [],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;,
+            &quot;additionalProperties&quot;: true
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/docs</code></h2><h3>查看本地接口文档</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;查看本地接口文档&quot;,
+  &quot;operationId&quot;: &quot;getAPIDocumentation&quot;,
+  &quot;tags&quot;: [
+    &quot;服务&quot;
+  ],
+  &quot;parameters&quot;: [],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;text/html&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section id="schema-Item"><details><summary>Item</summary><pre>{
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;purpose&quot;: {
+      &quot;default&quot;: &quot;&quot;,
+      &quot;maxLength&quot;: 10000,
+      &quot;title&quot;: &quot;Purpose&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;boundary&quot;: {
+      &quot;default&quot;: &quot;&quot;,
+      &quot;maxLength&quot;: 10000,
+      &quot;title&quot;: &quot;Boundary&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;environment&quot;: {
+      &quot;default&quot;: &quot;&quot;,
+      &quot;maxLength&quot;: 10000,
+      &quot;title&quot;: &quot;Environment&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;assumptions&quot;: {
+      &quot;default&quot;: &quot;&quot;,
+      &quot;maxLength&quot;: 10000,
+      &quot;title&quot;: &quot;Assumptions&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;owner&quot;: {
+      &quot;default&quot;: &quot;&quot;,
+      &quot;maxLength&quot;: 200,
+      &quot;title&quot;: &quot;Owner&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;lifecycle&quot;: {
+      &quot;default&quot;: &quot;概念阶段&quot;,
+      &quot;maxLength&quot;: 100,
+      &quot;title&quot;: &quot;Lifecycle&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;domain&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;general&quot;,
+        &quot;automotive&quot;,
+        &quot;robotics&quot;,
+        &quot;iot&quot;,
+        &quot;charging&quot;,
+        &quot;internet&quot;
+      ],
+      &quot;description&quot;: &quot;省略的旧项目按 automotive 展示，不自动改写存储。&quot;
+    }
+  },
+  &quot;title&quot;: &quot;Item&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></details></section><section id="schema-EntityAttribute"><details><summary>EntityAttribute</summary><pre>{
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;name&quot;: {
+      &quot;maxLength&quot;: 200,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Name&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;value&quot;: {
+      &quot;default&quot;: &quot;&quot;,
+      &quot;maxLength&quot;: 4000,
+      &quot;title&quot;: &quot;Value&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;name&quot;
+  ],
+  &quot;title&quot;: &quot;EntityAttribute&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></details></section><section id="schema-EntityChild"><details><summary>EntityChild</summary><pre>{
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;id&quot;: {
+      &quot;maxLength&quot;: 80,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Id&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;name&quot;: {
+      &quot;maxLength&quot;: 200,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Name&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;kind&quot;: {
+      &quot;enum&quot;: [
+        &quot;software&quot;,
+        &quot;store&quot;
+      ],
+      &quot;title&quot;: &quot;Kind&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;description&quot;: {
+      &quot;default&quot;: &quot;&quot;,
+      &quot;maxLength&quot;: 4000,
+      &quot;title&quot;: &quot;Description&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;reference&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;default&quot;: null,
+      &quot;title&quot;: &quot;Reference&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;id&quot;,
+    &quot;name&quot;,
+    &quot;kind&quot;
+  ],
+  &quot;title&quot;: &quot;EntityChild&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></details></section><section id="schema-Flow"><details><summary>Flow</summary><pre>{
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;id&quot;: {
+      &quot;maxLength&quot;: 80,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Id&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;name&quot;: {
+      &quot;maxLength&quot;: 200,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Name&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;source&quot;: {
+      &quot;title&quot;: &quot;Source&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;target&quot;: {
+      &quot;title&quot;: &quot;Target&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;sourceSide&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;enum&quot;: [
+            &quot;top&quot;,
+            &quot;right&quot;,
+            &quot;bottom&quot;,
+            &quot;left&quot;
+          ],
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;default&quot;: null,
+      &quot;title&quot;: &quot;Sourceside&quot;
+    },
+    &quot;targetSide&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;enum&quot;: [
+            &quot;top&quot;,
+            &quot;right&quot;,
+            &quot;bottom&quot;,
+            &quot;left&quot;
+          ],
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;default&quot;: null,
+      &quot;title&quot;: &quot;Targetside&quot;
+    },
+    &quot;labelOffset&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/LabelOffset&quot;
+    },
+    &quot;protocol&quot;: {
+      &quot;default&quot;: &quot;&quot;,
+      &quot;maxLength&quot;: 200,
+      &quot;title&quot;: &quot;Protocol&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;description&quot;: {
+      &quot;default&quot;: &quot;&quot;,
+      &quot;maxLength&quot;: 4000,
+      &quot;title&quot;: &quot;Description&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;communication&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/Communication&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;id&quot;,
+    &quot;name&quot;,
+    &quot;source&quot;,
+    &quot;target&quot;
+  ],
+  &quot;title&quot;: &quot;Flow&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></details></section><section id="schema-LabelOffset"><details><summary>LabelOffset</summary><pre>{
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;x&quot;: {
+      &quot;default&quot;: 0,
+      &quot;maximum&quot;: 10000,
+      &quot;minimum&quot;: -10000,
+      &quot;title&quot;: &quot;X&quot;,
+      &quot;type&quot;: &quot;number&quot;
+    },
+    &quot;y&quot;: {
+      &quot;default&quot;: 0,
+      &quot;maximum&quot;: 10000,
+      &quot;minimum&quot;: -10000,
+      &quot;title&quot;: &quot;Y&quot;,
+      &quot;type&quot;: &quot;number&quot;
+    }
+  },
+  &quot;title&quot;: &quot;LabelOffset&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></details></section><section id="schema-Node"><details><summary>Node</summary><pre>{
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;id&quot;: {
+      &quot;maxLength&quot;: 80,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Id&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;name&quot;: {
+      &quot;maxLength&quot;: 200,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Name&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;kind&quot;: {
+      &quot;default&quot;: &quot;entity&quot;,
+      &quot;enum&quot;: [
+        &quot;entity&quot;,
+        &quot;process&quot;,
+        &quot;external&quot;,
+        &quot;store&quot;,
+        &quot;boundary&quot;
+      ],
+      &quot;title&quot;: &quot;Kind&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;entityType&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;enum&quot;: [
+            &quot;ecu&quot;,
+            &quot;external&quot;,
+            &quot;service&quot;,
+            &quot;device&quot;,
+            &quot;application&quot;,
+            &quot;cloud&quot;,
+            &quot;actor&quot;
+          ],
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;title&quot;: &quot;Entitytype&quot;,
+      &quot;description&quot;: &quot;实体省略时按 kind 推导（默认 ecu，旧 external 推导 external）；实体不能显式为 null，信任边界必须省略或为 null。&quot;
+    },
+    &quot;children&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/EntityChild&quot;
+      },
+      &quot;maxItems&quot;: 200,
+      &quot;title&quot;: &quot;Children&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;attributes&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/EntityAttribute&quot;
+      },
+      &quot;maxItems&quot;: 100,
+      &quot;title&quot;: &quot;Attributes&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;x&quot;: {
+      &quot;maximum&quot;: 10000,
+      &quot;minimum&quot;: -10000,
+      &quot;title&quot;: &quot;X&quot;,
+      &quot;type&quot;: &quot;number&quot;
+    },
+    &quot;y&quot;: {
+      &quot;maximum&quot;: 10000,
+      &quot;minimum&quot;: -10000,
+      &quot;title&quot;: &quot;Y&quot;,
+      &quot;type&quot;: &quot;number&quot;
+    },
+    &quot;width&quot;: {
+      &quot;default&quot;: 180,
+      &quot;maximum&quot;: 3000,
+      &quot;minimum&quot;: 60,
+      &quot;title&quot;: &quot;Width&quot;,
+      &quot;type&quot;: &quot;number&quot;
+    },
+    &quot;height&quot;: {
+      &quot;default&quot;: 80,
+      &quot;maximum&quot;: 3000,
+      &quot;minimum&quot;: 40,
+      &quot;title&quot;: &quot;Height&quot;,
+      &quot;type&quot;: &quot;number&quot;
+    },
+    &quot;description&quot;: {
+      &quot;default&quot;: &quot;&quot;,
+      &quot;maxLength&quot;: 4000,
+      &quot;title&quot;: &quot;Description&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;reference&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;default&quot;: null,
+      &quot;title&quot;: &quot;Reference&quot;
+    },
+    &quot;operating_system&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/OperatingSystem&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;id&quot;,
+    &quot;name&quot;,
+    &quot;x&quot;,
+    &quot;y&quot;
+  ],
+  &quot;title&quot;: &quot;Node&quot;,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;allOf&quot;: [
+    {
+      &quot;if&quot;: {
+        &quot;properties&quot;: {
+          &quot;kind&quot;: {
+            &quot;enum&quot;: [
+              &quot;entity&quot;,
+              &quot;process&quot;,
+              &quot;external&quot;
+            ]
+          }
+        }
+      },
+      &quot;then&quot;: {
+        &quot;properties&quot;: {
+          &quot;entityType&quot;: {
+            &quot;enum&quot;: [
+              &quot;ecu&quot;,
+              &quot;external&quot;,
+              &quot;service&quot;,
+              &quot;device&quot;,
+              &quot;application&quot;,
+              &quot;cloud&quot;,
+              &quot;actor&quot;
+            ]
+          }
+        }
+      }
+    },
+    {
+      &quot;if&quot;: {
+        &quot;properties&quot;: {
+          &quot;kind&quot;: {
+            &quot;enum&quot;: [
+              &quot;boundary&quot;,
+              &quot;store&quot;
+            ]
+          }
+        },
+        &quot;required&quot;: [
+          &quot;kind&quot;
+        ]
+      },
+      &quot;then&quot;: {
+        &quot;properties&quot;: {
+          &quot;entityType&quot;: {
+            &quot;type&quot;: &quot;null&quot;
+          },
+          &quot;attributes&quot;: {
+            &quot;maxItems&quot;: 0
+          },
+          &quot;children&quot;: {
+            &quot;maxItems&quot;: 0
+          }
+        },
+        &quot;not&quot;: {
+          &quot;required&quot;: [
+            &quot;operating_system&quot;
+          ]
+        }
+      }
+    }
+  ]
+}</pre></details></section><section id="schema-Architecture"><details><summary>Architecture</summary><pre>{
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;nodes&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/Node&quot;
+      },
+      &quot;maxItems&quot;: 200,
+      &quot;title&quot;: &quot;Nodes&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;flows&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/Flow&quot;
+      },
+      &quot;maxItems&quot;: 400,
+      &quot;title&quot;: &quot;Flows&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;equal_spacing&quot;: {
+      &quot;default&quot;: true,
+      &quot;title&quot;: &quot;Equal Spacing&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    }
+  },
+  &quot;title&quot;: &quot;Architecture&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></details></section><section id="schema-Asset"><details><summary>Asset</summary><pre>{
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;id&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;default&quot;: null,
+      &quot;title&quot;: &quot;Id&quot;
+    },
+    &quot;name&quot;: {
+      &quot;maxLength&quot;: 200,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Name&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;description&quot;: {
+      &quot;default&quot;: &quot;&quot;,
+      &quot;maxLength&quot;: 6000,
+      &quot;title&quot;: &quot;Description&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;node_ids&quot;: {
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;title&quot;: &quot;Node Ids&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;properties&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;enum&quot;: [
+          &quot;confidentiality&quot;,
+          &quot;integrity&quot;,
+          &quot;availability&quot;,
+          &quot;authenticity&quot;,
+          &quot;authorization&quot;,
+          &quot;non_repudiation&quot;
+        ],
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;minItems&quot;: 1,
+      &quot;title&quot;: &quot;Properties&quot;
+    },
+    &quot;reference&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;default&quot;: null,
+      &quot;title&quot;: &quot;Reference&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;name&quot;,
+    &quot;properties&quot;
+  ],
+  &quot;title&quot;: &quot;Asset&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></details></section><section id="schema-AttackPath"><details><summary>AttackPath</summary><pre>{
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;id&quot;: {
+      &quot;title&quot;: &quot;Id&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;name&quot;: {
+      &quot;maxLength&quot;: 500,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Name&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;steps&quot;: {
+      &quot;default&quot;: &quot;&quot;,
+      &quot;maxLength&quot;: 10000,
+      &quot;title&quot;: &quot;Steps&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;feasibility&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;maximum&quot;: 4,
+          &quot;minimum&quot;: 1,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;default&quot;: null,
+      &quot;title&quot;: &quot;Feasibility&quot;
+    },
+    &quot;rationale&quot;: {
+      &quot;default&quot;: &quot;&quot;,
+      &quot;maxLength&quot;: 6000,
+      &quot;title&quot;: &quot;Rationale&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;reference&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;default&quot;: null,
+      &quot;title&quot;: &quot;Reference&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;name&quot;
+  ],
+  &quot;title&quot;: &quot;AttackPath&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></details></section><section id="schema-Impact"><details><summary>Impact</summary><pre>{
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;safety&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;maximum&quot;: 3,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;default&quot;: null,
+      &quot;title&quot;: &quot;Safety&quot;
+    },
+    &quot;financial&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;maximum&quot;: 3,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;default&quot;: null,
+      &quot;title&quot;: &quot;Financial&quot;
+    },
+    &quot;operational&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;maximum&quot;: 3,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;default&quot;: null,
+      &quot;title&quot;: &quot;Operational&quot;
+    },
+    &quot;privacy&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;maximum&quot;: 3,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;default&quot;: null,
+      &quot;title&quot;: &quot;Privacy&quot;
+    },
+    &quot;rationale&quot;: {
+      &quot;default&quot;: &quot;&quot;,
+      &quot;maxLength&quot;: 6000,
+      &quot;title&quot;: &quot;Rationale&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    }
+  },
+  &quot;title&quot;: &quot;Impact&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></details></section><section id="schema-Scenario"><details><summary>Scenario</summary><pre>{
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;id&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;default&quot;: null,
+      &quot;title&quot;: &quot;Id&quot;
+    },
+    &quot;title&quot;: {
+      &quot;maxLength&quot;: 300,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Title&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;asset_id&quot;: {
+      &quot;title&quot;: &quot;Asset Id&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;property&quot;: {
+      &quot;enum&quot;: [
+        &quot;confidentiality&quot;,
+        &quot;integrity&quot;,
+        &quot;availability&quot;,
+        &quot;authenticity&quot;,
+        &quot;authorization&quot;,
+        &quot;non_repudiation&quot;
+      ],
+      &quot;title&quot;: &quot;Property&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;damage&quot;: {
+      &quot;maxLength&quot;: 10000,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Damage&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;threat&quot;: {
+      &quot;maxLength&quot;: 10000,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Threat&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;impact&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/Impact&quot;
+    },
+    &quot;paths&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/AttackPath&quot;
+      },
+      &quot;maxItems&quot;: 100,
+      &quot;title&quot;: &quot;Paths&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;references&quot;: {
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;maxItems&quot;: 50,
+      &quot;title&quot;: &quot;References&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;title&quot;,
+    &quot;asset_id&quot;,
+    &quot;property&quot;,
+    &quot;damage&quot;,
+    &quot;threat&quot;
+  ],
+  &quot;title&quot;: &quot;Scenario&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></details></section><section id="schema-Decision"><details><summary>Decision</summary><pre>{
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;scenario_id&quot;: {
+      &quot;title&quot;: &quot;Scenario Id&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;treatment&quot;: {
+      &quot;enum&quot;: [
+        &quot;reduce&quot;,
+        &quot;avoid&quot;,
+        &quot;share&quot;,
+        &quot;retain&quot;
+      ],
+      &quot;title&quot;: &quot;Treatment&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;rationale&quot;: {
+      &quot;maxLength&quot;: 8000,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Rationale&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;owner&quot;: {
+      &quot;maxLength&quot;: 200,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Owner&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;goal&quot;: {
+      &quot;default&quot;: &quot;&quot;,
+      &quot;maxLength&quot;: 8000,
+      &quot;title&quot;: &quot;Goal&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;claim&quot;: {
+      &quot;default&quot;: &quot;&quot;,
+      &quot;maxLength&quot;: 8000,
+      &quot;title&quot;: &quot;Claim&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;residual_impact&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;type&quot;: &quot;number&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;maximum&quot;: 1200
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;default&quot;: null,
+      &quot;description&quot;: &quot;依项目方法校验：普通方法整数0..3；系数法为原始SFOP总分，允许小数且不大于3×系数和。&quot;
+    },
+    &quot;residual_feasibility&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;maximum&quot;: 4,
+          &quot;minimum&quot;: 1,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;default&quot;: null,
+      &quot;title&quot;: &quot;Residual Feasibility&quot;
+    },
+    &quot;residual_rationale&quot;: {
+      &quot;default&quot;: &quot;&quot;,
+      &quot;maxLength&quot;: 8000,
+      &quot;title&quot;: &quot;Residual Rationale&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;scenario_id&quot;,
+    &quot;treatment&quot;,
+    &quot;rationale&quot;,
+    &quot;owner&quot;
+  ],
+  &quot;title&quot;: &quot;Decision&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></details></section><section id="schema-Requirement"><details><summary>Requirement</summary><pre>{
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;id&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;default&quot;: null,
+      &quot;title&quot;: &quot;Id&quot;
+    },
+    &quot;scenario_id&quot;: {
+      &quot;title&quot;: &quot;Scenario Id&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;statement&quot;: {
+      &quot;maxLength&quot;: 10000,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Statement&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;allocation&quot;: {
+      &quot;maxLength&quot;: 500,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Allocation&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;verification&quot;: {
+      &quot;maxLength&quot;: 8000,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Verification&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;standard_refs&quot;: {
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;maxItems&quot;: 500,
+      &quot;title&quot;: &quot;Standard Refs&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;reference&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;default&quot;: null,
+      &quot;title&quot;: &quot;Reference&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;scenario_id&quot;,
+    &quot;statement&quot;,
+    &quot;allocation&quot;,
+    &quot;verification&quot;
+  ],
+  &quot;title&quot;: &quot;Requirement&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></details></section><section id="schema-Evidence"><details><summary>Evidence</summary><pre>{
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;id&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;default&quot;: null,
+      &quot;title&quot;: &quot;Id&quot;
+    },
+    &quot;requirement_id&quot;: {
+      &quot;title&quot;: &quot;Requirement Id&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;result&quot;: {
+      &quot;enum&quot;: [
+        &quot;pass&quot;,
+        &quot;fail&quot;,
+        &quot;pending&quot;
+      ],
+      &quot;title&quot;: &quot;Result&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;reference&quot;: {
+      &quot;maxLength&quot;: 2000,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Reference&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;summary&quot;: {
+      &quot;maxLength&quot;: 10000,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Summary&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;reviewer&quot;: {
+      &quot;maxLength&quot;: 200,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Reviewer&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;requirement_id&quot;,
+    &quot;result&quot;,
+    &quot;reference&quot;,
+    &quot;summary&quot;,
+    &quot;reviewer&quot;
+  ],
+  &quot;title&quot;: &quot;Evidence&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></details></section><section id="schema-Method"><details><summary>Method</summary><pre>{
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;name&quot;: {
+      &quot;maxLength&quot;: 200,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Name&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;rationale&quot;: {
+      &quot;maxLength&quot;: 6000,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Rationale&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;matrix&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 4,
+      &quot;maxItems&quot;: 4,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;array&quot;,
+        &quot;minItems&quot;: 4,
+        &quot;maxItems&quot;: 4,
+        &quot;items&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 1,
+          &quot;maximum&quot;: 5
+        }
+      },
+      &quot;description&quot;: &quot;4 × 4 组织风险矩阵；沿影响或可行性增加的方向，风险值不得降低。&quot;
+    },
+    &quot;impact_aggregation&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;maximum&quot;,
+        &quot;weighted_mean&quot;,
+        &quot;coefficient_sum&quot;
+      ],
+      &quot;default&quot;: &quot;maximum&quot;
+    },
+    &quot;impact_weights&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/ImpactWeights&quot;
+    },
+    &quot;impact_dimensions&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/ImpactDimensions&quot;
+    },
+    &quot;risk_calculation&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;matrix&quot;,
+        &quot;product&quot;
+      ],
+      &quot;default&quot;: &quot;matrix&quot;
+    },
+    &quot;product_thresholds&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 4,
+      &quot;maxItems&quot;: 4,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;number&quot;,
+        &quot;minimum&quot;: 0,
+        &quot;maximum&quot;: 4800
+      },
+      &quot;default&quot;: [
+        3,
+        6,
+        9,
+        12
+      ],
+      &quot;description&quot;: &quot;四个严格递增的风险分值上限（含等号）。coefficient_sum允许小数0..4800，风险分值=SFOP原始总分×可行性；其他模式保持整数1..15，风险分值=(影响等级+1)×可行性。默认[3,6,9,12]为组织示例。&quot;
+    },
+    &quot;impact_levels&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 4,
+      &quot;maxItems&quot;: 4,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/LevelDefinition&quot;
+      }
+    },
+    &quot;feasibility_levels&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 4,
+      &quot;maxItems&quot;: 4,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/LevelDefinition&quot;
+      }
+    },
+    &quot;risk_levels&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 5,
+      &quot;maxItems&quot;: 5,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/LevelDefinition&quot;
+      }
+    },
+    &quot;impact_coefficients&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/ImpactCoefficients&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;name&quot;,
+    &quot;rationale&quot;,
+    &quot;matrix&quot;
+  ],
+  &quot;title&quot;: &quot;Method&quot;,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;description&quot;: &quot;影响0–3、可行性1–4、风险1–5。maximum取四维最高值且要求全部完整；weighted_mean按正权重归一并向上取整，零权重维度不参与、可缺评分，总权重须&gt;0。场景取各路径最高风险；残余风险使用同算法。缺省扩展字段由运行时补默认值，不改写旧摘要。方法改动触发决策复核，冻结基线不变。 系数模式 coefficient_sum：SFOP总分=Σ(各维0..3×系数)，不归一不取整；只允许product，风险分值=总分×可行性，无+1。评估返回原始impact与score；残余impact接受小数，不能超过3×系数和。&quot;,
+  &quot;allOf&quot;: [
+    {
+      &quot;if&quot;: {
+        &quot;properties&quot;: {
+          &quot;impact_aggregation&quot;: {
+            &quot;const&quot;: &quot;coefficient_sum&quot;
+          }
+        },
+        &quot;required&quot;: [
+          &quot;impact_aggregation&quot;
+        ]
+      },
+      &quot;then&quot;: {
+        &quot;properties&quot;: {
+          &quot;risk_calculation&quot;: {
+            &quot;const&quot;: &quot;product&quot;
+          }
+        },
+        &quot;required&quot;: [
+          &quot;risk_calculation&quot;
+        ]
+      },
+      &quot;else&quot;: {
+        &quot;properties&quot;: {
+          &quot;product_thresholds&quot;: {
+            &quot;items&quot;: {
+              &quot;type&quot;: &quot;integer&quot;,
+              &quot;minimum&quot;: 1,
+              &quot;maximum&quot;: 15
+            }
+          }
+        }
+      }
+    }
+  ]
+}</pre></details></section><section id="schema-RegulationSelection"><details><summary>RegulationSelection</summary><pre>{
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;references&quot;: {
+      &quot;items&quot;: {
+        &quot;maxLength&quot;: 250,
+        &quot;minLength&quot;: 1,
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;maxItems&quot;: 2000,
+      &quot;title&quot;: &quot;References&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    }
+  },
+  &quot;title&quot;: &quot;RegulationSelection&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></details></section><section id="schema-ReferenceSelection"><details><summary>ReferenceSelection</summary><pre>{
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;asset_id&quot;: {
+      &quot;maxLength&quot;: 100,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Asset Id&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;reference&quot;: {
+      &quot;pattern&quot;: &quot;^systems:[0-9]+$&quot;,
+      &quot;title&quot;: &quot;Reference&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;relationship_keys&quot;: {
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;pattern&quot;: &quot;^relationships:&quot;
+      },
+      &quot;maxItems&quot;: 100,
+      &quot;minItems&quot;: 1,
+      &quot;title&quot;: &quot;Relationship Keys&quot;,
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;uniqueItems&quot;: true
+    },
+    &quot;include_controls&quot;: {
+      &quot;default&quot;: true,
+      &quot;title&quot;: &quot;Include Controls&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;asset_id&quot;,
+    &quot;reference&quot;,
+    &quot;relationship_keys&quot;
+  ],
+  &quot;title&quot;: &quot;ReferenceSelection&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></details></section><section id="schema-AssetCreate"><details><summary>AssetCreate</summary><pre>{
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;name&quot;: {
+      &quot;maxLength&quot;: 200,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Name&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;description&quot;: {
+      &quot;default&quot;: &quot;&quot;,
+      &quot;maxLength&quot;: 6000,
+      &quot;title&quot;: &quot;Description&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;node_ids&quot;: {
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;title&quot;: &quot;Node Ids&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;properties&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;enum&quot;: [
+          &quot;confidentiality&quot;,
+          &quot;integrity&quot;,
+          &quot;availability&quot;,
+          &quot;authenticity&quot;,
+          &quot;authorization&quot;,
+          &quot;non_repudiation&quot;
+        ],
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;minItems&quot;: 1,
+      &quot;title&quot;: &quot;Properties&quot;
+    },
+    &quot;reference&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;default&quot;: null,
+      &quot;title&quot;: &quot;Reference&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;name&quot;,
+    &quot;properties&quot;
+  ],
+  &quot;title&quot;: &quot;Asset&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></details></section><section id="schema-ScenarioCreate"><details><summary>ScenarioCreate</summary><pre>{
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;title&quot;: {
+      &quot;maxLength&quot;: 300,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Title&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;asset_id&quot;: {
+      &quot;title&quot;: &quot;Asset Id&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;property&quot;: {
+      &quot;enum&quot;: [
+        &quot;confidentiality&quot;,
+        &quot;integrity&quot;,
+        &quot;availability&quot;,
+        &quot;authenticity&quot;,
+        &quot;authorization&quot;,
+        &quot;non_repudiation&quot;
+      ],
+      &quot;title&quot;: &quot;Property&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;damage&quot;: {
+      &quot;maxLength&quot;: 10000,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Damage&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;threat&quot;: {
+      &quot;maxLength&quot;: 10000,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Threat&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;impact&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/Impact&quot;
+    },
+    &quot;paths&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/AttackPath&quot;
+      },
+      &quot;maxItems&quot;: 100,
+      &quot;title&quot;: &quot;Paths&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;references&quot;: {
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;maxItems&quot;: 50,
+      &quot;title&quot;: &quot;References&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;title&quot;,
+    &quot;asset_id&quot;,
+    &quot;property&quot;,
+    &quot;damage&quot;,
+    &quot;threat&quot;
+  ],
+  &quot;title&quot;: &quot;Scenario&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></details></section><section id="schema-RequirementCreate"><details><summary>RequirementCreate</summary><pre>{
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;scenario_id&quot;: {
+      &quot;title&quot;: &quot;Scenario Id&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;statement&quot;: {
+      &quot;maxLength&quot;: 10000,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Statement&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;allocation&quot;: {
+      &quot;maxLength&quot;: 500,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Allocation&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;verification&quot;: {
+      &quot;maxLength&quot;: 8000,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Verification&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;standard_refs&quot;: {
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;maxItems&quot;: 500,
+      &quot;title&quot;: &quot;Standard Refs&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;reference&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;default&quot;: null,
+      &quot;title&quot;: &quot;Reference&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;scenario_id&quot;,
+    &quot;statement&quot;,
+    &quot;allocation&quot;,
+    &quot;verification&quot;
+  ],
+  &quot;title&quot;: &quot;Requirement&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></details></section><section id="schema-EvidenceCreate"><details><summary>EvidenceCreate</summary><pre>{
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;requirement_id&quot;: {
+      &quot;title&quot;: &quot;Requirement Id&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;result&quot;: {
+      &quot;enum&quot;: [
+        &quot;pass&quot;,
+        &quot;fail&quot;,
+        &quot;pending&quot;
+      ],
+      &quot;title&quot;: &quot;Result&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;reference&quot;: {
+      &quot;maxLength&quot;: 2000,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Reference&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;summary&quot;: {
+      &quot;maxLength&quot;: 10000,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Summary&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;reviewer&quot;: {
+      &quot;maxLength&quot;: 200,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Reviewer&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;requirement_id&quot;,
+    &quot;result&quot;,
+    &quot;reference&quot;,
+    &quot;summary&quot;,
+    &quot;reviewer&quot;
+  ],
+  &quot;title&quot;: &quot;Evidence&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></details></section><section id="schema-TreatmentInput"><details><summary>TreatmentInput</summary><pre>{
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;treatment&quot;: {
+      &quot;enum&quot;: [
+        &quot;reduce&quot;,
+        &quot;avoid&quot;,
+        &quot;share&quot;,
+        &quot;retain&quot;
+      ],
+      &quot;title&quot;: &quot;Treatment&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;rationale&quot;: {
+      &quot;maxLength&quot;: 8000,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Rationale&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;owner&quot;: {
+      &quot;maxLength&quot;: 200,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Owner&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;goal&quot;: {
+      &quot;default&quot;: &quot;&quot;,
+      &quot;maxLength&quot;: 8000,
+      &quot;title&quot;: &quot;Goal&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;claim&quot;: {
+      &quot;default&quot;: &quot;&quot;,
+      &quot;maxLength&quot;: 8000,
+      &quot;title&quot;: &quot;Claim&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;residual_impact&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;type&quot;: &quot;number&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;maximum&quot;: 1200
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;default&quot;: null,
+      &quot;description&quot;: &quot;依项目方法校验：普通方法整数0..3；系数法为原始SFOP总分，允许小数且不大于3×系数和。&quot;
+    },
+    &quot;residual_feasibility&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;maximum&quot;: 4,
+          &quot;minimum&quot;: 1,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;default&quot;: null,
+      &quot;title&quot;: &quot;Residual Feasibility&quot;
+    },
+    &quot;residual_rationale&quot;: {
+      &quot;default&quot;: &quot;&quot;,
+      &quot;maxLength&quot;: 8000,
+      &quot;title&quot;: &quot;Residual Rationale&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;treatment&quot;,
+    &quot;rationale&quot;,
+    &quot;owner&quot;
+  ],
+  &quot;title&quot;: &quot;Decision&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></details></section><section id="schema-OpenWorkspace"><details><summary>OpenWorkspace</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;title&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;description&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 4000,
+      &quot;default&quot;: &quot;&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;title&quot;
+  ],
+  &quot;additionalProperties&quot;: false
+}</pre></details></section><section id="schema-SealBaseline"><details><summary>SealBaseline</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;name&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;reviewer&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;note&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 10000
+    }
+  },
+  &quot;required&quot;: [
+    &quot;name&quot;,
+    &quot;reviewer&quot;,
+    &quot;note&quot;
+  ],
+  &quot;additionalProperties&quot;: false
+}</pre></details></section><section id="schema-MutationResult"><details><summary>MutationResult</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;workspace_id&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;revision&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 1
+    },
+    &quot;entity_id&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;workspace_id&quot;,
+    &quot;revision&quot;,
+    &quot;entity_id&quot;
+  ],
+  &quot;additionalProperties&quot;: false
+}</pre></details></section><section id="schema-Problem"><details><summary>Problem</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;type&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;format&quot;: &quot;uri-reference&quot;
+    },
+    &quot;title&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;status&quot;: {
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;detail&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;instance&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;request_id&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;errors&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;object&quot;,
+        &quot;properties&quot;: {
+          &quot;field&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;message&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;required&quot;: [
+          &quot;field&quot;,
+          &quot;message&quot;
+        ],
+        &quot;additionalProperties&quot;: false
+      }
+    }
+  },
+  &quot;required&quot;: [
+    &quot;type&quot;,
+    &quot;title&quot;,
+    &quot;status&quot;,
+    &quot;detail&quot;,
+    &quot;instance&quot;,
+    &quot;request_id&quot;
+  ],
+  &quot;additionalProperties&quot;: false
+}</pre></details></section><section id="schema-AssetRecord"><details><summary>AssetRecord</summary><pre>{
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;id&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;name&quot;: {
+      &quot;maxLength&quot;: 200,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Name&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;description&quot;: {
+      &quot;default&quot;: &quot;&quot;,
+      &quot;maxLength&quot;: 6000,
+      &quot;title&quot;: &quot;Description&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;node_ids&quot;: {
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;title&quot;: &quot;Node Ids&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;properties&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;enum&quot;: [
+          &quot;confidentiality&quot;,
+          &quot;integrity&quot;,
+          &quot;availability&quot;,
+          &quot;authenticity&quot;,
+          &quot;authorization&quot;,
+          &quot;non_repudiation&quot;
+        ],
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;minItems&quot;: 1,
+      &quot;title&quot;: &quot;Properties&quot;
+    },
+    &quot;reference&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;default&quot;: null,
+      &quot;title&quot;: &quot;Reference&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;name&quot;,
+    &quot;properties&quot;,
+    &quot;id&quot;
+  ],
+  &quot;title&quot;: &quot;Asset&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></details></section><section id="schema-ScenarioRecord"><details><summary>ScenarioRecord</summary><pre>{
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;id&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;title&quot;: {
+      &quot;maxLength&quot;: 300,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Title&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;asset_id&quot;: {
+      &quot;title&quot;: &quot;Asset Id&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;property&quot;: {
+      &quot;enum&quot;: [
+        &quot;confidentiality&quot;,
+        &quot;integrity&quot;,
+        &quot;availability&quot;,
+        &quot;authenticity&quot;,
+        &quot;authorization&quot;,
+        &quot;non_repudiation&quot;
+      ],
+      &quot;title&quot;: &quot;Property&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;damage&quot;: {
+      &quot;maxLength&quot;: 10000,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Damage&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;threat&quot;: {
+      &quot;maxLength&quot;: 10000,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Threat&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;impact&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/Impact&quot;
+    },
+    &quot;paths&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/AttackPath&quot;
+      },
+      &quot;maxItems&quot;: 100,
+      &quot;title&quot;: &quot;Paths&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;references&quot;: {
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;maxItems&quot;: 50,
+      &quot;title&quot;: &quot;References&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;title&quot;,
+    &quot;asset_id&quot;,
+    &quot;property&quot;,
+    &quot;damage&quot;,
+    &quot;threat&quot;,
+    &quot;id&quot;
+  ],
+  &quot;title&quot;: &quot;Scenario&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></details></section><section id="schema-RequirementRecord"><details><summary>RequirementRecord</summary><pre>{
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;id&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;scenario_id&quot;: {
+      &quot;title&quot;: &quot;Scenario Id&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;statement&quot;: {
+      &quot;maxLength&quot;: 10000,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Statement&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;allocation&quot;: {
+      &quot;maxLength&quot;: 500,
+      &quot;title&quot;: &quot;Allocation&quot;,
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;自动选用参考知识产生的草稿允许为空；人工确认需求时必须补全。&quot;
+    },
+    &quot;verification&quot;: {
+      &quot;maxLength&quot;: 8000,
+      &quot;title&quot;: &quot;Verification&quot;,
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;自动选用参考知识产生的草稿允许为空；人工确认需求时必须补全。&quot;
+    },
+    &quot;standard_refs&quot;: {
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;maxItems&quot;: 500,
+      &quot;title&quot;: &quot;Standard Refs&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;reference&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;default&quot;: null,
+      &quot;title&quot;: &quot;Reference&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;scenario_id&quot;,
+    &quot;statement&quot;,
+    &quot;allocation&quot;,
+    &quot;verification&quot;,
+    &quot;id&quot;
+  ],
+  &quot;title&quot;: &quot;Requirement&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></details></section><section id="schema-EvidenceRecord"><details><summary>EvidenceRecord</summary><pre>{
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;id&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;requirement_id&quot;: {
+      &quot;title&quot;: &quot;Requirement Id&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;result&quot;: {
+      &quot;enum&quot;: [
+        &quot;pass&quot;,
+        &quot;fail&quot;,
+        &quot;pending&quot;
+      ],
+      &quot;title&quot;: &quot;Result&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;reference&quot;: {
+      &quot;maxLength&quot;: 2000,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Reference&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;summary&quot;: {
+      &quot;maxLength&quot;: 10000,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Summary&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;reviewer&quot;: {
+      &quot;maxLength&quot;: 200,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Reviewer&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;requirement_hash&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;recorded_at&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;format&quot;: &quot;date-time&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;requirement_id&quot;,
+    &quot;result&quot;,
+    &quot;reference&quot;,
+    &quot;summary&quot;,
+    &quot;reviewer&quot;,
+    &quot;id&quot;
+  ],
+  &quot;title&quot;: &quot;Evidence&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></details></section><section id="schema-DecisionRecord"><details><summary>DecisionRecord</summary><pre>{
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;scenario_id&quot;: {
+      &quot;title&quot;: &quot;Scenario Id&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;treatment&quot;: {
+      &quot;enum&quot;: [
+        &quot;reduce&quot;,
+        &quot;avoid&quot;,
+        &quot;share&quot;,
+        &quot;retain&quot;
+      ],
+      &quot;title&quot;: &quot;Treatment&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;rationale&quot;: {
+      &quot;maxLength&quot;: 8000,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Rationale&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;owner&quot;: {
+      &quot;maxLength&quot;: 200,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Owner&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;goal&quot;: {
+      &quot;default&quot;: &quot;&quot;,
+      &quot;maxLength&quot;: 8000,
+      &quot;title&quot;: &quot;Goal&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;claim&quot;: {
+      &quot;default&quot;: &quot;&quot;,
+      &quot;maxLength&quot;: 8000,
+      &quot;title&quot;: &quot;Claim&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;residual_impact&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;type&quot;: &quot;number&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;maximum&quot;: 1200
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;default&quot;: null,
+      &quot;description&quot;: &quot;依项目方法校验：普通方法整数0..3；系数法为原始SFOP总分，允许小数且不大于3×系数和。&quot;
+    },
+    &quot;residual_feasibility&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;maximum&quot;: 4,
+          &quot;minimum&quot;: 1,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;default&quot;: null,
+      &quot;title&quot;: &quot;Residual Feasibility&quot;
+    },
+    &quot;residual_rationale&quot;: {
+      &quot;default&quot;: &quot;&quot;,
+      &quot;maxLength&quot;: 8000,
+      &quot;title&quot;: &quot;Residual Rationale&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;assessment_hash&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;decided_at&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;format&quot;: &quot;date-time&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;scenario_id&quot;,
+    &quot;treatment&quot;,
+    &quot;rationale&quot;,
+    &quot;owner&quot;
+  ],
+  &quot;title&quot;: &quot;Decision&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></details></section><section id="schema-BaselineRecord"><details><summary>BaselineRecord</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;name&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;reviewer&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;note&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 10000
+    },
+    &quot;id&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;revision&quot;: {
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;sealed_at&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;format&quot;: &quot;date-time&quot;
+    },
+    &quot;content_hash&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;id&quot;,
+    &quot;name&quot;,
+    &quot;reviewer&quot;,
+    &quot;note&quot;,
+    &quot;revision&quot;,
+    &quot;sealed_at&quot;,
+    &quot;content_hash&quot;
+  ],
+  &quot;additionalProperties&quot;: false
+}</pre></details></section><section id="schema-Workspace"><details><summary>Workspace</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;id&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;title&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;description&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;revision&quot;: {
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;created_at&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;updated_at&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;item&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/Item&quot;
+    },
+    &quot;architecture&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/Architecture&quot;
+    },
+    &quot;assets&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/AssetRecord&quot;
+      }
+    },
+    &quot;scenarios&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/ScenarioRecord&quot;
+      }
+    },
+    &quot;decisions&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/DecisionRecord&quot;
+      }
+    },
+    &quot;requirements&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/RequirementRecord&quot;
+      }
+    },
+    &quot;evidence&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/EvidenceRecord&quot;
+      }
+    },
+    &quot;method&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/Method&quot;
+    },
+    &quot;method_confirmed&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;baselines&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/BaselineRecord&quot;
+      }
+    },
+    &quot;reference_imports&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;additionalProperties&quot;: true
+    },
+    &quot;regulation_refs&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      }
+    }
+  },
+  &quot;required&quot;: [
+    &quot;id&quot;,
+    &quot;title&quot;,
+    &quot;description&quot;,
+    &quot;revision&quot;,
+    &quot;created_at&quot;,
+    &quot;updated_at&quot;,
+    &quot;item&quot;,
+    &quot;architecture&quot;,
+    &quot;assets&quot;,
+    &quot;scenarios&quot;,
+    &quot;decisions&quot;,
+    &quot;requirements&quot;,
+    &quot;evidence&quot;,
+    &quot;method&quot;,
+    &quot;method_confirmed&quot;,
+    &quot;baselines&quot;
+  ],
+  &quot;additionalProperties&quot;: false
+}</pre></details></section><section id="schema-WorkspaceSummary"><details><summary>WorkspaceSummary</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;id&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;title&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;description&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;revision&quot;: {
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;updated_at&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;assets&quot;: {
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;scenarios&quot;: {
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;baselines&quot;: {
+      &quot;type&quot;: &quot;integer&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;id&quot;,
+    &quot;title&quot;,
+    &quot;description&quot;,
+    &quot;revision&quot;,
+    &quot;updated_at&quot;,
+    &quot;assets&quot;,
+    &quot;scenarios&quot;,
+    &quot;baselines&quot;
+  ],
+  &quot;additionalProperties&quot;: false
+}</pre></details></section><section id="schema-Event"><details><summary>Event</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;id&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;workspace_id&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;revision&quot;: {
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;action&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;at&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;body&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;additionalProperties&quot;: true
+    }
+  },
+  &quot;required&quot;: [
+    &quot;id&quot;,
+    &quot;workspace_id&quot;,
+    &quot;revision&quot;,
+    &quot;action&quot;,
+    &quot;at&quot;,
+    &quot;body&quot;
+  ],
+  &quot;additionalProperties&quot;: false
+}</pre></details></section><section id="schema-Review"><details><summary>Review</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;ready&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;issues&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;object&quot;,
+        &quot;properties&quot;: {
+          &quot;stage&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;message&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;reference&quot;: {
+            &quot;type&quot;: [
+              &quot;string&quot;,
+              &quot;null&quot;
+            ]
+          }
+        },
+        &quot;required&quot;: [
+          &quot;stage&quot;,
+          &quot;message&quot;,
+          &quot;reference&quot;
+        ],
+        &quot;additionalProperties&quot;: false
+      }
+    },
+    &quot;evaluations&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;object&quot;,
+        &quot;additionalProperties&quot;: true
+      }
+    },
+    &quot;requirements&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;object&quot;,
+        &quot;additionalProperties&quot;: true
+      }
+    },
+    &quot;stages&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;object&quot;,
+        &quot;properties&quot;: {
+          &quot;key&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;complete&quot;: {
+            &quot;type&quot;: &quot;boolean&quot;
+          }
+        },
+        &quot;required&quot;: [
+          &quot;key&quot;,
+          &quot;complete&quot;
+        ],
+        &quot;additionalProperties&quot;: false
+      }
+    }
+  },
+  &quot;required&quot;: [
+    &quot;ready&quot;,
+    &quot;issues&quot;,
+    &quot;evaluations&quot;,
+    &quot;requirements&quot;,
+    &quot;stages&quot;
+  ],
+  &quot;additionalProperties&quot;: false
+}</pre></details></section><section id="schema-Health"><details><summary>Health</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;application&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;mode&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;version&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;backend&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;outbound_connections&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;excel_export&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;application&quot;,
+    &quot;mode&quot;,
+    &quot;version&quot;,
+    &quot;outbound_connections&quot;,
+    &quot;excel_export&quot;
+  ],
+  &quot;additionalProperties&quot;: false
+}</pre></details></section><section id="schema-Reference"><details><summary>Reference</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;key&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;title&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;description&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;facts&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;additionalProperties&quot;: true
+    },
+    &quot;provenance&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;additionalProperties&quot;: true
+    },
+    &quot;withdrawn&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;citable&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;key&quot;,
+    &quot;title&quot;,
+    &quot;description&quot;
+  ],
+  &quot;additionalProperties&quot;: true
+}</pre></details></section><section id="schema-RegulationVersion"><details><summary>RegulationVersion</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;required&quot;: [
+    &quot;id&quot;,
+    &quot;code&quot;,
+    &quot;title&quot;,
+    &quot;edition&quot;,
+    &quot;coverage&quot;,
+    &quot;clause_count&quot;,
+    &quot;source_url&quot;
+  ],
+  &quot;properties&quot;: {
+    &quot;id&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;code&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;title&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;edition&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;coverage&quot;: {
+      &quot;enum&quot;: [
+        &quot;metadata_only&quot;,
+        &quot;partial&quot;,
+        &quot;complete_for_edition&quot;
+      ]
+    },
+    &quot;clause_count&quot;: {
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;source_url&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;source_note&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;coverage_note&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;editorial_notes&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      }
+    },
+    &quot;artifacts&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;object&quot;,
+        &quot;additionalProperties&quot;: true
+      }
+    }
+  },
+  &quot;additionalProperties&quot;: true
+}</pre></details></section><section id="schema-RegulationClause"><details><summary>RegulationClause</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;required&quot;: [
+    &quot;key&quot;,
+    &quot;document_id&quot;,
+    &quot;number&quot;,
+    &quot;body&quot;,
+    &quot;source_url&quot;
+  ],
+  &quot;properties&quot;: {
+    &quot;key&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;document_id&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;number&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;body&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;parent&quot;: {
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;page&quot;: {
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;page_end&quot;: {
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;document_title&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;parent_label&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;source_file&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;source_url&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;source_note&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    }
+  },
+  &quot;additionalProperties&quot;: true
+}</pre></details></section><section id="schema-WorkspacePage"><details><summary>WorkspacePage</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;items&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/WorkspaceSummary&quot;
+      }
+    },
+    &quot;total&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0
+    },
+    &quot;offset&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0
+    },
+    &quot;limit&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 1,
+      &quot;maximum&quot;: 100
+    }
+  },
+  &quot;required&quot;: [
+    &quot;items&quot;,
+    &quot;total&quot;,
+    &quot;offset&quot;,
+    &quot;limit&quot;
+  ],
+  &quot;additionalProperties&quot;: false
+}</pre></details></section><section id="schema-EventPage"><details><summary>EventPage</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;entries&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/Event&quot;
+      }
+    },
+    &quot;total&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0
+    },
+    &quot;offset&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0
+    },
+    &quot;limit&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 1,
+      &quot;maximum&quot;: 100
+    }
+  },
+  &quot;required&quot;: [
+    &quot;entries&quot;,
+    &quot;total&quot;,
+    &quot;offset&quot;,
+    &quot;limit&quot;
+  ],
+  &quot;additionalProperties&quot;: false
+}</pre></details></section><section id="schema-ReferencePage"><details><summary>ReferencePage</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;items&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/Reference&quot;
+      }
+    },
+    &quot;total&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0
+    },
+    &quot;offset&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0
+    },
+    &quot;limit&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 1,
+      &quot;maximum&quot;: 100
+    }
+  },
+  &quot;required&quot;: [
+    &quot;items&quot;,
+    &quot;total&quot;,
+    &quot;offset&quot;,
+    &quot;limit&quot;
+  ],
+  &quot;additionalProperties&quot;: true
+}</pre></details></section><section id="schema-ClausePage"><details><summary>ClausePage</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;items&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/RegulationClause&quot;
+      }
+    },
+    &quot;total&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0
+    },
+    &quot;offset&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0
+    },
+    &quot;limit&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 1,
+      &quot;maximum&quot;: 100
+    },
+    &quot;document&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/RegulationVersion&quot;
+    },
+    &quot;document_id&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;items&quot;,
+    &quot;total&quot;,
+    &quot;offset&quot;,
+    &quot;limit&quot;
+  ],
+  &quot;additionalProperties&quot;: false
+}</pre></details></section><section id="schema-RegulationCatalog"><details><summary>RegulationCatalog</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;documents&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/RegulationVersion&quot;
+      }
+    },
+    &quot;verified_at&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;network_sync&quot;: {
+      &quot;const&quot;: false
+    },
+    &quot;total_clauses&quot;: {
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;coverage_note&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;documents&quot;,
+    &quot;total_clauses&quot;,
+    &quot;network_sync&quot;
+  ],
+  &quot;additionalProperties&quot;: true
+}</pre></details></section><section id="schema-KnowledgeCatalog"><details><summary>KnowledgeCatalog</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: true,
+  &quot;properties&quot;: {
+    &quot;withdrawn&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;
+    }
+  }
+}</pre></details></section><section id="schema-Recommendations"><details><summary>Recommendations</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;required&quot;: [
+    &quot;workspace_id&quot;,
+    &quot;revision&quot;,
+    &quot;asset&quot;,
+    &quot;reference&quot;,
+    &quot;items&quot;,
+    &quot;summary&quot;
+  ],
+  &quot;properties&quot;: {
+    &quot;workspace_id&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;revision&quot;: {
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;asset&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;additionalProperties&quot;: true
+    },
+    &quot;reference&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;additionalProperties&quot;: true
+    },
+    &quot;items&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;object&quot;,
+        &quot;additionalProperties&quot;: true
+      }
+    },
+    &quot;summary&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;total&quot;: {
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;available&quot;: {
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;already_applied&quot;: {
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;blocked&quot;: {
+          &quot;type&quot;: &quot;integer&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;total&quot;,
+        &quot;available&quot;,
+        &quot;already_applied&quot;,
+        &quot;blocked&quot;
+      ],
+      &quot;additionalProperties&quot;: false
+    }
+  }
+}</pre></details></section><section id="schema-WorkProductsExport"><details><summary>WorkProductsExport</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;schema&quot;: {
+      &quot;const&quot;: &quot;jieheng.work-products/1&quot;
+    },
+    &quot;workspace&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/Workspace&quot;
+    },
+    &quot;review&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/Review&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;schema&quot;,
+    &quot;workspace&quot;,
+    &quot;review&quot;
+  ],
+  &quot;additionalProperties&quot;: false
+}</pre></details></section><section id="schema-AssetUpdate"><details><summary>AssetUpdate</summary><pre>{
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;id&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;可省略；若提供，必须与路径中的记录 ID 一致。&quot;
+    },
+    &quot;name&quot;: {
+      &quot;maxLength&quot;: 200,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Name&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;description&quot;: {
+      &quot;default&quot;: &quot;&quot;,
+      &quot;maxLength&quot;: 6000,
+      &quot;title&quot;: &quot;Description&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;node_ids&quot;: {
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;title&quot;: &quot;Node Ids&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;properties&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;enum&quot;: [
+          &quot;confidentiality&quot;,
+          &quot;integrity&quot;,
+          &quot;availability&quot;,
+          &quot;authenticity&quot;,
+          &quot;authorization&quot;,
+          &quot;non_repudiation&quot;
+        ],
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;minItems&quot;: 1,
+      &quot;title&quot;: &quot;Properties&quot;
+    },
+    &quot;reference&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;default&quot;: null,
+      &quot;title&quot;: &quot;Reference&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;name&quot;,
+    &quot;properties&quot;
+  ],
+  &quot;title&quot;: &quot;Asset&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></details></section><section id="schema-ScenarioUpdate"><details><summary>ScenarioUpdate</summary><pre>{
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;id&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;可省略；若提供，必须与路径中的记录 ID 一致。&quot;
+    },
+    &quot;title&quot;: {
+      &quot;maxLength&quot;: 300,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Title&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;asset_id&quot;: {
+      &quot;title&quot;: &quot;Asset Id&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;property&quot;: {
+      &quot;enum&quot;: [
+        &quot;confidentiality&quot;,
+        &quot;integrity&quot;,
+        &quot;availability&quot;,
+        &quot;authenticity&quot;,
+        &quot;authorization&quot;,
+        &quot;non_repudiation&quot;
+      ],
+      &quot;title&quot;: &quot;Property&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;damage&quot;: {
+      &quot;maxLength&quot;: 10000,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Damage&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;threat&quot;: {
+      &quot;maxLength&quot;: 10000,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Threat&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;impact&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/Impact&quot;
+    },
+    &quot;paths&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/AttackPath&quot;
+      },
+      &quot;maxItems&quot;: 100,
+      &quot;title&quot;: &quot;Paths&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;references&quot;: {
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;maxItems&quot;: 50,
+      &quot;title&quot;: &quot;References&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;title&quot;,
+    &quot;asset_id&quot;,
+    &quot;property&quot;,
+    &quot;damage&quot;,
+    &quot;threat&quot;
+  ],
+  &quot;title&quot;: &quot;Scenario&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></details></section><section id="schema-RequirementUpdate"><details><summary>RequirementUpdate</summary><pre>{
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;id&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;可省略；若提供，必须与路径中的记录 ID 一致。&quot;
+    },
+    &quot;scenario_id&quot;: {
+      &quot;title&quot;: &quot;Scenario Id&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;statement&quot;: {
+      &quot;maxLength&quot;: 10000,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Statement&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;allocation&quot;: {
+      &quot;maxLength&quot;: 500,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Allocation&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;verification&quot;: {
+      &quot;maxLength&quot;: 8000,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Verification&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;standard_refs&quot;: {
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;maxItems&quot;: 500,
+      &quot;title&quot;: &quot;Standard Refs&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;reference&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;default&quot;: null,
+      &quot;title&quot;: &quot;Reference&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;scenario_id&quot;,
+    &quot;statement&quot;,
+    &quot;allocation&quot;,
+    &quot;verification&quot;
+  ],
+  &quot;title&quot;: &quot;Requirement&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></details></section><section id="schema-ReferenceImportPage"><details><summary>ReferenceImportPage</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;items&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;object&quot;,
+        &quot;additionalProperties&quot;: true
+      }
+    },
+    &quot;total&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0
+    },
+    &quot;offset&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0
+    },
+    &quot;limit&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 1,
+      &quot;maximum&quot;: 100
+    }
+  },
+  &quot;required&quot;: [
+    &quot;items&quot;,
+    &quot;total&quot;,
+    &quot;offset&quot;,
+    &quot;limit&quot;
+  ],
+  &quot;additionalProperties&quot;: false
+}</pre></details></section><section id="schema-OperatingSystem"><details><summary>OperatingSystem</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;family&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;unknown&quot;,
+        &quot;bare_metal&quot;,
+        &quot;rtos&quot;,
+        &quot;linux&quot;,
+        &quot;qnx&quot;,
+        &quot;windows&quot;,
+        &quot;android&quot;,
+        &quot;ios&quot;,
+        &quot;macos&quot;,
+        &quot;other&quot;
+      ],
+      &quot;default&quot;: &quot;unknown&quot;
+    },
+    &quot;name&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 200,
+      &quot;default&quot;: &quot;&quot;
+    },
+    &quot;version&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 200,
+      &quot;default&quot;: &quot;&quot;
+    },
+    &quot;architecture&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 100,
+      &quot;default&quot;: &quot;&quot;
+    },
+    &quot;notes&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 4000,
+      &quot;default&quot;: &quot;&quot;
+    }
+  }
+}</pre></details></section><section id="schema-Communication"><details><summary>Communication</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;medium&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;unspecified&quot;,
+        &quot;wired&quot;,
+        &quot;wireless&quot;,
+        &quot;logical&quot;
+      ],
+      &quot;default&quot;: &quot;unspecified&quot;
+    },
+    &quot;technology&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 200,
+      &quot;default&quot;: &quot;&quot;
+    },
+    &quot;range&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;unspecified&quot;,
+        &quot;near_field&quot;,
+        &quot;local&quot;,
+        &quot;wide_area&quot;
+      ],
+      &quot;default&quot;: &quot;unspecified&quot;
+    },
+    &quot;purpose&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 4000,
+      &quot;default&quot;: &quot;&quot;
+    },
+    &quot;security_properties&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;maxItems&quot;: 6,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;enum&quot;: [
+          &quot;confidentiality&quot;,
+          &quot;integrity&quot;,
+          &quot;availability&quot;,
+          &quot;authenticity&quot;,
+          &quot;authorization&quot;,
+          &quot;non_repudiation&quot;
+        ]
+      },
+      &quot;default&quot;: [],
+      &quot;description&quot;: &quot;显式选择安全需求；不从技术或用途推断。输入去重。&quot;
+    }
+  }
+}</pre></details></section><section id="schema-ImpactWeights"><details><summary>ImpactWeights</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;safety&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;maximum&quot;: 100,
+      &quot;default&quot;: 25
+    },
+    &quot;financial&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;maximum&quot;: 100,
+      &quot;default&quot;: 25
+    },
+    &quot;operational&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;maximum&quot;: 100,
+      &quot;default&quot;: 25
+    },
+    &quot;privacy&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;maximum&quot;: 100,
+      &quot;default&quot;: 25
+    }
+  }
+}</pre></details></section><section id="schema-ImpactDimensions"><details><summary>ImpactDimensions</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;safety&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 100,
+      &quot;default&quot;: &quot;安全&quot;
+    },
+    &quot;financial&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 100,
+      &quot;default&quot;: &quot;财务&quot;
+    },
+    &quot;operational&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 100,
+      &quot;default&quot;: &quot;运行&quot;
+    },
+    &quot;privacy&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 100,
+      &quot;default&quot;: &quot;隐私&quot;
+    }
+  }
+}</pre></details></section><section id="schema-LevelDefinition"><details><summary>LevelDefinition</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;label&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;description&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 2000,
+      &quot;default&quot;: &quot;&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;label&quot;
+  ]
+}</pre></details></section><section id="schema-ImpactCoefficients"><details><summary>ImpactCoefficients</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;safety&quot;: {
+      &quot;type&quot;: &quot;number&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;maximum&quot;: 100,
+      &quot;default&quot;: 1
+    },
+    &quot;financial&quot;: {
+      &quot;type&quot;: &quot;number&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;maximum&quot;: 100,
+      &quot;default&quot;: 1
+    },
+    &quot;operational&quot;: {
+      &quot;type&quot;: &quot;number&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;maximum&quot;: 100,
+      &quot;default&quot;: 0.1
+    },
+    &quot;privacy&quot;: {
+      &quot;type&quot;: &quot;number&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;maximum&quot;: 100,
+      &quot;default&quot;: 0.1
+    }
+  },
+  &quot;description&quot;: &quot;系数直接求和，不归一化。至少一项大于零；零系数维度不要求评分。&quot;
+}</pre></details></section></html>
