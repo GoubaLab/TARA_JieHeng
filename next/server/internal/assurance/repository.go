@@ -318,6 +318,9 @@ func (r *Repository) Change(ctx context.Context, key string, expected int64, req
 		}
 	}
 	result := Object{"workspace_id": key, "revision": next["revision"], "entity_id": entityID}
+	if action == "replace-architecture" {
+		result["asset_sync"] = architectureAssetSummary(before, next)
+	}
 	receipt, err := repoBody(result)
 	if err != nil {
 		return nil, false, err

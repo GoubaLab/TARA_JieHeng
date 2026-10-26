@@ -69,6 +69,14 @@ var domainIdentity = Identity
 
 func dSchema(model string) map[string]dField {
 	switch model {
+	case "NumberPrefixes":
+		fields := map[string]dField{}
+		for key := range numberPrefixes {
+			fields[key] = ds(1, 12)
+		}
+		return fields
+	case "Numbering":
+		return map[string]dField{"prefixes": dm("NumberPrefixes", true), "separator": de("-", "_", ".", "/"), "padding": dn("int", 2, 6, true)}
 	case "Item":
 		return map[string]dField{"purpose": dsd("", 10000), "boundary": dsd("", 10000), "environment": dsd("", 10000), "assumptions": dsd("", 10000), "owner": dsd("", 200), "lifecycle": dsd("概念阶段", 100), "domain": dop(de("general", "automotive", "robotics", "iot", "charging", "internet"))}
 	case "OperatingSystem":
@@ -83,8 +91,12 @@ func dSchema(model string) map[string]dField {
 		return map[string]dField{"id": ds(1, 80), "name": ds(1, 200), "kind": ded("entity", "entity", "process", "external", "store", "boundary"), "entityType": ded(nil, "ecu", "external", "service", "device", "application", "cloud", "actor"), "children": dl(dm("EntityChild", true), 0, 200, false), "attributes": dl(dm("EntityAttribute", true), 0, 100, false), "x": dn("float", -10000, 10000, false), "y": dn("float", -10000, 10000, false), "width": dnd("float", 180, 60, 3000, false), "height": dnd("float", 80, 40, 3000, false), "description": dsd("", 4000), "reference": dsn(), "operating_system": dop(dm("OperatingSystem", true))}
 	case "LabelOffset":
 		return map[string]dField{"x": dnd("float", 0, -10000, 10000, true), "y": dnd("float", 0, -10000, 10000, true)}
+	case "RouteLayout":
+		return map[string]dField{"waypoint": dop(dm("LabelOffset", true))}
+	case "WirelessLayout":
+		return map[string]dField{"source_offset": dop(dm("LabelOffset", true)), "target_offset": dop(dm("LabelOffset", true)), "source_side": dop(de("top", "right", "bottom", "left")), "target_side": dop(de("top", "right", "bottom", "left")), "waypoint": dop(dm("LabelOffset", true))}
 	case "Flow":
-		return map[string]dField{"id": ds(1, 80), "name": ds(1, 200), "source": ds(0, 0), "target": ds(0, 0), "sourceSide": ded(nil, "top", "right", "bottom", "left"), "targetSide": ded(nil, "top", "right", "bottom", "left"), "labelOffset": dm("LabelOffset", false), "protocol": dsd("", 200), "description": dsd("", 4000), "communication": dop(dm("Communication", true))}
+		return map[string]dField{"id": ds(1, 80), "name": ds(1, 200), "source": ds(0, 0), "target": ds(0, 0), "sourceSide": ded(nil, "top", "right", "bottom", "left"), "targetSide": ded(nil, "top", "right", "bottom", "left"), "labelOffset": dm("LabelOffset", false), "protocol": dsd("", 200), "description": dsd("", 4000), "communication": dop(dm("Communication", true)), "wireless_layout": dop(dm("WirelessLayout", true)), "route_layout": dop(dm("RouteLayout", true))}
 	case "Architecture":
 		return map[string]dField{"nodes": dl(dm("Node", true), 0, 200, false), "flows": dl(dm("Flow", true), 0, 400, false), "equal_spacing": db(true, false)}
 	case "Asset":
@@ -360,6 +372,20 @@ func dValidateModel(model string, payload Object) (Object, error) {
 		result[key] = normalized
 	}
 	switch model {
+	case "NumberPrefixes":
+		seen := map[string]bool{}
+		pattern := regexp.MustCompile(`^[\p{L}\p{N}][\p{L}\p{N}_-]{0,11}$`)
+		for _, v := range result {
+			prefix := dStr(v)
+			key := strings.ToLower(dCasefold(prefix))
+			if !pattern.MatchString(prefix) {
+				return nil, dError("编号前缀须以文字或数字开头，仅可包含文字、数字、下划线和短横线，最长 12 个字符")
+			}
+			if seen[key] {
+				return nil, dError("不同类型的编号前缀不能重复（不区分大小写）")
+			}
+			seen[key] = true
+		}
 	case "Node":
 		if result["kind"] == "entity" && result["entityType"] == nil {
 			return nil, dError("实体必须选择实体类型")
@@ -504,7 +530,7 @@ func dCasefold(s string) string {
 	return b.String()
 }
 func ValidatePayload(action string, payload Object) (Object, error) {
-	models := map[string]string{"define-item": "Item", "replace-architecture": "Architecture", "record-asset": "Asset", "record-scenario": "Scenario", "decide-treatment": "Decision", "specify-requirement": "Requirement", "select-regulations": "RegulationSelection", "record-evidence": "Evidence", "adopt-method": "Method", "seal-baseline": "Baseline", "apply-reference-selection": "ReferenceSelection"}
+	models := map[string]string{"configure-numbering": "Numbering", "define-item": "Item", "replace-architecture": "Architecture", "record-asset": "Asset", "record-scenario": "Scenario", "decide-treatment": "Decision", "specify-requirement": "Requirement", "select-regulations": "RegulationSelection", "record-evidence": "Evidence", "adopt-method": "Method", "seal-baseline": "Baseline", "apply-reference-selection": "ReferenceSelection"}
 	model, ok := models[action]
 	if !ok {
 		return nil, dError("未知领域操作")

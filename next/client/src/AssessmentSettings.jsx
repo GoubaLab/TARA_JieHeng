@@ -1,3 +1,4 @@
+import NumberingSettings from "./NumberingSettings.jsx";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
@@ -86,6 +87,20 @@ export function MethodPreview({ method }) {
   );
 }
 export default function AssessmentSettings() {
+  return (
+    <Tabs
+      items={[
+        { key: "method", label: "评估算法", children: <MethodSettings /> },
+        {
+          key: "numbering",
+          label: "编号规则",
+          children: <NumberingSettings />,
+        },
+      ]}
+    />
+  );
+}
+function MethodSettings() {
   const { ws, save, message } = useWorkbench();
   const [form] = Form.useForm();
   const [error, setError] = useState("");
@@ -126,7 +141,7 @@ export default function AssessmentSettings() {
   return (
     <>
       <PageTitle
-        title="评估设置"
+        title="评估算法"
         description="为当前项目配置影响维度、评分依据和风险算法。"
         extra={
           <Button

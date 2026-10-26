@@ -483,7 +483,7 @@
       &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
     }
   }
-}</pre></details></section><section><h2><code>PUT /api/v1/workspaces/{id}/architecture</code></h2><h3>更新实体架构</h3><p>实体支持操作系统；软件与存储为内部组成；数据流只连接不同实体。communication为可选语义字段，几何标签偏移不参与评估摘要。</p><details><summary>参数、请求与响应</summary><pre>{
+}</pre></details></section><section><h2><code>PUT /api/v1/workspaces/{id}/architecture</code></h2><h3>更新实体架构</h3><p>实体支持操作系统；软件与存储为内部组成；数据流只连接不同实体。communication为可选语义字段，几何标签偏移不参与评估摘要。 Saves architecture and synchronizes derived project assets atomically. Stable identities avoid duplicates; manual edits and existing risk references are retained. Missing graphical sources are flagged instead of deleting assets.</p><details><summary>参数、请求与响应</summary><pre>{
   &quot;summary&quot;: &quot;更新实体架构&quot;,
   &quot;operationId&quot;: &quot;replaceArchitecture&quot;,
   &quot;tags&quot;: [
@@ -548,7 +548,7 @@
       }
     }
   },
-  &quot;description&quot;: &quot;实体支持操作系统；软件与存储为内部组成；数据流只连接不同实体。communication为可选语义字段，几何标签偏移不参与评估摘要。&quot;
+  &quot;description&quot;: &quot;实体支持操作系统；软件与存储为内部组成；数据流只连接不同实体。communication为可选语义字段，几何标签偏移不参与评估摘要。 Saves architecture and synchronizes derived project assets atomically. Stable identities avoid duplicates; manual edits and existing risk references are retained. Missing graphical sources are flagged instead of deleting assets.&quot;
 }</pre></details></section><section><h2><code>GET /api/v1/workspaces/{id}/architecture</code></h2><h3>读取工作产品资源</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
   &quot;summary&quot;: &quot;读取工作产品资源&quot;,
   &quot;operationId&quot;: &quot;getArchitecture&quot;,
@@ -2466,6 +2466,119 @@
       &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
     }
   }
+}</pre></details></section><section><h2><code>PUT /api/v1/workspaces/{id}/numbering</code></h2><h3>更新编号规则</h3><p>首次配置与其他写入会保存稳定序号。更改规则仅重新格式化显示编号，不重排或复用序号；冻结基线保留原规则。GET 不写库。默认 EN/TB/SW/DS/DF/AS/RS/AP/SR/EV，短横线，3 位。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;更新编号规则&quot;,
+  &quot;operationId&quot;: &quot;replaceNumbering&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/MutationResult&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/Numbering&quot;
+        }
+      }
+    }
+  },
+  &quot;description&quot;: &quot;首次配置与其他写入会保存稳定序号。更改规则仅重新格式化显示编号，不重排或复用序号；冻结基线保留原规则。GET 不写库。默认 EN/TB/SW/DS/DF/AS/RS/AP/SR/EV，短横线，3 位。&quot;
+}</pre></details></section><section><h2><code>GET /api/v1/workspaces/{id}/numbering</code></h2><h3>读取编号规则</h3><p>首次配置与其他写入会保存稳定序号。更改规则仅重新格式化显示编号，不重排或复用序号；冻结基线保留原规则。GET 不写库。默认 EN/TB/SW/DS/DF/AS/RS/AP/SR/EV，短横线，3 位。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;读取编号规则&quot;,
+  &quot;operationId&quot;: &quot;getNumbering&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/Numbering&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;description&quot;: &quot;首次配置与其他写入会保存稳定序号。更改规则仅重新格式化显示编号，不重排或复用序号；冻结基线保留原规则。GET 不写库。默认 EN/TB/SW/DS/DF/AS/RS/AP/SR/EV，短横线，3 位。&quot;
 }</pre></details></section><section id="schema-Item"><details><summary>Item</summary><pre>{
   &quot;additionalProperties&quot;: false,
   &quot;properties&quot;: {
@@ -2666,6 +2779,12 @@
     },
     &quot;communication&quot;: {
       &quot;$ref&quot;: &quot;#/components/schemas/Communication&quot;
+    },
+    &quot;wireless_layout&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/WirelessLayout&quot;
+    },
+    &quot;route_layout&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/RouteLayout&quot;
     }
   },
   &quot;required&quot;: [
@@ -3935,6 +4054,10 @@
     },
     &quot;entity_id&quot;: {
       &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;asset_sync&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/AssetSyncSummary&quot;,
+      &quot;description&quot;: &quot;Present when saving architecture; committed atomically and included in idempotency replay.&quot;
     }
   },
   &quot;required&quot;: [
@@ -4046,6 +4169,9 @@
       ],
       &quot;default&quot;: null,
       &quot;title&quot;: &quot;Reference&quot;
+    },
+    &quot;architecture_source&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/ArchitectureAssetSource&quot;
     }
   },
   &quot;required&quot;: [
@@ -4449,6 +4575,12 @@
       &quot;items&quot;: {
         &quot;type&quot;: &quot;string&quot;
       }
+    },
+    &quot;numbering&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/Numbering&quot;
+    },
+    &quot;numbering_state&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/NumberingState&quot;
     }
   },
   &quot;required&quot;: [
@@ -5444,4 +5576,359 @@
     }
   },
   &quot;description&quot;: &quot;系数直接求和，不归一化。至少一项大于零；零系数维度不要求评分。&quot;
+}</pre></details></section><section id="schema-WirelessLayout"><details><summary>WirelessLayout</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;Legacy visual layout accepted for round-trip compatibility. Endpoint cards and their offsets are no longer rendered; use Flow.sourceSide, targetSide and route_layout for entity-to-entity connections.&quot;,
+  &quot;properties&quot;: {
+    &quot;source_offset&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/LabelOffset&quot;,
+      &quot;description&quot;: &quot;发送端标识相对发送实体左上角的偏移&quot;
+    },
+    &quot;target_offset&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/LabelOffset&quot;,
+      &quot;description&quot;: &quot;接收端标识相对接收实体左上角的偏移&quot;
+    },
+    &quot;waypoint&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/LabelOffset&quot;,
+      &quot;description&quot;: &quot;用户指定途经点，画布坐标&quot;
+    },
+    &quot;source_side&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;top&quot;,
+        &quot;right&quot;,
+        &quot;bottom&quot;,
+        &quot;left&quot;
+      ],
+      &quot;description&quot;: &quot;省略时自动选择出线方向&quot;
+    },
+    &quot;target_side&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;top&quot;,
+        &quot;right&quot;,
+        &quot;bottom&quot;,
+        &quot;left&quot;
+      ],
+      &quot;description&quot;: &quot;省略时自动选择出线方向&quot;
+    }
+  },
+  &quot;deprecated&quot;: true
+}</pre></details></section><section id="schema-RouteLayout"><details><summary>RouteLayout</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;title&quot;: &quot;RouteLayout&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;Optional visual-only routing for all communication media. An empty object restores automatic routing and overrides a legacy wireless waypoint. Does not change source/target or assessment state.&quot;,
+  &quot;properties&quot;: {
+    &quot;waypoint&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/LabelOffset&quot;,
+      &quot;description&quot;: &quot;Manual route waypoint in canvas coordinates, snapped to 10 units by the editor.&quot;
+    }
+  }
+}</pre></details></section><section id="schema-ArchitectureAssetDefaults"><details><summary>ArchitectureAssetDefaults</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;name&quot;: {
+      &quot;maxLength&quot;: 200,
+      &quot;minLength&quot;: 1,
+      &quot;title&quot;: &quot;Name&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;description&quot;: {
+      &quot;default&quot;: &quot;&quot;,
+      &quot;maxLength&quot;: 6000,
+      &quot;title&quot;: &quot;Description&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;node_ids&quot;: {
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;title&quot;: &quot;Node Ids&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;properties&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;enum&quot;: [
+          &quot;confidentiality&quot;,
+          &quot;integrity&quot;,
+          &quot;availability&quot;,
+          &quot;authenticity&quot;,
+          &quot;authorization&quot;,
+          &quot;non_repudiation&quot;
+        ],
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;minItems&quot;: 1,
+      &quot;title&quot;: &quot;Properties&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;name&quot;,
+    &quot;description&quot;,
+    &quot;node_ids&quot;,
+    &quot;properties&quot;
+  ],
+  &quot;additionalProperties&quot;: false
+}</pre></details></section><section id="schema-ArchitectureAssetSource"><details><summary>ArchitectureAssetSource</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;readOnly&quot;: true,
+  &quot;additionalProperties&quot;: false,
+  &quot;required&quot;: [
+    &quot;kind&quot;,
+    &quot;id&quot;,
+    &quot;status&quot;,
+    &quot;defaults&quot;,
+    &quot;overrides&quot;
+  ],
+  &quot;properties&quot;: {
+    &quot;kind&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;entity&quot;,
+        &quot;software&quot;,
+        &quot;store&quot;,
+        &quot;flow&quot;
+      ]
+    },
+    &quot;id&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;status&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;active&quot;,
+        &quot;missing&quot;
+      ]
+    },
+    &quot;defaults&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/ArchitectureAssetDefaults&quot;
+    },
+    &quot;overrides&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;enum&quot;: [
+          &quot;name&quot;,
+          &quot;description&quot;,
+          &quot;node_ids&quot;,
+          &quot;properties&quot;
+        ]
+      },
+      &quot;description&quot;: &quot;Fields explicitly edited through the asset resource; subsequent architecture saves preserve these fields.&quot;
+    }
+  },
+  &quot;description&quot;: &quot;Server-maintained origin and prior generated values. Used to preserve manual edits during architecture synchronization. Never accepted in asset write bodies.&quot;
+}</pre></details></section><section id="schema-AssetSyncSummary"><details><summary>AssetSyncSummary</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;required&quot;: [
+    &quot;created&quot;,
+    &quot;updated&quot;,
+    &quot;missing&quot;,
+    &quot;total&quot;
+  ],
+  &quot;properties&quot;: {
+    &quot;created&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0
+    },
+    &quot;updated&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0
+    },
+    &quot;missing&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0
+    },
+    &quot;total&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0
+    }
+  }
+}</pre></details></section><section id="schema-NumberPrefixes"><details><summary>NumberPrefixes</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;required&quot;: [
+    &quot;entity&quot;,
+    &quot;boundary&quot;,
+    &quot;software&quot;,
+    &quot;store&quot;,
+    &quot;flow&quot;,
+    &quot;asset&quot;,
+    &quot;scenario&quot;,
+    &quot;path&quot;,
+    &quot;requirement&quot;,
+    &quot;evidence&quot;
+  ],
+  &quot;properties&quot;: {
+    &quot;entity&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 12,
+      &quot;pattern&quot;: &quot;^[\\p{L}\\p{N}][\\p{L}\\p{N}_-]{0,11}$&quot;
+    },
+    &quot;boundary&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 12,
+      &quot;pattern&quot;: &quot;^[\\p{L}\\p{N}][\\p{L}\\p{N}_-]{0,11}$&quot;
+    },
+    &quot;software&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 12,
+      &quot;pattern&quot;: &quot;^[\\p{L}\\p{N}][\\p{L}\\p{N}_-]{0,11}$&quot;
+    },
+    &quot;store&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 12,
+      &quot;pattern&quot;: &quot;^[\\p{L}\\p{N}][\\p{L}\\p{N}_-]{0,11}$&quot;
+    },
+    &quot;flow&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 12,
+      &quot;pattern&quot;: &quot;^[\\p{L}\\p{N}][\\p{L}\\p{N}_-]{0,11}$&quot;
+    },
+    &quot;asset&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 12,
+      &quot;pattern&quot;: &quot;^[\\p{L}\\p{N}][\\p{L}\\p{N}_-]{0,11}$&quot;
+    },
+    &quot;scenario&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 12,
+      &quot;pattern&quot;: &quot;^[\\p{L}\\p{N}][\\p{L}\\p{N}_-]{0,11}$&quot;
+    },
+    &quot;path&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 12,
+      &quot;pattern&quot;: &quot;^[\\p{L}\\p{N}][\\p{L}\\p{N}_-]{0,11}$&quot;
+    },
+    &quot;requirement&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 12,
+      &quot;pattern&quot;: &quot;^[\\p{L}\\p{N}][\\p{L}\\p{N}_-]{0,11}$&quot;
+    },
+    &quot;evidence&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 12,
+      &quot;pattern&quot;: &quot;^[\\p{L}\\p{N}][\\p{L}\\p{N}_-]{0,11}$&quot;
+    }
+  },
+  &quot;description&quot;: &quot;不同类型的前缀必须唯一（Unicode case folding，不区分大小写）。&quot;
+}</pre></details></section><section id="schema-Numbering"><details><summary>Numbering</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;required&quot;: [
+    &quot;prefixes&quot;,
+    &quot;separator&quot;,
+    &quot;padding&quot;
+  ],
+  &quot;properties&quot;: {
+    &quot;prefixes&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/NumberPrefixes&quot;
+    },
+    &quot;separator&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;-&quot;,
+        &quot;_&quot;,
+        &quot;.&quot;,
+        &quot;/&quot;
+      ]
+    },
+    &quot;padding&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 2,
+      &quot;maximum&quot;: 6
+    }
+  },
+  &quot;description&quot;: &quot;项目显示编号规则。最低位数，不截断更长序号；不更改内部 ID、引用或风险判定。&quot;
+}</pre></details></section><section id="schema-NumberingState"><details><summary>NumberingState</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;readOnly&quot;: true,
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;entity&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;additionalProperties&quot;: {
+        &quot;type&quot;: &quot;integer&quot;,
+        &quot;minimum&quot;: 1
+      }
+    },
+    &quot;boundary&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;additionalProperties&quot;: {
+        &quot;type&quot;: &quot;integer&quot;,
+        &quot;minimum&quot;: 1
+      }
+    },
+    &quot;software&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;additionalProperties&quot;: {
+        &quot;type&quot;: &quot;integer&quot;,
+        &quot;minimum&quot;: 1
+      }
+    },
+    &quot;store&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;additionalProperties&quot;: {
+        &quot;type&quot;: &quot;integer&quot;,
+        &quot;minimum&quot;: 1
+      }
+    },
+    &quot;flow&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;additionalProperties&quot;: {
+        &quot;type&quot;: &quot;integer&quot;,
+        &quot;minimum&quot;: 1
+      }
+    },
+    &quot;asset&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;additionalProperties&quot;: {
+        &quot;type&quot;: &quot;integer&quot;,
+        &quot;minimum&quot;: 1
+      }
+    },
+    &quot;scenario&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;additionalProperties&quot;: {
+        &quot;type&quot;: &quot;integer&quot;,
+        &quot;minimum&quot;: 1
+      }
+    },
+    &quot;path&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;additionalProperties&quot;: {
+        &quot;type&quot;: &quot;integer&quot;,
+        &quot;minimum&quot;: 1
+      }
+    },
+    &quot;requirement&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;additionalProperties&quot;: {
+        &quot;type&quot;: &quot;integer&quot;,
+        &quot;minimum&quot;: 1
+      }
+    },
+    &quot;evidence&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;additionalProperties&quot;: {
+        &quot;type&quot;: &quot;integer&quot;,
+        &quot;minimum&quot;: 1
+      }
+    }
+  },
+  &quot;description&quot;: &quot;服务端只读序号登记，按类型和内部 ID 索引，保留已删除记录的序号。path 键为 UTF-8 场景 ID 字节长度 + 冒号 + 场景 ID + 路径 ID。缺省历史快照按记录顺序只读投影。&quot;
 }</pre></details></section></html>

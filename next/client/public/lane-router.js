@@ -2,8 +2,8 @@
 (function (root, factory) {
   'use strict';
   const api = factory();
+  root.AssuranceLaneRouter = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
-  else root.AssuranceLaneRouter = api;
 })(typeof window !== 'undefined' ? window : globalThis, function () {
   'use strict';
   const EPS = 1e-6;
@@ -37,6 +37,10 @@
   }
   function crosses(a, b) {
     return a.horizontal !== b.horizontal && a.position > b.low + EPS && a.position < b.high - EPS && b.position > a.low + EPS && b.position < a.high - EPS;
+  }
+  // Inclusive intersections also catch crossings exactly at a grid vertex.
+  function touches(a, b) {
+    return a.horizontal !== b.horizontal && a.position >= b.low - EPS && a.position <= b.high + EPS && b.position >= a.low - EPS && b.position <= a.high + EPS;
   }
   function blocks(segment, rect) {
     return segment.horizontal
@@ -100,6 +104,7 @@
     for (const edge of edges) for (const end of [edge.source, edge.target]) {
       xs.add(end.point.x); ys.add(end.point.y); xs.add(end.escape.x); ys.add(end.escape.y);
     }
+    for (const edge of edges) for (const p of edge.waypoints || []) { for (const offset of [-spacing, 0, spacing]) { xs.add(round(p.x+offset)); ys.add(round(p.y+offset)); } }
     const x = [...xs].sort((a, b) => a - b), y = [...ys].sort((a, b) => a - b);
     const xIndex = new Map(x.map((v, i) => [v, i])), yIndex = new Map(y.map((v, i) => [v, i]));
     const width = x.length, count = width * y.length;
@@ -127,7 +132,7 @@
       index: (p) => yIndex.get(p.y) * width + xIndex.get(p.x) };
   }
 
-  function findPath(edge, graph, reservations, spacing) {
+  function findPath(edge, graph, reservations, spacing, avoidCrossings = false) {
     const start = graph.index(edge.source.escape), goal = graph.index(edge.target.escape);
     const initialAxis = edge.source.side === 'left' || edge.source.side === 'right' ? 0 : 1;
     const startState = start * 2 + initialAxis;
@@ -160,8 +165,13 @@
         if (!moveCache[key]) {
           let valid = true, crossed = 0;
           for (const reserved of reservations) {
-            if (reserved.edgeId === edge.id) continue;
-            if (parallelConflict(line, reserved, spacing)) { valid = false; break; }
+            if (reserved.edgeId === edge.id && !reserved.self) continue;
+            if (reserved.self) {
+              const sameLine = line.horizontal === reserved.horizontal && Math.abs(line.position-reserved.position) < EPS;
+              const intersection = line.horizontal ? {x:reserved.position,y:line.position} : {x:line.position,y:reserved.position};
+              const atJoin = edge.join && Math.abs(intersection.x-edge.join.x)<EPS && Math.abs(intersection.y-edge.join.y)<EPS;
+              if ((sameLine && overlap(line,reserved)) || (touches(line,reserved) && !atJoin)) { valid = false; break; }
+            } else if (parallelConflict(line, reserved, spacing) || (avoidCrossings && touches(line, reserved))) { valid = false; break; }
             if (crosses(line, reserved)) crossed++;
           }
           moveCache[key] = valid ? 1 : -1; crossingCost[key] = crossed * spacing * 0.4;
@@ -181,6 +191,7 @@
 
   function plan(input = {}) {
     const conflicts = [], warnings = [];
+    const avoidCrossings = input.avoidCrossings === true;
     const grid = Number(input.grid === undefined ? 20 : input.grid);
     const failure = (message, extra = {}) => conflicts.push({ code: 'INVALID_INPUT', message, ...extra });
     if (!Number.isFinite(grid) || grid <= 0) return { routes: [], conflicts: [{ code: 'INVALID_INPUT', message: '网格间距必须为正数。' }], warnings };
@@ -201,7 +212,9 @@
       if (['sourceSide', 'targetSide'].some((key) => original[key] != null && !SIDES.includes(original[key]))) {
         failure('连接侧必须为 top、right、bottom 或 left。', { edgeId: id }); continue;
       }
-      const edge = { id, source: { node: a, side: SIDES.includes(original.sourceSide) ? original.sourceSide : sideToward(a, b) },
+      const waypoints = original.waypoints || [];
+      if (!Array.isArray(waypoints) || waypoints.length > 20 || waypoints.some(p => !p || !Number.isFinite(p.x) || !Number.isFinite(p.y))) { failure('途经点坐标无效。', {edgeId:id}); continue; }
+      const edge = { id, waypoints: waypoints.map(p => ({x:round(p.x),y:round(p.y)})), source: { node: a, side: SIDES.includes(original.sourceSide) ? original.sourceSide : sideToward(a, b) },
         target: { node: b, side: SIDES.includes(original.targetSide) ? original.targetSide : sideToward(b, a) } };
       edges.push(edge);
       for (const terminal of ['source', 'target']) {
@@ -239,7 +252,7 @@
       if (rects.some((rect) => rect.id !== end.node.id && blocks(stub, rect))) conflicts.push({ code: 'PORT_BLOCKED', edgeId: edge.id, nodeId: end.node.id, side: end.side, message: '组件过近，连接点的引出通道被其他组件挡住。' });
     }
     for (let i = 0; i < stubs.length; i++) for (let j = i + 1; j < stubs.length; j++) {
-      if (parallelConflict(stubs[i], stubs[j], grid)) conflicts.push({ code: 'PORT_CLEARANCE', edgeIds: [stubs[i].edgeId, stubs[j].edgeId], message: '不同组件的端口引出段不足一格间距，请拉开组件或调整连接侧。' });
+      if (parallelConflict(stubs[i], stubs[j], grid) || (avoidCrossings && stubs[i].edgeId !== stubs[j].edgeId && touches(stubs[i], stubs[j]))) conflicts.push({ code: 'PORT_CLEARANCE', edgeIds: [stubs[i].edgeId, stubs[j].edgeId], message: '不同组件的端口引出段不足一格间距，请拉开组件或调整连接侧。' });
     }
     if (conflicts.length) return { routes: [], conflicts, warnings };
     const graph = buildGrid(obstacles, edges, rects, grid);
@@ -250,7 +263,26 @@
     for (let attempt = 0; attempt < 3; attempt++) {
       const reserved = [...stubs], result = [], failed = [];
       for (const edge of order) {
-        const points = findPath(edge, graph, reserved, grid);
+        let points;
+        if (!edge.waypoints.length) points = findPath(edge, graph, reserved, grid, avoidCrossings);
+        else {
+          const via = (routeEdge) => {
+            const targets = [...routeEdge.waypoints, routeEdge.target.escape];
+            let source = routeEdge.source, combined = [];
+            for (let i = 0; i < targets.length; i++) {
+              const target = i === targets.length - 1 ? routeEdge.target : {point:targets[i],escape:targets[i]};
+              const visited = segments(combined, routeEdge.id).map(s=>({...s,self:true}));
+              const part = findPath({...routeEdge,source,target,join:source.point}, graph, [...reserved,...visited], grid, avoidCrossings);
+              if (!part) return null;
+              combined.push(...part);
+              source = {point:targets[i],escape:targets[i],side:routeEdge.source.side};
+            }
+            return simplify(combined);
+          };
+          const forward = via(edge), backward = via({...edge,source:edge.target,target:edge.source,waypoints:[...edge.waypoints].reverse()})?.reverse();
+          const cost = pts => pts ? segments(pts,edge.id).reduce((s,p)=>s+p.high-p.low,0) + pts.length*grid : Infinity;
+          points = cost(forward) <= cost(backward) ? forward : backward;
+        }
         if (!points) { failed.push({ code: 'NO_CLEAR_ROUTE', edgeId: edge.id, message: '未找到同时满足避障和一格线距的路线，请拉开组件或调整连接侧。' }); continue; }
         const terminal = (e) => ({ side: e.side, ratio: e.ratio, point: { ...e.point } });
         result.push({ id: edge.id, source: terminal(edge.source), target: terminal(edge.target), points });

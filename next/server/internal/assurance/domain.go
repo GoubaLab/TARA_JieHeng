@@ -104,7 +104,7 @@ func AssessmentHash(ws, scenario Object) string {
 	}
 	for _, v := range dList(dObj(ws["architecture"])["flows"]) {
 		flow := Clone(dObj(v))
-		for _, key := range []string{"sourceSide", "targetSide", "labelOffset"} {
+		for _, key := range []string{"sourceSide", "targetSide", "labelOffset", "wireless_layout", "route_layout"} {
 			delete(flow, key)
 		}
 		if value, present := flow["communication"]; present {
@@ -117,6 +117,8 @@ func AssessmentHash(ws, scenario Object) string {
 		flows = append(flows, flow)
 	}
 	asset, _ := dFind(dList(ws["assets"]), scenario["asset_id"])
+	asset = Clone(asset)
+	delete(asset, "architecture_source")
 	item := Clone(dObj(ws["item"]))
 	if item["domain"] == "automotive" {
 		delete(item, "domain")
@@ -151,6 +153,9 @@ func Review(ws Object) Object {
 	}
 	for _, v := range assets {
 		asset := dObj(v)
+		if assetSource(asset)["status"] == "missing" {
+			issue("architecture", "资产“"+dStr(asset["name"])+"”的架构来源已移除，请核对资产及风险影响", asset["id"])
+		}
 		if len(dList(asset["node_ids"])) == 0 {
 			issue("architecture", "资产“"+dStr(asset["name"])+"”尚未关联架构组件", asset["id"])
 		}
@@ -288,6 +293,9 @@ func dUpsert(ws Object, collection string, value Object, prefix string) (string,
 }
 func Apply(original Object, action string, payload Object) (Object, string, error) {
 	ws := Clone(original)
+	if action != "seal-baseline" {
+		ensureRecordNumbers(ws)
+	}
 	entityID := dStr(ws["id"])
 	var err error
 	fail := func(message string) (Object, string, error) { return nil, "", dError(message) }
@@ -342,12 +350,13 @@ func Apply(original Object, action string, payload Object) (Object, string, erro
 			}
 			asset["node_ids"] = dUnique(mapped)
 			for _, id := range dList(asset["node_ids"]) {
-				if !ids[dStr(id)] {
+				if !ids[dStr(id)] && len(assetSource(asset)) == 0 {
 					return fail("该实体已关联资产，请先调整资产关联；迁移旧数据存储时须保留其内部对象标识")
 				}
 			}
 		}
 		ws["architecture"] = graph
+		syncArchitectureAssets(ws)
 	} else if action == "apply-reference-selection" {
 		return nil, "", ErrReferenceDataUnavailable
 	} else {
@@ -378,6 +387,17 @@ func Apply(original Object, action string, payload Object) (Object, string, erro
 						return fail("已有风险场景依赖该安全属性")
 					}
 				}
+			}
+			if previous, findErr := dFind(dList(ws["assets"]), value["id"]); findErr == nil && len(assetSource(previous)) > 0 {
+				source := Clone(assetSource(previous))
+				overrides := dList(source["overrides"])
+				for _, field := range []string{"name", "description", "node_ids", "properties"} {
+					if Digest(value[field]) != Digest(previous[field]) {
+						overrides = append(overrides, field)
+					}
+				}
+				source["overrides"] = dUnique(overrides)
+				value["architecture_source"] = source
 			}
 			entityID, err = dUpsert(ws, "assets", value, "asset")
 		case "record-scenario":
@@ -441,6 +461,8 @@ func Apply(original Object, action string, payload Object) (Object, string, erro
 			value["requirement_hash"] = Digest(requirement)
 			value["recorded_at"] = domainStamp()
 			entityID, err = dUpsert(ws, "evidence", value, "evidence")
+		case "configure-numbering":
+			ws["numbering"] = value
 		case "adopt-method":
 			ws["method"] = value
 			ws["method_confirmed"] = true
@@ -458,6 +480,9 @@ func Apply(original Object, action string, payload Object) (Object, string, erro
 		if err != nil {
 			return nil, "", err
 		}
+	}
+	if action != "seal-baseline" {
+		ensureRecordNumbers(ws)
 	}
 	ws["revision"] = dInt(ws["revision"]) + 1
 	ws["updated_at"] = domainStamp()

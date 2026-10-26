@@ -11,7 +11,7 @@ var reportProperties = map[string]string{"confidentiality": "机密性", "integr
 var reportImpacts = []string{"可忽略", "中等", "重大", "严重"}
 var reportFeasibility = []string{"很低", "低", "中", "高"}
 var reportTreatments = map[string]string{"reduce": "降低", "avoid": "规避", "share": "分担", "retain": "保留"}
-var reportActions = map[string]string{"open-workspace": "建立工作区", "define-item": "更新相关项定义", "replace-architecture": "保存系统架构", "record-asset": "记录资产", "record-scenario": "更新风险场景", "decide-treatment": "确认风险处置", "specify-requirement": "更新安全需求", "record-evidence": "记录验证证据", "adopt-method": "确认评估方法", "seal-baseline": "建立评审基线", "select-regulations": "选择项目法规条款", "apply-reference-selection": "批量选用参考知识"}
+var reportActions = map[string]string{"open-workspace": "建立工作区", "define-item": "更新相关项定义", "replace-architecture": "保存系统架构", "record-asset": "记录资产", "record-scenario": "更新风险场景", "decide-treatment": "确认风险处置", "specify-requirement": "更新安全需求", "record-evidence": "记录验证证据", "configure-numbering": "更新编号规则", "adopt-method": "确认评估方法", "seal-baseline": "建立评审基线", "select-regulations": "选择项目法规条款", "apply-reference-selection": "批量选用参考知识"}
 
 func reportImpact(v any) string {
 	if v == nil {
@@ -43,6 +43,7 @@ func reportIndex(rows any, key string) map[string]Object {
 
 // Tables projects the aggregate into independent, static report work products.
 func Tables(ws Object, journal []Object, catalog *Catalog) []Object {
+	code := RecordCodes(ws)
 	review := Review(ws)
 	architecture := libObj(ws["architecture"])
 	item := libObj(ws["item"])
@@ -149,17 +150,17 @@ func Tables(ws Object, journal []Object, catalog *Catalog) []Object {
 		for _, a := range libRows(node["attributes"]) {
 			details = append(details, libStr(a["name"])+"："+libStr(a["value"]))
 		}
-		rows = append(rows, []any{node["id"], nodeType, node["name"], "", "", strings.Join(details, "\n")})
+		rows = append(rows, []any{code(nodeNumberKind(node), node["id"]), nodeType, node["name"], "", "", strings.Join(details, "\n")})
 		for _, child := range libRows(node["children"]) {
 			desc := libStr(child["description"])
 			if libBool(child["reference"]) {
 				desc += "\n来源：" + reportReference(child["reference"], catalog)
 			}
-			rows = append(rows, []any{child["id"], map[string]string{"software": "内部软件", "store": "内部数据存储"}[libStr(child["kind"])], child["name"], node["name"], "", desc})
+			rows = append(rows, []any{code(libStr(child["kind"]), child["id"]), map[string]string{"software": "内部软件", "store": "内部数据存储"}[libStr(child["kind"])], child["name"], node["name"], "", desc})
 		}
 	}
 	for _, flow := range libRows(architecture["flows"]) {
-		rows = append(rows, []any{flow["id"], "实体间数据流", flow["name"], nodes[libStr(flow["source"])]["name"], nodes[libStr(flow["target"])]["name"], reportCommunication(flow)})
+		rows = append(rows, []any{code("flow", flow["id"]), "实体间数据流", flow["name"], nodes[libStr(flow["source"])]["name"], nodes[libStr(flow["target"])]["name"], reportCommunication(flow)})
 	}
 	add("数据流分析", []string{"标识", "类型", "名称", "所属实体 / 起点", "终点", "属性 / 协议 / 说明"}, rows, []int{38, 24, 28, 28, 28, 70}, "静态架构快照；软件和数据存储归属实体，数据流连接实体。旧未归属存储按原记录保留。")
 	rows = [][]any{}
@@ -171,18 +172,18 @@ func Tables(ws Object, journal []Object, catalog *Catalog) []Object {
 		for _, n := range libList(a["node_ids"]) {
 			nodeNames = append(nodeNames, libStr(nodes[libStr(n)]["name"]))
 		}
-		rows = append(rows, []any{a["id"], a["name"], a["description"], strings.Join(properties, "、"), strings.Join(nodeNames, "、"), reportReference(a["reference"], catalog)})
+		rows = append(rows, []any{code("asset", a["id"]), a["name"], a["description"], strings.Join(properties, "、"), strings.Join(nodeNames, "、"), reportReference(a["reference"], catalog)})
 	}
 	add("资产识别", []string{"资产标识", "资产名称", "描述", "安全属性", "关联组件", "来源引用"}, rows, []int{38, 28, 65, 28, 35, 28}, "")
 	rows = [][]any{}
 	for _, s := range libRows(ws["scenarios"]) {
 		imp := libObj(s["impact"])
-		rows = append(rows, []any{s["id"], s["damage"], impactLabel(imp["safety"]), impactLabel(imp["financial"]), impactLabel(imp["operational"]), impactLabel(imp["privacy"]), imp["rationale"]})
+		rows = append(rows, []any{code("scenario", s["id"]), s["damage"], impactLabel(imp["safety"]), impactLabel(imp["financial"]), impactLabel(imp["operational"]), impactLabel(imp["privacy"]), imp["rationale"]})
 	}
 	add("影响性判定", []string{"场景标识", "损害场景", libStr(dimensions["safety"]), libStr(dimensions["financial"]), libStr(dimensions["operational"]), libStr(dimensions["privacy"]), "判定依据"}, rows, []int{38, 70, 18, 18, 18, 18, 75}, "")
 	rows = [][]any{}
 	for _, s := range libRows(ws["scenarios"]) {
-		rows = append(rows, []any{s["id"], s["title"], assets[libStr(s["asset_id"])]["name"], reportProperties[libStr(s["property"])], s["threat"], reportReferences(s["references"], catalog)})
+		rows = append(rows, []any{code("scenario", s["id"]), s["title"], assets[libStr(s["asset_id"])]["name"], reportProperties[libStr(s["property"])], s["threat"], reportReferences(s["references"], catalog)})
 	}
 	add("威胁判定", []string{"场景标识", "风险场景", "资产", "安全属性", "威胁场景", "知识引用"}, rows, []int{38, 35, 28, 18, 80, 35}, "")
 	rows = [][]any{}
@@ -198,7 +199,7 @@ func Tables(ws Object, journal []Object, catalog *Catalog) []Object {
 					score = v["score"]
 				}
 			}
-			row := []any{s["id"], p["id"], p["name"], p["steps"], impactValue(ev["impact"]), feasibilityLabel(p["feasibility"])}
+			row := []any{code("scenario", s["id"]), code("path", pathNumberKey(libStr(s["id"]), libStr(p["id"]))), p["name"], p["steps"], impactValue(ev["impact"]), feasibilityLabel(p["feasibility"])}
 			if coefficient {
 				row = append(row, score)
 			}
@@ -234,7 +235,7 @@ func Tables(ws Object, journal []Object, catalog *Catalog) []Object {
 		if ev["residual"] != nil {
 			residual = ev["residual"]
 		}
-		row := []any{s["id"], treatment, owner, rationale, residualImpact, residualFeasibility}
+		row := []any{code("scenario", s["id"]), treatment, owner, rationale, residualImpact, residualFeasibility}
 		if coefficient {
 			var score any = "待评估"
 			if ev["residual_score"] != nil {
@@ -255,14 +256,14 @@ func Tables(ws Object, journal []Object, catalog *Catalog) []Object {
 	rows = [][]any{}
 	for _, d := range libRows(ws["decisions"]) {
 		if libBool(d["goal"]) {
-			rows = append(rows, []any{d["scenario_id"], d["goal"], d["owner"]})
+			rows = append(rows, []any{code("scenario", d["scenario_id"]), d["goal"], d["owner"]})
 		}
 	}
 	add("网络安全目标", []string{"场景标识", "目标", "责任人"}, rows, []int{38, 110, 24}, "")
 	rows = [][]any{}
 	for _, d := range libRows(ws["decisions"]) {
 		if libBool(d["claim"]) {
-			rows = append(rows, []any{d["scenario_id"], d["claim"], d["rationale"], d["owner"]})
+			rows = append(rows, []any{code("scenario", d["scenario_id"]), d["claim"], d["rationale"], d["owner"]})
 		}
 	}
 	add("网络安全声明", []string{"场景标识", "声明", "处置依据", "责任人"}, rows, []int{38, 95, 80, 24}, "")
@@ -273,9 +274,9 @@ func Tables(ws Object, journal []Object, catalog *Catalog) []Object {
 			if e["requirement_id"] != req["id"] {
 				continue
 			}
-			logs = append(logs, libStr(e["reference"])+"："+map[string]string{"pass": "通过", "fail": "失败", "pending": "待验证"}[libStr(e["result"])]+"；"+libStr(e["summary"])+"；复核人 "+libStr(e["reviewer"]))
+			logs = append(logs, code("evidence", e["id"])+" · "+libStr(e["reference"])+"："+map[string]string{"pass": "通过", "fail": "失败", "pending": "待验证"}[libStr(e["result"])]+"；"+libStr(e["summary"])+"；复核人 "+libStr(e["reviewer"]))
 		}
-		rows = append(rows, []any{req["id"], req["scenario_id"], req["statement"], req["allocation"], req["verification"], strings.Join(logs, "\n"), reportReferences(req["standard_refs"], catalog), reportReference(req["reference"], catalog)})
+		rows = append(rows, []any{code("requirement", req["id"]), code("scenario", req["scenario_id"]), req["statement"], req["allocation"], req["verification"], strings.Join(logs, "\n"), reportReferences(req["standard_refs"], catalog), reportReference(req["reference"], catalog)})
 	}
 	add("网络安全需求", []string{"需求标识", "场景标识", "需求陈述", "分配对象", "验证方法", "验证记录", "标准引用", "知识引用"}, rows, []int{38, 38, 90, 30, 85, 100, 35, 28}, "")
 	refSet := map[string]bool{}
@@ -305,7 +306,7 @@ func Tables(ws Object, journal []Object, catalog *Catalog) []Object {
 		relatedIDs := []string{}
 		for _, req := range libRows(ws["requirements"]) {
 			if libContains(req["standard_refs"], key) {
-				relatedIDs = append(relatedIDs, libStr(req["id"]))
+				relatedIDs = append(relatedIDs, code("requirement", req["id"]))
 			}
 		}
 		related := strings.Join(relatedIDs, "、")

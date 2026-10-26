@@ -596,7 +596,7 @@
             }
           }
         },
-        "description": "实体支持操作系统；软件与存储为内部组成；数据流只连接不同实体。communication为可选语义字段，几何标签偏移不参与评估摘要。"
+        "description": "实体支持操作系统；软件与存储为内部组成；数据流只连接不同实体。communication为可选语义字段，几何标签偏移不参与评估摘要。 Saves architecture and synchronizes derived project assets atomically. Stable identities avoid duplicates; manual edits and existing risk references are retained. Missing graphical sources are flagged instead of deleting assets."
       },
       "get": {
         "summary": "读取工作产品资源",
@@ -2592,6 +2592,123 @@
           }
         }
       }
+    },
+    "/workspaces/{id}/numbering": {
+      "put": {
+        "summary": "更新编号规则",
+        "operationId": "replaceNumbering",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutationResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Numbering"
+              }
+            }
+          }
+        },
+        "description": "首次配置与其他写入会保存稳定序号。更改规则仅重新格式化显示编号，不重排或复用序号；冻结基线保留原规则。GET 不写库。默认 EN/TB/SW/DS/DF/AS/RS/AP/SR/EV，短横线，3 位。"
+      },
+      "get": {
+        "summary": "读取编号规则",
+        "operationId": "getNumbering",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Numbering"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "description": "首次配置与其他写入会保存稳定序号。更改规则仅重新格式化显示编号，不重排或复用序号；冻结基线保留原规则。GET 不写库。默认 EN/TB/SW/DS/DF/AS/RS/AP/SR/EV，短横线，3 位。"
+      }
     }
   },
   "components": {
@@ -2799,6 +2916,12 @@
           },
           "communication": {
             "$ref": "#/components/schemas/Communication"
+          },
+          "wireless_layout": {
+            "$ref": "#/components/schemas/WirelessLayout"
+          },
+          "route_layout": {
+            "$ref": "#/components/schemas/RouteLayout"
           }
         },
         "required": [
@@ -4089,6 +4212,10 @@
           },
           "entity_id": {
             "type": "string"
+          },
+          "asset_sync": {
+            "$ref": "#/components/schemas/AssetSyncSummary",
+            "description": "Present when saving architecture; committed atomically and included in idempotency replay."
           }
         },
         "required": [
@@ -4202,6 +4329,9 @@
             ],
             "default": null,
             "title": "Reference"
+          },
+          "architecture_source": {
+            "$ref": "#/components/schemas/ArchitectureAssetSource"
           }
         },
         "required": [
@@ -4611,6 +4741,12 @@
             "items": {
               "type": "string"
             }
+          },
+          "numbering": {
+            "$ref": "#/components/schemas/Numbering"
+          },
+          "numbering_state": {
+            "$ref": "#/components/schemas/NumberingState"
           }
         },
         "required": [
@@ -5631,6 +5767,369 @@
           }
         },
         "description": "系数直接求和，不归一化。至少一项大于零；零系数维度不要求评分。"
+      },
+      "WirelessLayout": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Legacy visual layout accepted for round-trip compatibility. Endpoint cards and their offsets are no longer rendered; use Flow.sourceSide, targetSide and route_layout for entity-to-entity connections.",
+        "properties": {
+          "source_offset": {
+            "$ref": "#/components/schemas/LabelOffset",
+            "description": "发送端标识相对发送实体左上角的偏移"
+          },
+          "target_offset": {
+            "$ref": "#/components/schemas/LabelOffset",
+            "description": "接收端标识相对接收实体左上角的偏移"
+          },
+          "waypoint": {
+            "$ref": "#/components/schemas/LabelOffset",
+            "description": "用户指定途经点，画布坐标"
+          },
+          "source_side": {
+            "type": "string",
+            "enum": [
+              "top",
+              "right",
+              "bottom",
+              "left"
+            ],
+            "description": "省略时自动选择出线方向"
+          },
+          "target_side": {
+            "type": "string",
+            "enum": [
+              "top",
+              "right",
+              "bottom",
+              "left"
+            ],
+            "description": "省略时自动选择出线方向"
+          }
+        },
+        "deprecated": true
+      },
+      "RouteLayout": {
+        "type": "object",
+        "title": "RouteLayout",
+        "additionalProperties": false,
+        "description": "Optional visual-only routing for all communication media. An empty object restores automatic routing and overrides a legacy wireless waypoint. Does not change source/target or assessment state.",
+        "properties": {
+          "waypoint": {
+            "$ref": "#/components/schemas/LabelOffset",
+            "description": "Manual route waypoint in canvas coordinates, snapped to 10 units by the editor."
+          }
+        }
+      },
+      "ArchitectureAssetDefaults": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "description": {
+            "default": "",
+            "maxLength": 6000,
+            "title": "Description",
+            "type": "string"
+          },
+          "node_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Node Ids",
+            "type": "array"
+          },
+          "properties": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "confidentiality",
+                "integrity",
+                "availability",
+                "authenticity",
+                "authorization",
+                "non_repudiation"
+              ],
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Properties"
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "node_ids",
+          "properties"
+        ],
+        "additionalProperties": false
+      },
+      "ArchitectureAssetSource": {
+        "type": "object",
+        "readOnly": true,
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "id",
+          "status",
+          "defaults",
+          "overrides"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "entity",
+              "software",
+              "store",
+              "flow"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "missing"
+            ]
+          },
+          "defaults": {
+            "$ref": "#/components/schemas/ArchitectureAssetDefaults"
+          },
+          "overrides": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "name",
+                "description",
+                "node_ids",
+                "properties"
+              ]
+            },
+            "description": "Fields explicitly edited through the asset resource; subsequent architecture saves preserve these fields."
+          }
+        },
+        "description": "Server-maintained origin and prior generated values. Used to preserve manual edits during architecture synchronization. Never accepted in asset write bodies."
+      },
+      "AssetSyncSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "created",
+          "updated",
+          "missing",
+          "total"
+        ],
+        "properties": {
+          "created": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "updated": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "missing": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "NumberPrefixes": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "entity",
+          "boundary",
+          "software",
+          "store",
+          "flow",
+          "asset",
+          "scenario",
+          "path",
+          "requirement",
+          "evidence"
+        ],
+        "properties": {
+          "entity": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 12,
+            "pattern": "^[\\p{L}\\p{N}][\\p{L}\\p{N}_-]{0,11}$"
+          },
+          "boundary": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 12,
+            "pattern": "^[\\p{L}\\p{N}][\\p{L}\\p{N}_-]{0,11}$"
+          },
+          "software": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 12,
+            "pattern": "^[\\p{L}\\p{N}][\\p{L}\\p{N}_-]{0,11}$"
+          },
+          "store": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 12,
+            "pattern": "^[\\p{L}\\p{N}][\\p{L}\\p{N}_-]{0,11}$"
+          },
+          "flow": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 12,
+            "pattern": "^[\\p{L}\\p{N}][\\p{L}\\p{N}_-]{0,11}$"
+          },
+          "asset": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 12,
+            "pattern": "^[\\p{L}\\p{N}][\\p{L}\\p{N}_-]{0,11}$"
+          },
+          "scenario": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 12,
+            "pattern": "^[\\p{L}\\p{N}][\\p{L}\\p{N}_-]{0,11}$"
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 12,
+            "pattern": "^[\\p{L}\\p{N}][\\p{L}\\p{N}_-]{0,11}$"
+          },
+          "requirement": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 12,
+            "pattern": "^[\\p{L}\\p{N}][\\p{L}\\p{N}_-]{0,11}$"
+          },
+          "evidence": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 12,
+            "pattern": "^[\\p{L}\\p{N}][\\p{L}\\p{N}_-]{0,11}$"
+          }
+        },
+        "description": "不同类型的前缀必须唯一（Unicode case folding，不区分大小写）。"
+      },
+      "Numbering": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "prefixes",
+          "separator",
+          "padding"
+        ],
+        "properties": {
+          "prefixes": {
+            "$ref": "#/components/schemas/NumberPrefixes"
+          },
+          "separator": {
+            "type": "string",
+            "enum": [
+              "-",
+              "_",
+              ".",
+              "/"
+            ]
+          },
+          "padding": {
+            "type": "integer",
+            "minimum": 2,
+            "maximum": 6
+          }
+        },
+        "description": "项目显示编号规则。最低位数，不截断更长序号；不更改内部 ID、引用或风险判定。"
+      },
+      "NumberingState": {
+        "type": "object",
+        "readOnly": true,
+        "additionalProperties": false,
+        "properties": {
+          "entity": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "boundary": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "software": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "store": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "flow": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "asset": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "scenario": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "path": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "requirement": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "evidence": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "description": "服务端只读序号登记，按类型和内部 ID 索引，保留已删除记录的序号。path 键为 UTF-8 场景 ID 字节长度 + 冒号 + 场景 ID + 路径 ID。缺省历史快照按记录顺序只读投影。"
       }
     },
     "parameters": {

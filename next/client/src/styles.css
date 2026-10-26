@@ -1313,7 +1313,42 @@ a:focus-visible {
     display: none !important;
     animation: none !important;
   }
-  .dfd-root .port {
+  .dfd-root .port,
+  .dfd-root .connection-end,
+  .dfd-root .connection-segment {
     display: none !important;
   }
+}
+
+/* Selected connection controls never become graph entities. */
+.dfd-root .connection-end {
+  cursor: grab;
+  outline: none;
+}
+.dfd-root .connection-end:hover > circle:first-of-type,
+.dfd-root .connection-end:focus-visible > circle:first-of-type {
+  fill: #e6f4ff;
+  stroke-width: 3;
+}
+.dfd-root .connection-end:active {
+  cursor: grabbing;
+}
+.dfd-root .connection-segment:hover > rect {
+  fill: #e6f4ff;
+  stroke-width: 2;
+}
+.dfd-root .connection-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.architecture-assets-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  background: #fafcff;
+  border-top: 1px solid #e5e9f0;
 }

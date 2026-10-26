@@ -76,7 +76,7 @@ func (s *HTTPServer) routes() {
 		s.route("GET "+apiPrefix+"/"+v.path, v.fn)
 	}
 	s.route("POST "+apiPrefix+"/workspaces", s.createWorkspace)
-	for _, v := range []struct{ path, field string }{{"item", "item"}, {"architecture", "architecture"}, {"assessment-method", "method"}, {"regulation-references", "regulation_refs"}} {
+	for _, v := range []struct{ path, field string }{{"numbering", "numbering"}, {"item", "item"}, {"architecture", "architecture"}, {"assessment-method", "method"}, {"regulation-references", "regulation_refs"}} {
 		s.route("GET "+apiPrefix+"/workspaces/{workspace_id}/"+v.path, s.singleton(v.field))
 	}
 	for _, c := range []string{"assets", "scenarios", "requirements", "evidence"} {
@@ -87,7 +87,7 @@ func (s *HTTPServer) routes() {
 		method, path, action, idField string
 		createID                      bool
 	}{
-		{"PUT", "item", "define-item", "", false}, {"PUT", "architecture", "replace-architecture", "", false},
+		{"PUT", "numbering", "configure-numbering", "", false}, {"PUT", "item", "define-item", "", false}, {"PUT", "architecture", "replace-architecture", "", false},
 		{"POST", "assets", "record-asset", "", true}, {"PUT", "assets/{resource_id}", "record-asset", "id", false},
 		{"POST", "scenarios", "record-scenario", "", true}, {"PUT", "scenarios/{resource_id}", "record-scenario", "id", false},
 		{"PUT", "scenarios/{resource_id}/treatment", "decide-treatment", "scenario_id", false},

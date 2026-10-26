@@ -120,6 +120,9 @@ func (s *HTTPServer) singleton(field string) endpoint {
 		}
 		setETag(w, ws)
 		value := ws[field]
+		if field == "numbering" {
+			value = EffectiveNumbering(dObj(value))
+		}
 		if field == "regulation_refs" {
 			if value == nil {
 				value = []any{}

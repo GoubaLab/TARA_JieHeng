@@ -1,6 +1,8 @@
 """Public release scope tests use original, synthetic inputs only."""
 import importlib.util
 import json
+import struct
+import zlib
 from pathlib import Path
 import re
 import tempfile
@@ -39,6 +41,21 @@ class SourceReleaseTests(unittest.TestCase):
         self.assertIsNotNone(re.search(release.LOCAL_OR_CREDENTIAL,token),token)
         for text in ('relative/path/only','see /opt/shared/work/input.pdf'):
             self.assertIsNone(re.search(release.LOCAL_OR_CREDENTIAL,text),text)
+
+    def test_only_reviewed_png_paths_and_no_embedded_text(self):
+        def chunk(kind, body):
+            return struct.pack('>I', len(body)) + kind + body + struct.pack('>I', zlib.crc32(kind + body))
+        header = b'\x89PNG\r\n\x1a\n'
+        ihdr = chunk(b'IHDR', struct.pack('>IIBBBBB', 1, 1, 8, 2, 0, 0, 0))
+        image = chunk(b'IDAT', zlib.compress(b'\0\0\0\0'))
+        end = chunk(b'IEND', b'')
+        release.validate_screenshot(header + ihdr + image + end)
+        with self.assertRaises(ValueError):
+            release.validate_screenshot(header + ihdr + chunk(b'tEXt', b'private note') + image + end)
+        with self.assertRaises(ValueError):
+            release.validate_screenshot(header + ihdr + image + end + b'trailing data')
+        self.assertTrue(release.source_allowed('next/docs/screenshots/numbering.png'))
+        self.assertFalse(release.source_allowed('next/docs/screenshots/unreviewed.png'))
 
     def test_staging_tool_source_passes_its_own_audit(self):
         source=Path(release.__file__).read_text(encoding='utf-8')

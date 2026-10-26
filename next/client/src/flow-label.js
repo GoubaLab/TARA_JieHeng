@@ -1,9 +1,11 @@
 /** Position labels in SVG canvas coordinates, independent of zoom and pan. */
 export function routeMidpoint(points = []) {
   if (!points.length) return { x: 0, y: 0 };
-  const lengths = points.slice(1).map((point, index) =>
-    Math.hypot(point.x - points[index].x, point.y - points[index].y),
-  );
+  const lengths = points
+    .slice(1)
+    .map((point, index) =>
+      Math.hypot(point.x - points[index].x, point.y - points[index].y),
+    );
   let remaining = lengths.reduce((sum, length) => sum + length, 0) / 2;
   for (let index = 0; index < lengths.length; index += 1) {
     const length = lengths[index];
@@ -41,4 +43,32 @@ export function labelOffsetForDrag(beforeOffset, startPoint, currentPoint) {
     x: rounded((beforeOffset?.x ?? 0) + currentPoint.x - startPoint.x),
     y: rounded((beforeOffset?.y ?? 0) + currentPoint.y - startPoint.y),
   };
+}
+
+export function closestRoutePoint(points, cursor) {
+  let best = points[0] || cursor,
+    distance = Infinity;
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1],
+      b = points[i],
+      dx = b.x - a.x,
+      dy = b.y - a.y,
+      length = dx * dx + dy * dy,
+      t = length
+        ? Math.max(
+            0,
+            Math.min(
+              1,
+              ((cursor.x - a.x) * dx + (cursor.y - a.y) * dy) / length,
+            ),
+          )
+        : 0,
+      point = { x: a.x + t * dx, y: a.y + t * dy },
+      d = Math.hypot(point.x - cursor.x, point.y - cursor.y);
+    if (d < distance) {
+      best = point;
+      distance = d;
+    }
+  }
+  return { ...best };
 }

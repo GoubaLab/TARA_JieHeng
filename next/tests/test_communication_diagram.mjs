@@ -73,8 +73,8 @@ test("static export preserves full OS and communication metadata while escaping 
   const svg = staticDiagramSvg(graph, [route]);
   for (const text of ["系统 &lt;A&gt;", "v2.3", "ARM64", "宿主与客体", "客体系统 QNX 8.0", "MQTT/TLS", "覆盖范围：局域", "用途：遥测", "安全属性：完整性、真实性", "遥测数据 &amp; 校验", "device → cloud"])
     assert.ok(svg.includes(text), text);
-  assert.match(svg, /stroke-dasharray="7 5"/); assert.match(svg, /communication-badge/);
-  assert.match(svg, /translate\(340 53\)/); assert.match(svg, /marker-end="url\(#static-arrow\)"/);
+  assert.match(svg, /stroke-dasharray="7 5"/); assert.match(svg, /marker-end="url\(#static-arrow\)"/); assert.equal((svg.match(/communication-badge/g) || []).length, 1);
+  assert.doesNotMatch(svg, /wireless-endpoint|W01/);
   assert.doesNotMatch(svg, /<animate|@keyframes|animation:|flow-pulse|data-port=|data-flow-label=|选中实体查看|<script|<image/i);
   assert.deepEqual(graph, before);
 });

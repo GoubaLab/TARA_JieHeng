@@ -22,7 +22,7 @@ export const pages = {
   treatment: "风险处置与需求",
   verification: "验证与报告",
   library: "参考资料",
-  settings: "评估设置",
+  settings: "项目设置",
   regulations: "法规数据库",
 };
 export const actions = {
@@ -35,6 +35,7 @@ export const actions = {
   "specify-requirement": "更新安全需求",
   "record-evidence": "新增验证记录",
   "adopt-method": "确认评估方法",
+  "configure-numbering": "更新编号规则",
   "seal-baseline": "建立评审基线",
   "apply-reference-selection": "批量选用参考资料",
   "select-regulations": "更新项目法规引用",
@@ -74,6 +75,7 @@ export function command(ws, action, payload, requestId = crypto.randomUUID()) {
     "specify-requirement": [payload.id ? "PUT" : "POST", `/requirements${payload.id ? "/" + key(payload.id) : ""}`],
     "record-evidence": ["POST", "/evidence"],
     "adopt-method": ["PUT", "/assessment-method"],
+    "configure-numbering": ["PUT", "/numbering"],
     "seal-baseline": ["POST", "/baselines"],
     "apply-reference-selection": ["POST", "/reference-imports"],
     "select-regulations": ["PUT", "/regulation-references"],

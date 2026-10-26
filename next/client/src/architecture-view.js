@@ -1,3 +1,4 @@
+import { routeConnections, editableSegments } from "./connection-routing.js";
 import { flowLabelPosition } from "./flow-label.js";
 import {
   communicationCaption,
@@ -5,6 +6,7 @@ import {
   communicationForDisplay,
   flowDashArray,
   wirelessBadge,
+  isWirelessFlow,
   hasOperatingSystem,
   operatingSystemSummary,
   osFamilies,
@@ -188,6 +190,26 @@ export function labelDimensions(flow) {
     ),
   };
 }
+// Handles are view controls, never entities or business endpoints.
+export function connectionHandles(flow, route) {
+  if (!flow || !route?.points.length) return "";
+  const e = escapeXml,
+    points = route.points;
+  const endpoints = ["source", "target"]
+    .map((role) => {
+      const p = role === "source" ? points[0] : points.at(-1);
+      return `<g data-flow="${e(flow.id)}" data-flow-end="${role}" class="connection-end" role="button" tabindex="0" aria-label="${role === "source" ? "发送端" : "接收端箭头"}：拖到所属实体另一侧换边"><title>拖到所属实体的另一侧换边；不会更换实体</title><circle cx="${p.x}" cy="${p.y}" r="8" fill="#fff" stroke="#1677ff" stroke-width="2"/><circle cx="${p.x}" cy="${p.y}" r="2.5" fill="#1677ff" pointer-events="none"/></g>`;
+    })
+    .join("");
+  const segments = editableSegments(points)
+    .map(
+      ({ index, point, axis }) =>
+        `<g data-flow="${e(flow.id)}" data-flow-segment="${index}" class="connection-segment" style="cursor:${axis === "y" ? "ns-resize" : "ew-resize"}"><title>拖动线段调整途经位置；松手自动对齐</title><rect x="${point.x - 5}" y="${point.y - 5}" width="10" height="10" rx="2" fill="#fff" stroke="#1677ff" stroke-width="1.5"/></g>`,
+    )
+    .join("");
+  return segments + endpoints;
+}
+
 function wrapDetail(text, units) {
   const lines = [];
   for (const paragraph of String(text).split("\n")) {
@@ -208,6 +230,16 @@ function wrapDetail(text, units) {
   return lines;
 }
 export function staticDiagramSvg(graph, routes, pathForRoute) {
+  const flowById = new Map(graph.flows.map((flow) => [flow.id, flow]));
+  if (
+    routes.length !== graph.flows.length ||
+    routes.some((r) => !flowById.has(r.id))
+  ) {
+    const result = routeConnections(graph);
+    if (result.conflicts.length)
+      throw new Error("存在布线冲突，请调整实体间距或整理连线后再导出。");
+    routes = result.routes;
+  }
   const points = graph.nodes.flatMap((node) => [
     { x: node.x, y: node.y },
     { x: node.x + node.width, y: node.y + node.height },

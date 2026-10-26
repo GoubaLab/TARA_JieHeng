@@ -1,3 +1,4 @@
+import { recordCode, pathNumberKey, buildCodeIndex } from "./numbering.js";
 import React, {
   createContext,
   useContext,
@@ -847,11 +848,12 @@ function Definition() {
 }
 function Architecture() {
   const { ws, catalog, setEditor, setPicker, setAutomation } = useWorkbench();
+  const [activeTab, setActiveTab] = useState("canvas");
   return (
     <>
       <PageTitle
         title="架构与资产"
-        description="绘制实体与实体间的数据流，在实体内维护软件、数据存储和属性。"
+        description="绘制实体和数据流，保存后自动生成并同步资产清单。软件与数据存储在实体内维护。"
         extra={
           <>
             <Button
@@ -878,14 +880,15 @@ function Architecture() {
         }
       />
       <Tabs
-        defaultActiveKey="canvas"
+        activeKey={activeTab}
+        onChange={setActiveTab}
         items={[
           {
             key: "canvas",
             label: "系统架构",
             children: (
               <Card className="canvas-card">
-                <DiagramPanel />
+                <DiagramPanel onAssets={() => setActiveTab("assets")} />
               </Card>
             ),
           },
@@ -901,21 +904,26 @@ function Architecture() {
         type="info"
         showIcon
         title="实体与通信建模"
-        description="在实体中维护操作系统、属性、软件和数据存储。通信技术决定连线标识，数据流用途与安全属性可按实际场景填写。"
+        description="保存架构会自动识别实体功能、内部软件、存储数据与传输数据。再次保存会同步未手工修改的内容；手工补充和已有风险分析会保留。安全属性为可编辑建议，数据流已选属性会直接带入。"
       />
     </>
   );
 }
-function DiagramPanel() {
+function DiagramPanel({ onAssets }) {
   const { ws, save, message, setFlow } = useWorkbench();
   const el = useRef(),
     diagram = useRef();
   const callbacks = useRef();
-  callbacks.current = { save, message, setFlow };
-  const signature = JSON.stringify(ws.architecture);
+  callbacks.current = { save, message, setFlow, onAssets };
+  const signature = JSON.stringify([
+    ws.architecture,
+    ws.numbering,
+    ws.numbering_state,
+  ]);
   useEffect(() => {
     const instance = new Diagram(el.current, ws.architecture, {
       draftKey: "jieheng.graph." + ws.id,
+      getCodes: (graph) => buildCodeIndex(ws, graph),
       escape: (v) =>
         String(v ?? "").replace(
           /[&<>"']/g,
@@ -930,8 +938,16 @@ function DiagramPanel() {
         ),
       toast: (t) => callbacks.current.message.info(t),
       onSave: async (graph) => {
-        await callbacks.current.save("replace-architecture", graph);
-        callbacks.current.message.success("架构已保存");
+        const result = await callbacks.current.save(
+          "replace-architecture",
+          graph,
+        );
+        const sync = result.asset_sync;
+        callbacks.current.message.success(
+          sync
+            ? `架构已保存：新增 ${sync.created} 项资产，更新 ${sync.updated} 项，共 ${sync.total} 项${sync.missing ? `；${sync.missing} 项来源已移除，待核对` : ""}`
+            : "架构已保存，资产清单已同步",
+        );
       },
       onFlow: (value, done) => callbacks.current.setFlow({ value, done }),
     });
@@ -948,7 +964,17 @@ function DiagramPanel() {
       window.removeEventListener("beforeunload", unload);
     };
   }, [ws.id, signature]);
-  return <div className="dfd-root" ref={el} />;
+  return (
+    <>
+      <div className="dfd-root" ref={el} />
+      <div className="architecture-assets-summary">
+        <Text>已识别 {ws.assets.length} 项资产 · 保存架构后自动同步</Text>
+        <Button type="link" onClick={() => callbacks.current.onAssets()}>
+          查看资产清单
+        </Button>
+      </div>
+    </>
+  );
 }
 function AssetTable() {
   const { ws, catalog, setEditor, setAutomation, setReference } =
@@ -956,6 +982,13 @@ function AssetTable() {
   const [q, setQ] = useState("");
   return (
     <Card>
+      <Alert
+        type="info"
+        showIcon
+        title="资产随架构保存自动生成"
+        description="实体功能、软件、存储数据和传输数据均可识别。安全属性可按实际业务调整；再次保存架构不会覆盖你手工修改的名称、说明和安全属性。"
+        className="section-card"
+      />
       <div className="table-toolbar">
         <Text strong>受保护资产</Text>
         <Input.Search
@@ -969,10 +1002,13 @@ function AssetTable() {
       </div>
       <Table
         rowKey="id"
-        dataSource={ws.assets.filter((a) => match(a, q))}
+        dataSource={ws.assets.filter((a) =>
+          match([a, recordCode(ws, "asset", a.id)], q),
+        )}
         pagination={compactPage}
-        scroll={{ x: 950 }}
+        scroll={{ x: 1120 }}
         columns={[
+          numberColumn(ws, "asset"),
           {
             title: "资产名称",
             dataIndex: "name",
@@ -986,6 +1022,31 @@ function AssetTable() {
                 {v}
               </Button>
             ),
+          },
+          {
+            title: "识别来源",
+            dataIndex: "architecture_source",
+            width: 150,
+            render: (source) =>
+              source ? (
+                <Space orientation="vertical" size={4}>
+                  <Tag color="blue">
+                    {
+                      {
+                        entity: "实体功能",
+                        software: "内部软件",
+                        store: "存储数据",
+                        flow: "传输数据",
+                      }[source.kind]
+                    }
+                  </Tag>
+                  {source.status === "missing" && (
+                    <Tag color="warning">来源已移除 · 待核对</Tag>
+                  )}
+                </Space>
+              ) : (
+                <Text type="secondary">手工维护</Text>
+              ),
           },
           {
             title: "安全属性",
@@ -1002,6 +1063,7 @@ function AssetTable() {
           {
             title: "关联实体",
             dataIndex: "node_ids",
+            width: 220,
             render: (ids) =>
               ids
                 .map(
@@ -1024,19 +1086,20 @@ function AssetTable() {
           },
           {
             title: "操作",
-            width: 240,
+            width: catalog.categories.length ? 240 : 110,
             fixed: "right",
             render: (_, a) => (
               <Space>
-                <Button
-                  type="link"
-                  disabled={!catalog.categories.length}
-                  onClick={() =>
-                    setAutomation({ assetId: a.id, reference: a.reference })
-                  }
-                >
-                  选用参考资料
-                </Button>
+                {catalog.categories.length > 0 && (
+                  <Button
+                    type="link"
+                    onClick={() =>
+                      setAutomation({ assetId: a.id, reference: a.reference })
+                    }
+                  >
+                    选用参考资料
+                  </Button>
+                )}
                 <Button
                   type="link"
                   onClick={() => setEditor({ kind: "scenario", assetId: a.id })}
@@ -1193,6 +1256,7 @@ function Assessment() {
                   pagination={false}
                   dataSource={s.paths}
                   columns={[
+                    numberColumn(ws, "path", s.id),
                     { title: "攻击路径", dataIndex: "name" },
                     {
                       title: "步骤与前提",
@@ -1221,6 +1285,7 @@ function Assessment() {
             ),
           }}
           columns={[
+            numberColumn(ws, "scenario"),
             {
               title: "风险场景",
               dataIndex: "title",
@@ -1346,6 +1411,7 @@ function Treatment() {
                   dataSource={ws.scenarios}
                   scroll={{ x: 950 }}
                   columns={[
+                    numberColumn(ws, "scenario"),
                     { title: "风险场景", dataIndex: "title", width: 240 },
                     {
                       title: "初始风险",
@@ -1472,11 +1538,15 @@ function Requirements() {
       <Table
         rowKey="id"
         dataSource={ws.requirements.filter((r) =>
-          match([r.statement, r.allocation], q),
+          match(
+            [r.statement, r.allocation, recordCode(ws, "requirement", r.id)],
+            q,
+          ),
         )}
         pagination={compactPage}
         scroll={{ x: 1150 }}
         columns={[
+          numberColumn(ws, "requirement"),
           {
             title: "需求陈述",
             dataIndex: "statement",
@@ -1688,6 +1758,7 @@ function Verification() {
                     dataSource={[...ws.evidence].reverse()}
                     pagination={compactPage}
                     columns={[
+                      numberColumn(ws, "evidence"),
                       { title: "证据引用", dataIndex: "reference" },
                       {
                         title: "验证结果",
@@ -2024,4 +2095,21 @@ function Library() {
       </Card>
     </>
   );
+}
+
+function numberColumn(ws, kind, parentId) {
+  return {
+    title: "编号",
+    key: "number",
+    width: 140,
+    render: (_, row) => (
+      <Text code style={{ whiteSpace: "nowrap" }}>
+        {recordCode(
+          ws,
+          kind,
+          parentId ? pathNumberKey(parentId, row.id) : row.id,
+        )}
+      </Text>
+    ),
+  };
 }

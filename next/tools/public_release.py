@@ -8,6 +8,8 @@ import json
 import os
 import re
 import shutil
+import struct
+import zlib
 import tempfile
 import unicodedata
 
@@ -16,6 +18,7 @@ BUILDERS = {'build_gb44495.py', 'build_gb44496.py', 'build_gbt44464.py', 'build_
 TOOLS = {'build-go.sh', 'build-api-docs.py', 'public_release.py', 'test_public_release.py'}
 BLOCKED_PARTS = {'.git', '.work', '.runtime', '.venv', 'node_modules', '__pycache__', 'var', 'bin', 'web', 'dist', 'private', 'backups', 'retired-tests', 'source-snapshot', 'testdata', 'fixtures'}
 BLOCKED_SUFFIXES = {'.pdf', '.docx', '.xlsx', '.zip', '.tar', '.gz', '.tgz', '.sqlite', '.sqlite3', '.db', '.pyc', '.log'}
+SCREENSHOTS = {'next/docs/screenshots/architecture.png', 'next/docs/screenshots/assets.png', 'next/docs/screenshots/numbering.png'}
 SOURCE_SUFFIXES = {'.go', '.json', '.html', '.js', '.jsx', '.mjs', '.cjs', '.ts', '.tsx', '.css', '.svg', '.txt', '.md', '.mod', '.sum', '.sh', '.py'}
 IDENTIFIERS = re.compile(rb'\b(?:systems|losses|patterns|techniques|controls|relationships|checks|methods|criteria|collections|gb|r155):[A-Za-z0-9_-]+')
 # Assembled from parts so this audit pattern cannot match the staging tool's own source.
@@ -27,6 +30,22 @@ EMPTY_MANIFEST = {'schema_version': 1, 'verified_at': None, 'documents': []}
 PUBLIC_README = '''# 界衡 · 威胁建模平台
 
 Go / SQLite 与 React / Ant Design 实现的本地威胁建模工作台。源码、原创测试、接口契约和扩展说明公开，支持相关项、实体与数据流、资产、场景、风险评估、处置、需求、验证和冻结报告。
+
+## 界面预览
+
+以下截图来自原创合成示例，不包含真实项目或客户资料。
+
+实体间统一布线，协议直接标在连线上；拖动端点换边、线段调整走向，导出为静态图。
+
+![实体与数据流](next/docs/screenshots/architecture.png)
+
+保存架构后自动生成资产，保留人工修改和已有风险关系。
+
+![自动资产清单](next/docs/screenshots/assets.png)
+
+在“项目设置 → 编号规则”按类型自定义前缀、分隔符与数字位数，画布、清单及报告统一显示。
+
+![自定义编号规则](next/docs/screenshots/numbering.png)
 
 ## 从源码运行
 
@@ -150,6 +169,8 @@ def source_allowed(name):
         return False
     if path.suffix.lower() in BLOCKED_SUFFIXES or path.name.startswith('.env') or path.name.endswith(('-wal', '-shm')):
         return False
+    if name in SCREENSHOTS:
+        return True
     if name in {'start.sh', 'start.py'}:
         return True
     if len(path.parts) < 2 or path.parts[0] != 'next':
@@ -219,6 +240,25 @@ def transformed(name, data):
     return data
 
 
+def validate_screenshot(data):
+    """Only reviewed, metadata-free PNG UI screenshots may enter public staging."""
+    if not data.startswith(b'\x89PNG\r\n\x1a\n') or len(data) > 5_000_000:
+        raise ValueError('Invalid public screenshot')
+    offset, kinds = 8, []
+    while offset + 12 <= len(data):
+        length = struct.unpack('>I', data[offset:offset+4])[0]
+        end = offset + 12 + length
+        kind = data[offset+4:offset+8]
+        if end > len(data) or kind not in {b'IHDR', b'IDAT', b'IEND', b'sRGB', b'gAMA', b'cHRM', b'pHYs'}:
+            raise ValueError('Screenshot contains unsupported metadata or invalid chunks')
+        if zlib.crc32(data[offset+4:end-4]) != struct.unpack('>I', data[end-4:end])[0]:
+            raise ValueError('Screenshot checksum mismatch')
+        kinds.append(kind); offset = end
+        if kind == b'IEND': break
+    if offset != len(data) or not kinds or kinds[0] != b'IHDR' or kinds[-1] != b'IEND' or b'IDAT' not in kinds:
+        raise ValueError('Incomplete public screenshot')
+
+
 def audit(stage, evidence, legal_windows):
     generated = {'README.md', '.gitignore', '.github/workflows/ci.yml', '.public-release-stage.json', 'next/data/regulations/README.md', 'next/data/regulations/manifest.json', 'next/data/regulations/manifest.sample.json'}
     identifiers, files = set(evidence['identifier_sha256']), set(evidence['file_sha256'])
@@ -236,6 +276,10 @@ def audit(stage, evidence, legal_windows):
         if digest in files: raise ValueError('Excluded source fingerprint: ' + name)
         if any(hashlib.sha256(match.group()).hexdigest() in identifiers for match in IDENTIFIERS.finditer(data)):
             raise ValueError('Excluded identifier fingerprint: ' + name)
+        if name in SCREENSHOTS:
+            validate_screenshot(data)
+            records.append({'path': name, 'sha256': digest, 'bytes': len(data)})
+            continue
         text = data.decode('utf-8')
         if re.search(LOCAL_OR_CREDENTIAL, text):
             raise ValueError('Local path or credential-shaped content: ' + name)
@@ -279,7 +323,7 @@ def main(argv=None):
         temporary.rename(output)
     finally:
         if temporary.exists(): shutil.rmtree(temporary)
-    report={'scope':'source-only','created_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),'files':records,'regulation_documents':0,'binary_artifacts':0,'contains_private_fingerprint_manifest':False,'network_operations':False,'published':False}
+    report={'scope':'source-only','created_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),'files':records,'regulation_documents':0,'binary_artifacts':0,'screenshot_artifacts':sum(r['path'] in SCREENSHOTS for r in records),'contains_private_fingerprint_manifest':False,'network_operations':False,'published':False}
     audit_file=output.with_suffix('.audit.json');audit_file.write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
     print(json.dumps({'staging':str(output),'audit':str(audit_file),'files':len(records),'regulation_documents':0,'published':False}))
 

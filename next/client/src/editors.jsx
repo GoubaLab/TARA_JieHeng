@@ -659,6 +659,26 @@ export function EntityEditor({ editor, onClose }) {
             )}
             {kind === "asset" && (
               <>
+                {ws.assets.find((a) => a.id === editor.id)
+                  ?.architecture_source && (
+                  <Alert
+                    className="section-card"
+                    type={
+                      ws.assets.find((a) => a.id === editor.id)
+                        .architecture_source.status === "missing"
+                        ? "warning"
+                        : "info"
+                    }
+                    showIcon
+                    title={
+                      ws.assets.find((a) => a.id === editor.id)
+                        .architecture_source.status === "missing"
+                        ? "架构来源已移除，资产和已有风险分析已保留"
+                        : "此资产由系统架构自动识别"
+                    }
+                    description="名称、说明和安全属性可直接修改；后续保存架构会保留这些手工修改。"
+                  />
+                )}
                 <Form.Item name="name" label="资产名称" rules={required}>
                   <Input maxLength={200} placeholder="例如：高压控制指令" />
                 </Form.Item>

@@ -195,6 +195,9 @@ export function communicationDetails(flow) {
   if (flow.description) details.push("传输内容与约束：" + flow.description);
   return details;
 }
+export const isWirelessFlow = (flow) =>
+  communicationForDisplay(flow).medium === "wireless";
+
 export function flowDashArray(flow) {
   const medium = communicationForDisplay(flow).medium;
   return medium === "wireless" ? "7 5" : medium === "logical" ? "2 4" : "";
