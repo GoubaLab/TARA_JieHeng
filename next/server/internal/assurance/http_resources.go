@@ -96,6 +96,9 @@ func (s *HTTPServer) workspace(w http.ResponseWriter, r *http.Request) error {
 		return e
 	}
 	setETag(w, ws)
+	if source := dObj(ws["tara_import"]); source != nil {
+		delete(source, "original_base64")
+	}
 	return writeJSON(w, r, 200, ws)
 }
 func (s *HTTPServer) review(w http.ResponseWriter, r *http.Request) error {
@@ -255,6 +258,15 @@ func (s *HTTPServer) mutate(action, idField string, createID bool) endpoint {
 			status = 201
 			base := apiPrefix + "/workspaces/" + r.PathValue("workspace_id")
 			collection := map[string]string{"record-asset": "assets", "record-scenario": "scenarios", "specify-requirement": "requirements", "record-evidence": "evidence", "seal-baseline": "baselines", "apply-reference-selection": "reference-imports"}[action]
+			if action == "import-tara" {
+				collection = "tara-imports"
+			}
+			if action == "record-damage" {
+				collection = "damage-scenarios"
+			}
+			if action == "record-goal" {
+				collection = "security-goals"
+			}
 			location := base + "/" + collection
 			if action != "apply-reference-selection" {
 				location += "/" + fmt.Sprint(result["entity_id"])

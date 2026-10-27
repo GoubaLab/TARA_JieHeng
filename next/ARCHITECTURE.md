@@ -14,8 +14,11 @@
 | `catalog.go` / `automation.go` | 当前为空目录、撤下引用占位与选用禁用；自有资料扩展点 |
 | `regulations.go` | 版本、条款、来源摘要、父子引用关系和原件访问 |
 | `http.go` / `http_resources.go` | 资源接口、条件请求、媒体类型、同源边界和问题响应 |
-| `report.go` / `report_method.go` | 17 类工作产品、方法及元数据的静态投影 |
+| `report.go` / `report_method.go` / `tara_report.go` | 17 类基础工作产品、扩展追溯与全部来源表页的静态投影 |
 | `report_excel.go` | Go 原生 Excel 生成及 ZIP/工作簿结构验证 |
+| `tara_import.go` / `http_tara.go` | XLSX 预览、结构与计算校验、原子导入、来源快照及原文件下载 |
+| `tara_domain.go` / `tara_integrity.go` | 多对多引用、影响分档、五因子潜力、目标与验证依据失效 |
+| `client/src/TaraProducts.jsx` / `TaraFields.jsx` | 工作产品清单、损害/目标编辑、来源对照及扩展字段 |
 | `client/src/Workbench.jsx` | 导航、总览、清单、待办与项目上下文 |
 | `editors.jsx` / `AssessmentSettings.jsx` | 记录编辑、评分算法与判定依据设置 |
 | `method-config.js` | 前端默认显示和风险预览；最终计算以 Go 为准 |
@@ -25,7 +28,7 @@
 
 后端表包含工作区、日志、请求回执、基线和创建回执。每次写入在同一事务内检查成功回执、项目修订、对象存在性、引用来源与业务规则，再原子保存结果。传给 prepare 回调的 current 是事务内工作区副本，撤下引用校验不额外读库，也不产生检查与写入竞态。
 
-工作区含 Item、Architecture、Asset、Scenario、Decision、Requirement、Evidence、Method、Baseline 及法规引用。通用领域与稳定接口键分离，汽车是一个领域上下文。实体拥有 OS、属性和内部软件/存储；数据流连接不同实体，通信元数据独立于几何位置。SFOP 四维与可行性为现有评分骨架，显示标签与算法可配置，新增任意维度需要领域迁移。
+工作区含 Item、Architecture、Asset、Scenario、Decision、Requirement、Evidence、Method、Baseline 及法规引用；可选 DamageScenario、SecurityGoal 与 TaraImport 保持旧项目兼容。通用领域与稳定接口键分离，汽车是一个领域上下文。实体拥有 OS、属性和内部软件/存储；数据流连接不同实体，通信元数据独立于几何位置。SFOP 四维与可行性为现有评分骨架，显示标签与算法可配置，新增任意维度需要领域迁移。
 
 读取不改写旧数据。可选 OS/通信/方法默认值在摘要中归一，不因补默认字段改变旧决策；真实语义变化会使受影响处置需要复核。位置、尺寸、端点侧向、标签偏移和项目法规勾选不参与评估摘要。基线保存完整工作产品快照，不被后续修改覆盖；报告可投影当前版本或冻结版本。
 

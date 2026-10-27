@@ -26,6 +26,8 @@ func reportMethodNote(method Object) string {
 			values = append(values, libStr(names[key])+"×"+libStr(coefficients[key]))
 		}
 		parts = append(parts, "SFOP总分为各维等级乘系数之和："+strings.Join(values, " + ")+"；不归一化、不取整；零系数维度不参与评分")
+	} else if method["impact_aggregation"] == "coefficient_bands" {
+		parts = append(parts, "SFOP 原始取值："+libJoin(method["impact_scale"], "、")+"；按维度系数求和，影响分档下限（含等号）："+libJoin(method["impact_thresholds"], "、")+fmt.Sprintf("；单维严重时综合影响至少为 %d 级。", libInt(method["severe_impact_floor"])+1))
 	} else if method["impact_aggregation"] == "weighted_mean" {
 		weights, names := libObj(method["impact_weights"]), libObj(method["impact_dimensions"])
 		values := []string{}

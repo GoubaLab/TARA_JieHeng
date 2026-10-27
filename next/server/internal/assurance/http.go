@@ -76,12 +76,17 @@ func (s *HTTPServer) routes() {
 		s.route("GET "+apiPrefix+"/"+v.path, v.fn)
 	}
 	s.route("POST "+apiPrefix+"/workspaces", s.createWorkspace)
+	s.route("POST "+apiPrefix+"/workspaces/{workspace_id}/tara-import-previews", s.taraPreview)
+	s.route("GET "+apiPrefix+"/workspaces/{workspace_id}/tara-imports/{resource_id}", s.taraImportResource)
+	s.route("GET "+apiPrefix+"/workspaces/{workspace_id}/tara-imports/{resource_id}/source", s.taraSource)
 	for _, v := range []struct{ path, field string }{{"numbering", "numbering"}, {"item", "item"}, {"architecture", "architecture"}, {"assessment-method", "method"}, {"regulation-references", "regulation_refs"}} {
 		s.route("GET "+apiPrefix+"/workspaces/{workspace_id}/"+v.path, s.singleton(v.field))
 	}
 	for _, c := range []string{"assets", "scenarios", "requirements", "evidence"} {
 		s.route("GET "+apiPrefix+"/workspaces/{workspace_id}/"+c+"/{resource_id}", s.resource(c, "id"))
 	}
+	s.route("GET "+apiPrefix+"/workspaces/{workspace_id}/damage-scenarios/{resource_id}", s.resource("damage_scenarios", "id"))
+	s.route("GET "+apiPrefix+"/workspaces/{workspace_id}/security-goals/{resource_id}", s.resource("security_goals", "id"))
 	s.route("GET "+apiPrefix+"/workspaces/{workspace_id}/scenarios/{resource_id}/treatment", s.resource("decisions", "scenario_id"))
 	for _, v := range []struct {
 		method, path, action, idField string
@@ -95,6 +100,9 @@ func (s *HTTPServer) routes() {
 		{"POST", "evidence", "record-evidence", "", true}, {"PUT", "assessment-method", "adopt-method", "", false},
 		{"POST", "baselines", "seal-baseline", "", false}, {"POST", "reference-imports", "apply-reference-selection", "", false},
 		{"PUT", "regulation-references", "select-regulations", "", false},
+		{"POST", "tara-imports", "import-tara", "", false},
+		{"POST", "damage-scenarios", "record-damage", "", true}, {"PUT", "damage-scenarios/{resource_id}", "record-damage", "id", false},
+		{"POST", "security-goals", "record-goal", "", true}, {"PUT", "security-goals/{resource_id}", "record-goal", "id", false},
 	} {
 		s.route(v.method+" "+apiPrefix+"/workspaces/{workspace_id}/"+v.path, s.mutate(v.action, v.idField, v.createID))
 	}

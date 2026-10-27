@@ -199,6 +199,7 @@ export const isWirelessFlow = (flow) =>
   communicationForDisplay(flow).medium === "wireless";
 
 export function flowDashArray(flow) {
+  if (flow.channel_kind === "energy") return "";
   const medium = communicationForDisplay(flow).medium;
   return medium === "wireless" ? "7 5" : medium === "logical" ? "2 4" : "";
 }
@@ -214,4 +215,14 @@ export function wirelessBadge(flow, x = 0, y = 0) {
         ? '<text x="0" y="3" text-anchor="middle" font-size="8" fill="#536176">BT</text>'
         : '<path d="M-7-2Q0-8 7-2M-4 1Q0-3 4 1" fill="none" stroke="#536176" stroke-width="1.3"/><circle cx="0" cy="4" r="1.4" fill="#536176"/>';
   return `<g class="communication-badge" transform="translate(${x} ${y})"><rect x="-11" y="-10" width="22" height="20" rx="4" fill="#f5f7fa" stroke="#c9d2df"/>${icon}</g>`;
+}
+
+export function flowColor(flow) {
+  return flow?.channel_kind === "energy"
+    ? "#ad6800"
+    : flow?.emphasis === "critical"
+      ? "#b42318"
+      : flow?.emphasis === "internal"
+        ? "#9aa4b2"
+        : "#687281";
 }

@@ -104,3 +104,12 @@ test("coefficient sums remain raw decimals and use the raw product without an ad
   method.risk_calculation = "matrix";
   assert.ok(methodErrors(method).length > 0);
 });
+
+test("source-scale SFOP method keeps matrix semantics and validates band thresholds", () => {
+  const m=effectiveMethod({impact_aggregation:"coefficient_bands",risk_calculation:"matrix",matrix,impact_scale:[0,10,100,1000],impact_thresholds:[20,100,1000],severe_impact_floor:2,attack_potential_thresholds:[10,14,20]});
+  assert.deepEqual(methodErrors(m),[]);
+  assert.equal(previewRisk(m,2,3),3);
+  assert.equal(methodErrors({...m,impact_thresholds:[20,20,1000]}).length,1);
+  assert.equal(methodErrors({...m,attack_potential_thresholds:[10,9,20]}).length,1);
+  assert.equal(methodErrors({...m,risk_calculation:"product"}).length,1);
+});

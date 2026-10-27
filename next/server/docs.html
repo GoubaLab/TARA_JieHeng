@@ -2579,6 +2579,613 @@
     }
   },
   &quot;description&quot;: &quot;首次配置与其他写入会保存稳定序号。更改规则仅重新格式化显示编号，不重排或复用序号；冻结基线保留原规则。GET 不写库。默认 EN/TB/SW/DS/DF/AS/RS/AP/SR/EV，短横线，3 位。&quot;
+}</pre></details></section><section><h2><code>POST /api/v1/workspaces/{id}/damage-scenarios</code></h2><h3>创建损害场景</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;创建损害场景&quot;,
+  &quot;operationId&quot;: &quot;createDamageScenario&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;201&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/MutationResult&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/DamageScenarioCreate&quot;
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>PUT /api/v1/workspaces/{id}/damage-scenarios/{resource_id}</code></h2><h3>更新损害场景</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;更新损害场景&quot;,
+  &quot;operationId&quot;: &quot;replaceDamageScenario&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;name&quot;: &quot;resource_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1
+      }
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/MutationResult&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/DamageScenarioUpdate&quot;
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/workspaces/{id}/damage-scenarios/{resource_id}</code></h2><h3>读取损害场景</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;读取损害场景&quot;,
+  &quot;operationId&quot;: &quot;getDamageScenario&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;name&quot;: &quot;resource_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1
+      }
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/DamageScenarioRecord&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>POST /api/v1/workspaces/{id}/security-goals</code></h2><h3>创建安全目标</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;创建安全目标&quot;,
+  &quot;operationId&quot;: &quot;createSecurityGoal&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;201&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/MutationResult&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/SecurityGoalCreate&quot;
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>PUT /api/v1/workspaces/{id}/security-goals/{resource_id}</code></h2><h3>更新安全目标</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;更新安全目标&quot;,
+  &quot;operationId&quot;: &quot;replaceSecurityGoal&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;name&quot;: &quot;resource_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1
+      }
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/MutationResult&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/SecurityGoalUpdate&quot;
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/workspaces/{id}/security-goals/{resource_id}</code></h2><h3>读取安全目标</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;读取安全目标&quot;,
+  &quot;operationId&quot;: &quot;getSecurityGoal&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;name&quot;: &quot;resource_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1
+      }
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/SecurityGoalRecord&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>POST /api/v1/workspaces/{id}/tara-imports</code></h2><h3>完整导入 TARA 工作簿</h3><p>仅空白工作产品项目。原子保存原文件、全部表页和原生工作产品；不覆盖现有记录。tara-chinese-v1 精确适配列结构和已核对的方法；未知表头、引用、方法或计算差异返回422。残余值作为 target 保留。项目方法待确认。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;完整导入 TARA 工作簿&quot;,
+  &quot;operationId&quot;: &quot;createTaraImport&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;201&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/MutationResult&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/TaraImportInput&quot;
+        }
+      }
+    }
+  },
+  &quot;description&quot;: &quot;仅空白工作产品项目。原子保存原文件、全部表页和原生工作产品；不覆盖现有记录。tara-chinese-v1 精确适配列结构和已核对的方法；未知表头、引用、方法或计算差异返回422。残余值作为 target 保留。项目方法待确认。&quot;
+}</pre></details></section><section><h2><code>POST /api/v1/workspaces/{id}/tara-import-previews</code></h2><h3>核对 TARA 导入（不写入）</h3><p>仅空白工作产品项目。原子保存原文件、全部表页和原生工作产品；不覆盖现有记录。tara-chinese-v1 精确适配列结构和已核对的方法；未知表头、引用、方法或计算差异返回422。残余值作为 target 保留。项目方法待确认。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;核对 TARA 导入（不写入）&quot;,
+  &quot;operationId&quot;: &quot;previewTaraImport&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    },
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/TaraImportSummary&quot;
+          }
+        }
+      }
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/TaraImportInput&quot;
+        }
+      }
+    }
+  },
+  &quot;description&quot;: &quot;仅空白工作产品项目。原子保存原文件、全部表页和原生工作产品；不覆盖现有记录。tara-chinese-v1 精确适配列结构和已核对的方法；未知表头、引用、方法或计算差异返回422。残余值作为 target 保留。项目方法待确认。&quot;
+}</pre></details></section><section><h2><code>GET /api/v1/workspaces/{id}/tara-imports/{resource_id}</code></h2><h3>读取导入来源表页和核对信息</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;读取导入来源表页和核对信息&quot;,
+  &quot;operationId&quot;: &quot;getTaraImport&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;name&quot;: &quot;resource_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1
+      }
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/TaraImport&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/workspaces/{id}/tara-imports/{resource_id}/source</code></h2><h3>下载完全保留的原始 XLSX</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;下载完全保留的原始 XLSX&quot;,
+  &quot;operationId&quot;: &quot;downloadTaraSource&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;name&quot;: &quot;resource_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1
+      }
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;,
+            &quot;format&quot;: &quot;binary&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
 }</pre></details></section><section id="schema-Item"><details><summary>Item</summary><pre>{
   &quot;additionalProperties&quot;: false,
   &quot;properties&quot;: {
@@ -2785,6 +3392,30 @@
     },
     &quot;route_layout&quot;: {
       &quot;$ref&quot;: &quot;#/components/schemas/RouteLayout&quot;
+    },
+    &quot;channel_kind&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;data&quot;,
+        &quot;energy&quot;
+      ],
+      &quot;default&quot;: &quot;data&quot;,
+      &quot;description&quot;: &quot;energy 为电能流，不自动生成传输数据资产。&quot;
+    },
+    &quot;emphasis&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;normal&quot;,
+        &quot;critical&quot;,
+        &quot;internal&quot;
+      ],
+      &quot;default&quot;: &quot;normal&quot;,
+      &quot;description&quot;: &quot;图中颜色标识，不替代风险评估。&quot;
+    },
+    &quot;show_label&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;default&quot;: true,
+      &quot;description&quot;: &quot;隐藏后仍可选中线路查看与修改名称，导出明细保留。&quot;
     }
   },
   &quot;required&quot;: [
@@ -2837,7 +3468,9 @@
         &quot;process&quot;,
         &quot;external&quot;,
         &quot;store&quot;,
-        &quot;boundary&quot;
+        &quot;boundary&quot;,
+        &quot;process_step&quot;,
+        &quot;data_store&quot;
       ],
       &quot;title&quot;: &quot;Kind&quot;,
       &quot;type&quot;: &quot;string&quot;
@@ -2997,7 +3630,8 @@
         }
       }
     }
-  ]
+  ],
+  &quot;description&quot;: &quot; 展开 DFD 独立使用 process_step（处理过程）和 data_store（数据存储）；不转换为物理实体，也不可嵌套实体属性或操作系统。&quot;
 }</pre></details></section><section id="schema-Architecture"><details><summary>Architecture</summary><pre>{
   &quot;additionalProperties&quot;: false,
   &quot;properties&quot;: {
@@ -3021,6 +3655,27 @@
       &quot;default&quot;: true,
       &quot;title&quot;: &quot;Equal Spacing&quot;,
       &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;view_mode&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;entities&quot;,
+        &quot;dfd&quot;
+      ],
+      &quot;description&quot;: &quot;缺省 entities，保持实体建模规则；dfd 允许处理过程、数据存储作为独立端点。&quot;
+    },
+    &quot;show_numbers&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;default&quot;: true,
+      &quot;description&quot;: &quot;画布自动编号前缀可见性，不改变编号登记。&quot;
+    },
+    &quot;asset_generation&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;automatic&quot;,
+        &quot;catalog&quot;
+      ],
+      &quot;description&quot;: &quot;默认 automatic：保存图同步派生资产。catalog：维护导入或人工资产清单，不自动生成重复资产。 写入省略此字段时保留当前模式。&quot;
     }
   },
   &quot;title&quot;: &quot;Architecture&quot;,
@@ -3068,7 +3723,9 @@
           &quot;availability&quot;,
           &quot;authenticity&quot;,
           &quot;authorization&quot;,
-          &quot;non_repudiation&quot;
+          &quot;non_repudiation&quot;,
+          &quot;freshness&quot;,
+          &quot;privacy&quot;
         ],
         &quot;type&quot;: &quot;string&quot;
       },
@@ -3086,6 +3743,28 @@
       ],
       &quot;default&quot;: null,
       &quot;title&quot;: &quot;Reference&quot;
+    },
+    &quot;source_code&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;asset_type&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;group&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;function_refs&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
     }
   },
   &quot;required&quot;: [
@@ -3144,6 +3823,21 @@
       ],
       &quot;default&quot;: null,
       &quot;title&quot;: &quot;Reference&quot;
+    },
+    &quot;source_code&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;actor&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 500
+    },
+    &quot;vector&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;potential&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/AttackPotential&quot;
     }
   },
   &quot;required&quot;: [
@@ -3251,7 +3945,9 @@
         &quot;availability&quot;,
         &quot;authenticity&quot;,
         &quot;authorization&quot;,
-        &quot;non_repudiation&quot;
+        &quot;non_repudiation&quot;,
+        &quot;freshness&quot;,
+        &quot;privacy&quot;
       ],
       &quot;title&quot;: &quot;Property&quot;,
       &quot;type&quot;: &quot;string&quot;
@@ -3286,6 +3982,61 @@
       &quot;maxItems&quot;: 50,
       &quot;title&quot;: &quot;References&quot;,
       &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;source_code&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;asset_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;damage_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;properties&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 1,
+      &quot;maxItems&quot;: 8,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;enum&quot;: [
+          &quot;confidentiality&quot;,
+          &quot;integrity&quot;,
+          &quot;availability&quot;,
+          &quot;authenticity&quot;,
+          &quot;authorization&quot;,
+          &quot;non_repudiation&quot;,
+          &quot;freshness&quot;,
+          &quot;privacy&quot;
+        ]
+      }
+    },
+    &quot;stride&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 500
+    },
+    &quot;cause&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 10000
+    },
+    &quot;cal&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 1,
+      &quot;maximum&quot;: 4
     }
   },
   &quot;required&quot;: [
@@ -3371,6 +4122,53 @@
       &quot;maxLength&quot;: 8000,
       &quot;title&quot;: &quot;Residual Rationale&quot;,
       &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;controls&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 10000
+    },
+    &quot;acceptance&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;acceptance_rationale&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 10000
+    },
+    &quot;customer_confirmation&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 500
+    },
+    &quot;confirmed_at&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;declarant&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 500
+    },
+    &quot;goal_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;cal&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 1,
+      &quot;maximum&quot;: 4
+    },
+    &quot;residual_status&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;target&quot;,
+        &quot;validated&quot;
+      ],
+      &quot;description&quot;: &quot;target 表示设计目标；validated 需要全部关联需求具有有效通过证据。&quot;
     }
   },
   &quot;required&quot;: [
@@ -3437,6 +4235,45 @@
       ],
       &quot;default&quot;: null,
       &quot;title&quot;: &quot;Reference&quot;
+    },
+    &quot;source_code&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;scenario_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;goal_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;customer_refs&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;cal&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 1,
+      &quot;maximum&quot;: 4
     }
   },
   &quot;required&quot;: [
@@ -3539,7 +4376,8 @@
       &quot;enum&quot;: [
         &quot;maximum&quot;,
         &quot;weighted_mean&quot;,
-        &quot;coefficient_sum&quot;
+        &quot;coefficient_sum&quot;,
+        &quot;coefficient_bands&quot;
       ],
       &quot;default&quot;: &quot;maximum&quot;
     },
@@ -3600,6 +4438,44 @@
     },
     &quot;impact_coefficients&quot;: {
       &quot;$ref&quot;: &quot;#/components/schemas/ImpactCoefficients&quot;
+    },
+    &quot;impact_scale&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 4,
+      &quot;maxItems&quot;: 4,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;number&quot;,
+        &quot;minimum&quot;: 0,
+        &quot;maximum&quot;: 1000000
+      },
+      &quot;description&quot;: &quot;严格递增。&quot;
+    },
+    &quot;impact_thresholds&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 3,
+      &quot;maxItems&quot;: 3,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;number&quot;,
+        &quot;minimum&quot;: 0,
+        &quot;maximum&quot;: 400000000
+      },
+      &quot;description&quot;: &quot;严格递增。&quot;
+    },
+    &quot;attack_potential_thresholds&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 3,
+      &quot;maxItems&quot;: 3,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;integer&quot;,
+        &quot;minimum&quot;: 1,
+        &quot;maximum&quot;: 500
+      },
+      &quot;description&quot;: &quot;严格递增。&quot;
+    },
+    &quot;severe_impact_floor&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;maximum&quot;: 3
     }
   },
   &quot;required&quot;: [
@@ -3609,7 +4485,7 @@
   ],
   &quot;title&quot;: &quot;Method&quot;,
   &quot;type&quot;: &quot;object&quot;,
-  &quot;description&quot;: &quot;影响0–3、可行性1–4、风险1–5。maximum取四维最高值且要求全部完整；weighted_mean按正权重归一并向上取整，零权重维度不参与、可缺评分，总权重须&gt;0。场景取各路径最高风险；残余风险使用同算法。缺省扩展字段由运行时补默认值，不改写旧摘要。方法改动触发决策复核，冻结基线不变。 系数模式 coefficient_sum：SFOP总分=Σ(各维0..3×系数)，不归一不取整；只允许product，风险分值=总分×可行性，无+1。评估返回原始impact与score；残余impact接受小数，不能超过3×系数和。&quot;,
+  &quot;description&quot;: &quot;影响0–3、可行性1–4、风险1–5。maximum取四维最高值且要求全部完整；weighted_mean按正权重归一并向上取整，零权重维度不参与、可缺评分，总权重须&gt;0。场景取各路径最高风险；残余风险使用同算法。缺省扩展字段由运行时补默认值，不改写旧摘要。方法改动触发决策复核，冻结基线不变。 系数模式 coefficient_sum：SFOP总分=Σ(各维0..3×系数)，不归一不取整；只允许product，风险分值=总分×可行性，无+1。评估返回原始impact与score；残余impact接受小数，不能超过3×系数和。 coefficient_bands：0..3 索引映射 impact_scale 后乘系数求和，按 impact_thresholds 下限分档；任一维为严重时最低 severe_impact_floor。仅用矩阵。五因子 AP 求和按 attack_potential_thresholds 下限把可行性从4逐级降至1。&quot;,
   &quot;allOf&quot;: [
     {
       &quot;if&quot;: {
@@ -3640,6 +4516,30 @@
               &quot;minimum&quot;: 1,
               &quot;maximum&quot;: 15
             }
+          }
+        }
+      }
+    },
+    {
+      &quot;if&quot;: {
+        &quot;properties&quot;: {
+          &quot;impact_aggregation&quot;: {
+            &quot;const&quot;: &quot;coefficient_bands&quot;
+          }
+        },
+        &quot;required&quot;: [
+          &quot;impact_aggregation&quot;
+        ]
+      },
+      &quot;then&quot;: {
+        &quot;required&quot;: [
+          &quot;impact_scale&quot;,
+          &quot;impact_thresholds&quot;,
+          &quot;risk_calculation&quot;
+        ],
+        &quot;properties&quot;: {
+          &quot;risk_calculation&quot;: {
+            &quot;const&quot;: &quot;matrix&quot;
           }
         }
       }
@@ -3730,7 +4630,9 @@
           &quot;availability&quot;,
           &quot;authenticity&quot;,
           &quot;authorization&quot;,
-          &quot;non_repudiation&quot;
+          &quot;non_repudiation&quot;,
+          &quot;freshness&quot;,
+          &quot;privacy&quot;
         ],
         &quot;type&quot;: &quot;string&quot;
       },
@@ -3748,6 +4650,28 @@
       ],
       &quot;default&quot;: null,
       &quot;title&quot;: &quot;Reference&quot;
+    },
+    &quot;source_code&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;asset_type&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;group&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;function_refs&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
     }
   },
   &quot;required&quot;: [
@@ -3776,7 +4700,9 @@
         &quot;availability&quot;,
         &quot;authenticity&quot;,
         &quot;authorization&quot;,
-        &quot;non_repudiation&quot;
+        &quot;non_repudiation&quot;,
+        &quot;freshness&quot;,
+        &quot;privacy&quot;
       ],
       &quot;title&quot;: &quot;Property&quot;,
       &quot;type&quot;: &quot;string&quot;
@@ -3811,6 +4737,61 @@
       &quot;maxItems&quot;: 50,
       &quot;title&quot;: &quot;References&quot;,
       &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;source_code&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;asset_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;damage_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;properties&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 1,
+      &quot;maxItems&quot;: 8,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;enum&quot;: [
+          &quot;confidentiality&quot;,
+          &quot;integrity&quot;,
+          &quot;availability&quot;,
+          &quot;authenticity&quot;,
+          &quot;authorization&quot;,
+          &quot;non_repudiation&quot;,
+          &quot;freshness&quot;,
+          &quot;privacy&quot;
+        ]
+      }
+    },
+    &quot;stride&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 500
+    },
+    &quot;cause&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 10000
+    },
+    &quot;cal&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 1,
+      &quot;maximum&quot;: 4
     }
   },
   &quot;required&quot;: [
@@ -3866,6 +4847,45 @@
       ],
       &quot;default&quot;: null,
       &quot;title&quot;: &quot;Reference&quot;
+    },
+    &quot;source_code&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;scenario_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;goal_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;customer_refs&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;cal&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 1,
+      &quot;maximum&quot;: 4
     }
   },
   &quot;required&quot;: [
@@ -3990,6 +5010,53 @@
       &quot;maxLength&quot;: 8000,
       &quot;title&quot;: &quot;Residual Rationale&quot;,
       &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;controls&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 10000
+    },
+    &quot;acceptance&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;acceptance_rationale&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 10000
+    },
+    &quot;customer_confirmation&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 500
+    },
+    &quot;confirmed_at&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;declarant&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 500
+    },
+    &quot;goal_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;cal&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 1,
+      &quot;maximum&quot;: 4
+    },
+    &quot;residual_status&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;target&quot;,
+        &quot;validated&quot;
+      ],
+      &quot;description&quot;: &quot;target 表示设计目标；validated 需要全部关联需求具有有效通过证据。&quot;
     }
   },
   &quot;required&quot;: [
@@ -4058,6 +5125,9 @@
     &quot;asset_sync&quot;: {
       &quot;$ref&quot;: &quot;#/components/schemas/AssetSyncSummary&quot;,
       &quot;description&quot;: &quot;Present when saving architecture; committed atomically and included in idempotency replay.&quot;
+    },
+    &quot;import_summary&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/TaraImportSummary&quot;
     }
   },
   &quot;required&quot;: [
@@ -4151,7 +5221,9 @@
           &quot;availability&quot;,
           &quot;authenticity&quot;,
           &quot;authorization&quot;,
-          &quot;non_repudiation&quot;
+          &quot;non_repudiation&quot;,
+          &quot;freshness&quot;,
+          &quot;privacy&quot;
         ],
         &quot;type&quot;: &quot;string&quot;
       },
@@ -4172,6 +5244,28 @@
     },
     &quot;architecture_source&quot;: {
       &quot;$ref&quot;: &quot;#/components/schemas/ArchitectureAssetSource&quot;
+    },
+    &quot;source_code&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;asset_type&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;group&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;function_refs&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
     }
   },
   &quot;required&quot;: [
@@ -4204,7 +5298,9 @@
         &quot;availability&quot;,
         &quot;authenticity&quot;,
         &quot;authorization&quot;,
-        &quot;non_repudiation&quot;
+        &quot;non_repudiation&quot;,
+        &quot;freshness&quot;,
+        &quot;privacy&quot;
       ],
       &quot;title&quot;: &quot;Property&quot;,
       &quot;type&quot;: &quot;string&quot;
@@ -4239,6 +5335,61 @@
       &quot;maxItems&quot;: 50,
       &quot;title&quot;: &quot;References&quot;,
       &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;source_code&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;asset_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;damage_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;properties&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 1,
+      &quot;maxItems&quot;: 8,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;enum&quot;: [
+          &quot;confidentiality&quot;,
+          &quot;integrity&quot;,
+          &quot;availability&quot;,
+          &quot;authenticity&quot;,
+          &quot;authorization&quot;,
+          &quot;non_repudiation&quot;,
+          &quot;freshness&quot;,
+          &quot;privacy&quot;
+        ]
+      }
+    },
+    &quot;stride&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 500
+    },
+    &quot;cause&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 10000
+    },
+    &quot;cal&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 1,
+      &quot;maximum&quot;: 4
     }
   },
   &quot;required&quot;: [
@@ -4298,6 +5449,45 @@
       ],
       &quot;default&quot;: null,
       &quot;title&quot;: &quot;Reference&quot;
+    },
+    &quot;source_code&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;scenario_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;goal_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;customer_refs&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;cal&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 1,
+      &quot;maximum&quot;: 4
     }
   },
   &quot;required&quot;: [
@@ -4347,7 +5537,8 @@
       &quot;type&quot;: &quot;string&quot;
     },
     &quot;requirement_hash&quot;: {
-      &quot;type&quot;: &quot;string&quot;
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;普通需求为需求摘要；扩展 TARA 需求还包含关联目标和评估上下文，依据变化使旧验证失效。&quot;
     },
     &quot;recorded_at&quot;: {
       &quot;type&quot;: &quot;string&quot;,
@@ -4445,6 +5636,58 @@
     &quot;decided_at&quot;: {
       &quot;type&quot;: &quot;string&quot;,
       &quot;format&quot;: &quot;date-time&quot;
+    },
+    &quot;controls&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 10000
+    },
+    &quot;acceptance&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;acceptance_rationale&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 10000
+    },
+    &quot;customer_confirmation&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 500
+    },
+    &quot;confirmed_at&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;declarant&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 500
+    },
+    &quot;goal_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;cal&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 1,
+      &quot;maximum&quot;: 4
+    },
+    &quot;residual_status&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;target&quot;,
+        &quot;validated&quot;
+      ],
+      &quot;description&quot;: &quot;target 表示设计目标；validated 需要全部关联需求具有有效通过证据。&quot;
+    },
+    &quot;goal_hash&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;readOnly&quot;: true,
+      &quot;description&quot;: &quot;关联目标批准时的摘要；目标改变后需重新评审。&quot;
     }
   },
   &quot;required&quot;: [
@@ -4581,6 +5824,21 @@
     },
     &quot;numbering_state&quot;: {
       &quot;$ref&quot;: &quot;#/components/schemas/NumberingState&quot;
+    },
+    &quot;damage_scenarios&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/DamageScenarioRecord&quot;
+      }
+    },
+    &quot;security_goals&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/SecurityGoalRecord&quot;
+      }
+    },
+    &quot;tara_import&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/TaraImport&quot;
     }
   },
   &quot;required&quot;: [
@@ -5192,7 +6450,9 @@
           &quot;availability&quot;,
           &quot;authenticity&quot;,
           &quot;authorization&quot;,
-          &quot;non_repudiation&quot;
+          &quot;non_repudiation&quot;,
+          &quot;freshness&quot;,
+          &quot;privacy&quot;
         ],
         &quot;type&quot;: &quot;string&quot;
       },
@@ -5210,6 +6470,28 @@
       ],
       &quot;default&quot;: null,
       &quot;title&quot;: &quot;Reference&quot;
+    },
+    &quot;source_code&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;asset_type&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;group&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;function_refs&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
     }
   },
   &quot;required&quot;: [
@@ -5242,7 +6524,9 @@
         &quot;availability&quot;,
         &quot;authenticity&quot;,
         &quot;authorization&quot;,
-        &quot;non_repudiation&quot;
+        &quot;non_repudiation&quot;,
+        &quot;freshness&quot;,
+        &quot;privacy&quot;
       ],
       &quot;title&quot;: &quot;Property&quot;,
       &quot;type&quot;: &quot;string&quot;
@@ -5277,6 +6561,61 @@
       &quot;maxItems&quot;: 50,
       &quot;title&quot;: &quot;References&quot;,
       &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;source_code&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;asset_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;damage_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;properties&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 1,
+      &quot;maxItems&quot;: 8,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;enum&quot;: [
+          &quot;confidentiality&quot;,
+          &quot;integrity&quot;,
+          &quot;availability&quot;,
+          &quot;authenticity&quot;,
+          &quot;authorization&quot;,
+          &quot;non_repudiation&quot;,
+          &quot;freshness&quot;,
+          &quot;privacy&quot;
+        ]
+      }
+    },
+    &quot;stride&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 500
+    },
+    &quot;cause&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 10000
+    },
+    &quot;cal&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 1,
+      &quot;maximum&quot;: 4
     }
   },
   &quot;required&quot;: [
@@ -5336,6 +6675,45 @@
       ],
       &quot;default&quot;: null,
       &quot;title&quot;: &quot;Reference&quot;
+    },
+    &quot;source_code&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;scenario_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;goal_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;customer_refs&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;cal&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 1,
+      &quot;maximum&quot;: 4
     }
   },
   &quot;required&quot;: [
@@ -5454,7 +6832,7 @@
     },
     &quot;security_properties&quot;: {
       &quot;type&quot;: &quot;array&quot;,
-      &quot;maxItems&quot;: 6,
+      &quot;maxItems&quot;: 8,
       &quot;items&quot;: {
         &quot;type&quot;: &quot;string&quot;,
         &quot;enum&quot;: [
@@ -5463,7 +6841,9 @@
           &quot;availability&quot;,
           &quot;authenticity&quot;,
           &quot;authorization&quot;,
-          &quot;non_repudiation&quot;
+          &quot;non_repudiation&quot;,
+          &quot;freshness&quot;,
+          &quot;privacy&quot;
         ]
       },
       &quot;default&quot;: [],
@@ -5657,7 +7037,9 @@
           &quot;availability&quot;,
           &quot;authenticity&quot;,
           &quot;authorization&quot;,
-          &quot;non_repudiation&quot;
+          &quot;non_repudiation&quot;,
+          &quot;freshness&quot;,
+          &quot;privacy&quot;
         ],
         &quot;type&quot;: &quot;string&quot;
       },
@@ -5931,4 +7313,734 @@
     }
   },
   &quot;description&quot;: &quot;服务端只读序号登记，按类型和内部 ID 索引，保留已删除记录的序号。path 键为 UTF-8 场景 ID 字节长度 + 冒号 + 场景 ID + 路径 ID。缺省历史快照按记录顺序只读投影。&quot;
+}</pre></details></section><section id="schema-AttackPotential"><details><summary>AttackPotential</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;elapsed_time&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;maximum&quot;: 100
+    },
+    &quot;expertise&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;maximum&quot;: 100
+    },
+    &quot;knowledge&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;maximum&quot;: 100
+    },
+    &quot;opportunity&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;maximum&quot;: 100
+    },
+    &quot;equipment&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;maximum&quot;: 100
+    }
+  },
+  &quot;required&quot;: [
+    &quot;elapsed_time&quot;,
+    &quot;expertise&quot;,
+    &quot;knowledge&quot;,
+    &quot;opportunity&quot;,
+    &quot;equipment&quot;
+  ]
+}</pre></details></section><section id="schema-AssetLink"><details><summary>AssetLink</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;asset_id&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;node_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 200,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    }
+  },
+  &quot;required&quot;: [
+    &quot;asset_id&quot;,
+    &quot;node_ids&quot;
+  ]
+}</pre></details></section><section id="schema-DamageScenario"><details><summary>DamageScenario</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;source_code&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;id&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;description&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 10000,
+      &quot;minLength&quot;: 1
+    },
+    &quot;consequence&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 10000
+    },
+    &quot;asset_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 1,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;function_refs&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;properties&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 1,
+      &quot;maxItems&quot;: 8,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;enum&quot;: [
+          &quot;confidentiality&quot;,
+          &quot;integrity&quot;,
+          &quot;availability&quot;,
+          &quot;authenticity&quot;,
+          &quot;authorization&quot;,
+          &quot;non_repudiation&quot;,
+          &quot;freshness&quot;,
+          &quot;privacy&quot;
+        ]
+      }
+    },
+    &quot;impact&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/Impact&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;description&quot;,
+    &quot;asset_ids&quot;,
+    &quot;properties&quot;,
+    &quot;impact&quot;
+  ]
+}</pre></details></section><section id="schema-DamageScenarioCreate"><details><summary>DamageScenarioCreate</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;source_code&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;description&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 10000,
+      &quot;minLength&quot;: 1
+    },
+    &quot;consequence&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 10000
+    },
+    &quot;asset_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 1,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;function_refs&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;properties&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 1,
+      &quot;maxItems&quot;: 8,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;enum&quot;: [
+          &quot;confidentiality&quot;,
+          &quot;integrity&quot;,
+          &quot;availability&quot;,
+          &quot;authenticity&quot;,
+          &quot;authorization&quot;,
+          &quot;non_repudiation&quot;,
+          &quot;freshness&quot;,
+          &quot;privacy&quot;
+        ]
+      }
+    },
+    &quot;impact&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/Impact&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;description&quot;,
+    &quot;asset_ids&quot;,
+    &quot;properties&quot;,
+    &quot;impact&quot;
+  ]
+}</pre></details></section><section id="schema-DamageScenarioRecord"><details><summary>DamageScenarioRecord</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;source_code&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;id&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;description&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 10000,
+      &quot;minLength&quot;: 1
+    },
+    &quot;consequence&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 10000
+    },
+    &quot;asset_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 1,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;function_refs&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;properties&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 1,
+      &quot;maxItems&quot;: 8,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;enum&quot;: [
+          &quot;confidentiality&quot;,
+          &quot;integrity&quot;,
+          &quot;availability&quot;,
+          &quot;authenticity&quot;,
+          &quot;authorization&quot;,
+          &quot;non_repudiation&quot;,
+          &quot;freshness&quot;,
+          &quot;privacy&quot;
+        ]
+      }
+    },
+    &quot;impact&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/Impact&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;description&quot;,
+    &quot;asset_ids&quot;,
+    &quot;properties&quot;,
+    &quot;impact&quot;,
+    &quot;id&quot;
+  ]
+}</pre></details></section><section id="schema-DamageScenarioUpdate"><details><summary>DamageScenarioUpdate</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;source_code&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;id&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;description&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 10000,
+      &quot;minLength&quot;: 1
+    },
+    &quot;consequence&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 10000
+    },
+    &quot;asset_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 1,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;function_refs&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;properties&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 1,
+      &quot;maxItems&quot;: 8,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;enum&quot;: [
+          &quot;confidentiality&quot;,
+          &quot;integrity&quot;,
+          &quot;availability&quot;,
+          &quot;authenticity&quot;,
+          &quot;authorization&quot;,
+          &quot;non_repudiation&quot;,
+          &quot;freshness&quot;,
+          &quot;privacy&quot;
+        ]
+      }
+    },
+    &quot;impact&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/Impact&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;description&quot;,
+    &quot;asset_ids&quot;,
+    &quot;properties&quot;,
+    &quot;impact&quot;
+  ]
+}</pre></details></section><section id="schema-SecurityGoal"><details><summary>SecurityGoal</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;source_code&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;id&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;statement&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 10000,
+      &quot;minLength&quot;: 1
+    },
+    &quot;scenario_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 1,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;cal&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 1,
+      &quot;maximum&quot;: 4
+    },
+    &quot;theme&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 1000
+    }
+  },
+  &quot;required&quot;: [
+    &quot;statement&quot;,
+    &quot;scenario_ids&quot;,
+    &quot;cal&quot;
+  ]
+}</pre></details></section><section id="schema-SecurityGoalCreate"><details><summary>SecurityGoalCreate</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;source_code&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;statement&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 10000,
+      &quot;minLength&quot;: 1
+    },
+    &quot;scenario_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 1,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;cal&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 1,
+      &quot;maximum&quot;: 4
+    },
+    &quot;theme&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 1000
+    }
+  },
+  &quot;required&quot;: [
+    &quot;statement&quot;,
+    &quot;scenario_ids&quot;,
+    &quot;cal&quot;
+  ]
+}</pre></details></section><section id="schema-SecurityGoalRecord"><details><summary>SecurityGoalRecord</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;source_code&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;id&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;statement&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 10000,
+      &quot;minLength&quot;: 1
+    },
+    &quot;scenario_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 1,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;cal&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 1,
+      &quot;maximum&quot;: 4
+    },
+    &quot;theme&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 1000
+    }
+  },
+  &quot;required&quot;: [
+    &quot;statement&quot;,
+    &quot;scenario_ids&quot;,
+    &quot;cal&quot;,
+    &quot;id&quot;
+  ]
+}</pre></details></section><section id="schema-SecurityGoalUpdate"><details><summary>SecurityGoalUpdate</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;source_code&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;id&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;statement&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 10000,
+      &quot;minLength&quot;: 1
+    },
+    &quot;scenario_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 1,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;cal&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 1,
+      &quot;maximum&quot;: 4
+    },
+    &quot;theme&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 1000
+    }
+  },
+  &quot;required&quot;: [
+    &quot;statement&quot;,
+    &quot;scenario_ids&quot;,
+    &quot;cal&quot;
+  ]
+}</pre></details></section><section id="schema-TaraImportInput"><details><summary>TaraImportInput</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;filename&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 200,
+      &quot;pattern&quot;: &quot;^[^/\\\\]+\\.xlsx$&quot;
+    },
+    &quot;content_base64&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;contentEncoding&quot;: &quot;base64&quot;,
+      &quot;description&quot;: &quot;XLSX 原始字节，最大 1,400,000 字节。&quot;
+    },
+    &quot;asset_links&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/AssetLink&quot;
+      }
+    }
+  },
+  &quot;required&quot;: [
+    &quot;filename&quot;,
+    &quot;content_base64&quot;
+  ]
+}</pre></details></section><section id="schema-TaraImportSummary"><details><summary>TaraImportSummary</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;sheets&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;maximum&quot;: 20000
+    },
+    &quot;cells&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;maximum&quot;: 20000
+    },
+    &quot;assets&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;maximum&quot;: 20000
+    },
+    &quot;damages&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;maximum&quot;: 20000
+    },
+    &quot;scenarios&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;maximum&quot;: 20000
+    },
+    &quot;paths&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;maximum&quot;: 20000
+    },
+    &quot;goals&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;maximum&quot;: 20000
+    },
+    &quot;requirements&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;maximum&quot;: 20000
+    },
+    &quot;id&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 10000
+    },
+    &quot;filename&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 10000
+    },
+    &quot;sha256&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 10000
+    },
+    &quot;title&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 10000
+    },
+    &quot;method&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/Method&quot;
+    },
+    &quot;diagnostics&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;object&quot;
+      }
+    }
+  },
+  &quot;required&quot;: [
+    &quot;id&quot;,
+    &quot;filename&quot;,
+    &quot;sha256&quot;,
+    &quot;sheets&quot;,
+    &quot;assets&quot;,
+    &quot;damages&quot;,
+    &quot;scenarios&quot;,
+    &quot;paths&quot;,
+    &quot;goals&quot;,
+    &quot;requirements&quot;,
+    &quot;diagnostics&quot;
+  ]
+}</pre></details></section><section id="schema-TaraSourceSheet"><details><summary>TaraSourceSheet</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;name&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;rows&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;array&quot;,
+        &quot;items&quot;: {
+          &quot;type&quot;: &quot;string&quot;
+        }
+      }
+    },
+    &quot;formulas&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;object&quot;,
+        &quot;additionalProperties&quot;: false,
+        &quot;properties&quot;: {
+          &quot;cell&quot;: {
+            &quot;type&quot;: &quot;string&quot;,
+            &quot;maxLength&quot;: 10000
+          },
+          &quot;formula&quot;: {
+            &quot;type&quot;: &quot;string&quot;,
+            &quot;maxLength&quot;: 10000
+          },
+          &quot;cached_value&quot;: {
+            &quot;type&quot;: &quot;string&quot;,
+            &quot;maxLength&quot;: 10000
+          }
+        },
+        &quot;required&quot;: []
+      }
+    },
+    &quot;merges&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    &quot;visible&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;name&quot;,
+    &quot;rows&quot;,
+    &quot;formulas&quot;,
+    &quot;merges&quot;,
+    &quot;visible&quot;
+  ]
+}</pre></details></section><section id="schema-TaraImport"><details><summary>TaraImport</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;id&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 10000
+    },
+    &quot;filename&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 10000
+    },
+    &quot;sha256&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 64
+    },
+    &quot;imported_at&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 10000
+    },
+    &quot;profile&quot;: {
+      &quot;const&quot;: &quot;tara-chinese-v1&quot;
+    },
+    &quot;sheets&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/TaraSourceSheet&quot;
+      }
+    },
+    &quot;nonempty_cells&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;maximum&quot;: 20000000
+    },
+    &quot;images&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;object&quot;,
+        &quot;additionalProperties&quot;: false,
+        &quot;properties&quot;: {
+          &quot;name&quot;: {
+            &quot;type&quot;: &quot;string&quot;,
+            &quot;maxLength&quot;: 10000
+          },
+          &quot;mime&quot;: {
+            &quot;type&quot;: &quot;string&quot;,
+            &quot;maxLength&quot;: 10000
+          },
+          &quot;content_base64&quot;: {
+            &quot;type&quot;: &quot;string&quot;,
+            &quot;contentEncoding&quot;: &quot;base64&quot;
+          }
+        },
+        &quot;required&quot;: []
+      }
+    },
+    &quot;diagnostics&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;object&quot;
+      }
+    }
+  },
+  &quot;required&quot;: [
+    &quot;id&quot;,
+    &quot;filename&quot;,
+    &quot;sha256&quot;,
+    &quot;sheets&quot;,
+    &quot;profile&quot;
+  ]
 }</pre></details></section></html>

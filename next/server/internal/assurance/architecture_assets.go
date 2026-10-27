@@ -16,6 +16,9 @@ func assetText(text string, limit int) string {
 	}
 	return text
 }
+func diagramEndpoint(graph, node Object) bool {
+	return node["kind"] == "entity" || (graph["view_mode"] == "dfd" && (node["kind"] == "process_step" || node["kind"] == "data_store"))
+}
 func architectureAssetCandidates(graph Object) []Object {
 	result := []Object{}
 	add := func(kind string, item Object, nodes []any, name, description string, properties []any) {
@@ -23,10 +26,19 @@ func architectureAssetCandidates(graph Object) []Object {
 	}
 	for _, raw := range dList(graph["nodes"]) {
 		node := dObj(raw)
-		if node["kind"] != "entity" {
+		if !diagramEndpoint(graph, node) {
 			continue
 		}
-		add("entity", node, []any{node["id"]}, dStr(node["name"])+" · 功能与服务", dStr(node["description"]), []any{"integrity", "availability"})
+		kind, suffix := "entity", " · 功能与服务"
+		properties := []any{"integrity", "availability"}
+		if node["kind"] == "process_step" {
+			kind, suffix = "software", " · 处理过程"
+		}
+		if node["kind"] == "data_store" {
+			kind, suffix = "store", " · 存储数据"
+			properties = []any{"confidentiality", "integrity", "availability"}
+		}
+		add(kind, node, []any{node["id"]}, dStr(node["name"])+suffix, dStr(node["description"]), properties)
 		for _, childRaw := range dList(node["children"]) {
 			child := dObj(childRaw)
 			kind := dStr(child["kind"])
@@ -41,6 +53,9 @@ func architectureAssetCandidates(graph Object) []Object {
 	}
 	for _, raw := range dList(graph["flows"]) {
 		flow := dObj(raw)
+		if flow["channel_kind"] == "energy" {
+			continue
+		}
 		properties := dList(dObj(flow["communication"])["security_properties"])
 		if len(properties) == 0 {
 			properties = []any{"confidentiality", "integrity", "availability"}
@@ -51,13 +66,16 @@ func architectureAssetCandidates(graph Object) []Object {
 }
 
 func syncArchitectureAssets(ws Object) {
+	if dObj(ws["architecture"])["asset_generation"] == "catalog" {
+		return
+	}
 	assets := dList(ws["assets"])
 	bySource := map[string]Object{}
 	ids := map[string]bool{}
 	active := map[string]bool{}
 	for _, raw := range dList(dObj(ws["architecture"])["nodes"]) {
 		n := dObj(raw)
-		if n["kind"] == "entity" {
+		if diagramEndpoint(dObj(ws["architecture"]), n) {
 			ids[dStr(n["id"])] = true
 		}
 	}

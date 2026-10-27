@@ -4,6 +4,8 @@ export const properties = {
   availability: "可用性",
   authenticity: "真实性",
   authorization: "授权",
+  freshness: "新鲜性",
+  privacy: "隐私性",
   non_repudiation: "不可抵赖性",
 };
 export const impacts = ["可忽略", "中等", "重大", "严重"];
@@ -16,6 +18,7 @@ export const treatments = {
 };
 export const pages = {
   overview: "项目总览",
+  tara: "TARA 工作产品",
   definition: "相关项定义",
   architecture: "架构与资产",
   assessment: "风险分析",
@@ -27,6 +30,9 @@ export const pages = {
 };
 export const actions = {
   "open-workspace": "创建项目",
+  "import-tara": "导入完整 TARA",
+  "record-damage": "更新损害场景",
+  "record-goal": "更新安全目标",
   "define-item": "更新相关项",
   "replace-architecture": "保存架构",
   "record-asset": "更新资产",
@@ -67,12 +73,33 @@ export async function request(path, options = {}) {
 export function command(ws, action, payload, requestId = crypto.randomUUID()) {
   const key = (value) => encodeURIComponent(value);
   const routes = {
+    "import-tara": ["POST", "/tara-imports"],
+    "record-damage": [
+      payload.id ? "PUT" : "POST",
+      `/damage-scenarios${payload.id ? "/" + key(payload.id) : ""}`,
+    ],
+    "record-goal": [
+      payload.id ? "PUT" : "POST",
+      `/security-goals${payload.id ? "/" + key(payload.id) : ""}`,
+    ],
     "define-item": ["PUT", "/item"],
     "replace-architecture": ["PUT", "/architecture"],
-    "record-asset": [payload.id ? "PUT" : "POST", `/assets${payload.id ? "/" + key(payload.id) : ""}`],
-    "record-scenario": [payload.id ? "PUT" : "POST", `/scenarios${payload.id ? "/" + key(payload.id) : ""}`],
-    "decide-treatment": ["PUT", `/scenarios/${key(payload.scenario_id)}/treatment`],
-    "specify-requirement": [payload.id ? "PUT" : "POST", `/requirements${payload.id ? "/" + key(payload.id) : ""}`],
+    "record-asset": [
+      payload.id ? "PUT" : "POST",
+      `/assets${payload.id ? "/" + key(payload.id) : ""}`,
+    ],
+    "record-scenario": [
+      payload.id ? "PUT" : "POST",
+      `/scenarios${payload.id ? "/" + key(payload.id) : ""}`,
+    ],
+    "decide-treatment": [
+      "PUT",
+      `/scenarios/${key(payload.scenario_id)}/treatment`,
+    ],
+    "specify-requirement": [
+      payload.id ? "PUT" : "POST",
+      `/requirements${payload.id ? "/" + key(payload.id) : ""}`,
+    ],
     "record-evidence": ["POST", "/evidence"],
     "adopt-method": ["PUT", "/assessment-method"],
     "configure-numbering": ["PUT", "/numbering"],
@@ -83,7 +110,17 @@ export function command(ws, action, payload, requestId = crypto.randomUUID()) {
   const route = routes[action];
   if (!route) throw new Error("未知操作，请刷新页面后重试。");
   const body = { ...payload };
-  if (["record-asset", "record-scenario", "specify-requirement", "record-evidence"].includes(action)) delete body.id;
+  if (
+    [
+      "record-asset",
+      "record-scenario",
+      "specify-requirement",
+      "record-evidence",
+      "record-damage",
+      "record-goal",
+    ].includes(action)
+  )
+    delete body.id;
   if (action === "decide-treatment") delete body.scenario_id;
   return request(`/workspaces/${key(ws.id)}${route[1]}`, {
     method: route[0],
@@ -106,7 +143,9 @@ export async function workspaceEvents(id) {
   const entries = [];
   let offset = 0;
   do {
-    const page = await request(`/workspaces/${encodeURIComponent(id)}/events?offset=${offset}&limit=100`);
+    const page = await request(
+      `/workspaces/${encodeURIComponent(id)}/events?offset=${offset}&limit=100`,
+    );
     entries.push(...page.entries);
     offset += page.entries.length;
     if (offset >= page.total || !page.entries.length) break;

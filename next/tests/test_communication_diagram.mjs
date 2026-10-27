@@ -66,13 +66,14 @@ test("expanded entity types retain ports and OS summary while children remain in
   assert.doesNotMatch(nodeMarkup({ ...entity("boundary"), kind: "boundary", operating_system: { name: "ignored" } }), /OS ·/);
 });
 
-test("static export preserves full OS and communication metadata while escaping text and omitting animation", () => {
+test("static export keeps visible OS and protocol labels but omits metadata appendices and animation", () => {
   const device = { ...entity("device"), height: 80, operating_system: { family: "rtos", name: "系统 <A>", version: "v2.3", architecture: "ARM64", notes: "宿主与客体\n客体系统 QNX 8.0" } };
   const wireless = flow({ protocol: "MQTT/TLS", description: "遥测数据 & 校验", labelOffset: { x: 20, y: -12 }, communication: { medium: "wireless", technology: "Wi-Fi", range: "local", purpose: "遥测", security_properties: ["integrity", "authenticity"] } });
   const graph = { nodes: [device, { ...entity("cloud", 400), entityType: "cloud" }], flows: [wireless] }, before = structuredClone(graph);
   const svg = staticDiagramSvg(graph, [route]);
-  for (const text of ["系统 &lt;A&gt;", "v2.3", "ARM64", "宿主与客体", "客体系统 QNX 8.0", "MQTT/TLS", "覆盖范围：局域", "用途：遥测", "安全属性：完整性、真实性", "遥测数据 &amp; 校验", "device → cloud"])
+  for (const text of ["系统 &lt;A&gt;", "v2.3", "MQTT/TLS"])
     assert.ok(svg.includes(text), text);
+  assert.doesNotMatch(svg,/ARM64|宿主与客体|客体系统 QNX|覆盖范围：|用途：|安全属性：|实体属性与内部组成明细|数据流与通信明细/);
   assert.match(svg, /stroke-dasharray="7 5"/); assert.match(svg, /marker-end="url\(#static-arrow\)"/); assert.equal((svg.match(/communication-badge/g) || []).length, 1);
   assert.doesNotMatch(svg, /wireless-endpoint|W01/);
   assert.doesNotMatch(svg, /<animate|@keyframes|animation:|flow-pulse|data-port=|data-flow-label=|选中实体查看|<script|<image/i);

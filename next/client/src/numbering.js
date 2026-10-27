@@ -31,9 +31,11 @@ export const pathNumberKey = (scenarioId, pathId) =>
 export const nodeNumberKind = (node) =>
   node.kind === "boundary"
     ? "boundary"
-    : node.kind === "store"
+    : ["store", "data_store"].includes(node.kind)
       ? "store"
-      : "entity";
+      : node.kind === "process_step"
+        ? "software"
+        : "entity";
 export function buildCodeIndex(ws, draftGraph) {
   const rules = effectiveNumbering(ws.numbering),
     state = new Map();
@@ -83,7 +85,7 @@ export function recordCode(ws, kind, id) {
   return cache.get(ws)(kind, id);
 }
 export function numberedGraph(graph, code) {
-  if (!code) return graph;
+  if (!code || graph.show_numbers === false) return graph;
   const label = (kind, value) => ({
     ...value,
     name: `${code(kind, value.id)} · ${value.name}`,

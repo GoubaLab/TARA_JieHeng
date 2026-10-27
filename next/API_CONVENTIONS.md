@@ -103,3 +103,26 @@ Idempotency-Key: b320291b-39d1-44df-800b-c26b8a445731
 `GET /workspaces/{id}/numbering` 返回有效规则，`PUT` 完整替换规则并遵守 `If-Match` 与 `Idempotency-Key`。请求为 `prefixes`（10 种类型）、`separator`（`-` / `_` / `.` / `/`）、`padding`（2–6）。前缀支持 Unicode 文字和数字，可包含下划线、短横线，最长 12 字符，各类型前缀不能重复（不区分大小写）。默认类型依次为 entity=EN、boundary=TB、software=SW、store=DS、flow=DF、asset=AS、scenario=RS、path=AP、requirement=SR、evidence=EV。
 
 `Workspace.numbering_state` 为只读类型→内部 ID→序号登记；客户端不可指定序号。攻击路径 ID 只在场景内唯一，其登记键为 `UTF8字节长度(scenario_id) + ":" + scenario_id + path_id`。读旧项目不写库；第一次非冻结操作先固定旧记录序号，再为新增记录顺序分配，删除保留登记不复用。只修改格式不会改变业务 ID、风险计算摘要或引用。画布、清单、HTML 与 Excel 显示编号一致；JSON 保留内部 ID 和编号配置/登记以支持复现。冻结基线始终按冻结快照规则导出。
+
+## 展开 DFD
+
+`Architecture.view_mode` 缺省为 `entities`，既有实体及内部组成规则不变。`dfd` 模式可使用独立 `process_step` 与 `data_store` 节点，允许与实体互联；信任边界仍不能作为连接端点。旧 `process`、`external`、`store` 的迁移规则不变。处理过程生成软件类资产，独立存储生成存储数据资产，均保持稳定来源 ID 与用户编辑。
+
+`Flow.channel_kind` 可为 `data`（缺省）或 `energy`；电能流独立绘制，不生成传输数据资产。`emphasis` 为 `normal` / `critical` / `internal`，仅用于图中色彩强调。`show_label`（缺省 true）控制标签可见性；隐藏仍保留名称与报告明细。`Architecture.show_numbers` 控制画布编号前缀显示。显示设置不改变风险摘要，数据流/电能流类别属于语义变更。
+
+
+## 完整 TARA 工作簿导入
+
+`POST /workspaces/{id}/tara-import-previews` 接收 `{filename, content_base64, asset_links?}`，只核对，不增加修订。`POST /workspaces/{id}/tara-imports` 使用相同内容，并携带 `If-Match`、`Idempotency-Key` 与 `X-Workspace-Client`；成功返回 201、ETag、Location 和 `import_summary`。失败原子回滚，相同请求幂等重放。导入仅允许空白工作产品项目，可先建立 DFD 并设置 `architecture.asset_generation="catalog"`。
+
+当前适配版本 `tara-chinese-v1` 支持约定的中文表结构和已核对的 SFOP 原始取值分档、五因子攻击潜力矩阵方法；不是任意 Excel 的自动识别器。限制为原文件 1.4 MB、解压 30 MB、40 个表页；不执行公式或宏。未知表头、无效引用、未知方法和计算不一致返回 422。用户数据仅保存到所选本地数据库，事件记录只存来源摘要和计数。
+
+`GET /workspaces/{id}/tara-imports/{resource_id}` 返回来源表页、图像、合并范围、公式与缓存文本；`.../source` 返回字节一致的原始 XLSX。工作区普通读取不包含原文件字节。项目报告追加全部来源表页，完整原始排版与嵌入图仍可从原文件取得。
+
+`damage-scenarios`、`security-goals` 提供 POST 创建与 `/{resource_id}` GET/PUT。完整模型见 OpenAPI。场景支持多个资产、安全属性、损害引用；需求支持多个目标与威胁。业务编号 `source_code` 与内部 ID 独立。修改关联损害后，风险重新计算；攻击路径的 `potential` 五因子存在时按项目阈值计算可行性。
+
+`coefficient_bands` 使用 `impact_scale`、`impact_coefficients`、`impact_thresholds`、`severe_impact_floor`；仅允许风险矩阵。`attack_potential_thresholds` 以三个递增下限把攻击可行性从 4 降至 1。其他项目原有 coefficient_sum 总分直接参与风险计算的行为保持兼容。
+
+导入时方法待确认、负责人和签署空项保持空，残余评估为 `residual_status="target"`，不得视为通过验证。改成 `validated` 前必须存在全部关联需求的有效通过记录；评审完整性仍独立检查。
+
+目标关联处置保存服务端 `goal_hash`，调用者不在输入中提交此字段。目标修改要求处置复核。扩展 TARA 的 `EvidenceRecord.requirement_hash` 同时绑定关联目标与评估上下文；普通旧需求保持原摘要兼容。后续复测失败或依据改变时，有效 `residual_status` 回到 target，评审不通过。

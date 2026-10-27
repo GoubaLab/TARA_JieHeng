@@ -46,10 +46,11 @@ test('motion toggle is a view preference and does not touch graph or undo histor
 });
 
 
-test('static exports include every internal object and attribute even when the card is too small',()=>{
+test('static export is cropped to the diagram and does not append hidden object or attribute details',()=>{
  const entity={...node('ecu','entity'),entityType:'ecu',height:80,children:Array.from({length:12},(_,i)=>({id:'child'+i,kind:'software',name:'Internal object '+i,description:'Complete description '+i})),attributes:[{name:'Hardware',value:'Revision B'}]};
  const svg=staticDiagramSvg({nodes:[entity],flows:[]},[]);
- for(let i=0;i<12;i++){assert.ok(svg.includes('Internal object '+i));assert.ok(svg.includes('Complete description '+i));}
- assert.match(svg,/Hardware：Revision B/);assert.match(svg,/实体属性与内部组成明细/);assert.doesNotMatch(svg,/选中实体查看/);
- assert.ok(Number(svg.match(/<svg[^>]+height="([0-9]+)"/)[1])>600);
+ assert.doesNotMatch(svg,/Complete description|Hardware：|实体属性与内部组成明细|数据流与通信明细|下方明细|选中实体查看/);
+ assert.match(svg,/另有 12 项/);
+ assert.equal(Number(svg.match(/<svg[^>]+height="([0-9]+)"/)[1]),150);
+ assert.equal(entity.children.length,12);
 });

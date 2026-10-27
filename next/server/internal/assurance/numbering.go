@@ -20,7 +20,10 @@ func nodeNumberKind(node Object) string {
 	if node["kind"] == "boundary" {
 		return "boundary"
 	}
-	if node["kind"] == "store" {
+	if node["kind"] == "process_step" {
+		return "software"
+	}
+	if node["kind"] == "store" || node["kind"] == "data_store" {
 		return "store"
 	}
 	return "entity"

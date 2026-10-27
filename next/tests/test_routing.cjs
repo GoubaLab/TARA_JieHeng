@@ -137,9 +137,9 @@ test('huge canvas extents fail promptly without allocating an unbounded grid', (
   assert.ok(plan(input).conflicts.some((c) => c.code === 'LAYOUT_TOO_LARGE'));
 });
 
-function ibmsFixture() {
+function branchedFixture() {
   const nodes = [
-    ['IBMS-BOUNDARY', 260, 50, 830, 830, true], ['E1', 30, 420, 190, 110], ['E2', 1170, 420, 190, 110],
+    ['TEST-BOUNDARY', 260, 50, 830, 830, true], ['E1', 30, 420, 190, 110], ['E2', 1170, 420, 190, 110],
     ['P1', 380, 140, 190, 80], ['P2', 380, 340, 190, 80], ['P3', 380, 540, 190, 80], ['P4', 380, 740, 190, 80],
     ['D1', 800, 340, 190, 80], ['D2', 800, 740, 190, 80], ['D3', 800, 540, 190, 80], ['D4', 800, 140, 190, 80],
   ].map(([id, x, y, width, height, boundary]) => ({ id, x, y, width, height, boundary }));
@@ -153,8 +153,8 @@ function ibmsFixture() {
   return { nodes, edges: rows.map(([id, source, sourceSide, target, targetSide]) => ({ id: 'VIEW-' + id, source, target, sourceSide, targetSide })), grid: 20 };
 }
 
-test('all 18 original IBMS business edges fit, including non-grid ports on 190 by 80 nodes', () => {
-  const input = ibmsFixture(), start = performance.now(), out = plan(input);
+test('all 18 branched geometry-test edges fit, including non-grid ports on 190 by 80 nodes', () => {
+  const input = branchedFixture(), start = performance.now(), out = plan(input);
   const elapsed = performance.now() - start;
   checkGeometry(input, out);
   assert.ok(elapsed < 3000, `Routing took ${elapsed.toFixed(0)} ms`);
@@ -167,7 +167,7 @@ test('moving, resizing, removing and adding edges retains geometry or returns an
   const random = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 0x100000000);
   const stats = {}, variants = [];
   for (const kind of ['move', 'resize', 'remove', 'parallel']) for (let i = 0; i < 8; i++) {
-    const input = ibmsFixture();
+    const input = branchedFixture();
     if (kind === 'move') for (const node of input.nodes.filter((n) => !n.boundary)) {
       node.x += Math.round((random() - 0.5) * 140); node.y += Math.round((random() - 0.5) * 100);
     }

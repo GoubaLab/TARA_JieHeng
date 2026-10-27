@@ -1,3 +1,4 @@
+import TaraProducts from "./TaraProducts.jsx";
 import { recordCode, pathNumberKey, buildCodeIndex } from "./numbering.js";
 import React, {
   createContext,
@@ -95,6 +96,7 @@ const navItems = [
   ["overview", <AppstoreOutlined />],
   ["definition", <FileTextOutlined />],
   ["architecture", <ApartmentOutlined />],
+  ["tara", <DatabaseOutlined />],
   ["assessment", <AlertOutlined />],
   ["treatment", <SafetyCertificateOutlined />],
   ["verification", <AuditOutlined />],
@@ -107,7 +109,7 @@ const stageNames = {
   treatment: "风险处置",
   verification: "需求验证",
 };
-export function Risk({ level, provisional = false, method }) {
+export function Risk({ level, provisional = false, target = false, method }) {
   const context = useContext(Ctx);
   const levels = effectiveMethod(method || context?.ws?.method).risk_levels;
   const grade = levels[level - 1];
@@ -116,14 +118,16 @@ export function Risk({ level, provisional = false, method }) {
   ) : (
     <Tooltip
       title={
-        provisional
-          ? "方法尚未确认，此值为暂算结果"
-          : grade?.description || `风险等级 ${level} · ${grade?.label || ""}`
+        target
+          ? "控制措施落地并验证后的目标值，尚未验证完成"
+          : provisional
+            ? "方法尚未确认，此值为暂算结果"
+            : grade?.description || `风险等级 ${level} · ${grade?.label || ""}`
       }
     >
       <Tag color={["", "green", "cyan", "gold", "orange", "red"][level]}>
         {level} · {grade?.label || "风险"}
-        {provisional ? " · 暂算" : ""}
+        {target ? " · 目标" : provisional ? " · 暂算" : ""}
       </Tag>
     </Tooltip>
   );
@@ -347,6 +351,7 @@ export default function Workbench() {
         overview: <Overview />,
         definition: <Definition />,
         architecture: <Architecture />,
+        tara: <TaraProducts />,
         assessment: <Assessment />,
         treatment: <Treatment />,
         verification: <Verification />,
@@ -853,7 +858,11 @@ function Architecture() {
     <>
       <PageTitle
         title="架构与资产"
-        description="绘制实体和数据流，保存后自动生成并同步资产清单。软件与数据存储在实体内维护。"
+        description={
+          ws.architecture.view_mode === "dfd"
+            ? "展开外部实体、硬件接口、处理过程和数据存储，保存后同步资产。电能流单独标识。"
+            : "绘制实体和数据流，保存后自动生成并同步资产清单。软件与数据存储在实体内维护。"
+        }
         extra={
           <>
             <Button
@@ -1229,6 +1238,15 @@ function Assessment() {
                   items={[
                     { key: "damage", label: "损害场景", children: s.damage },
                     { key: "threat", label: "威胁场景", children: s.threat },
+                    ...(ws.method.impact_aggregation === "coefficient_bands"
+                      ? [
+                          {
+                            key: "band-score",
+                            label: "SFOP 原始影响值",
+                            children: s.evaluation.impact_score ?? "待评估",
+                          },
+                        ]
+                      : []),
                     ...(ws.method.impact_aggregation === "coefficient_sum"
                       ? [
                           {
@@ -1304,13 +1322,19 @@ function Assessment() {
               title: "关联资产",
               dataIndex: "asset_id",
               width: 170,
-              render: (id) => ws.assets.find((a) => a.id === id)?.name,
+              render: (id, s) =>
+                (s.asset_ids || [id])
+                  .map(
+                    (aid) => ws.assets.find((a) => a.id === aid)?.name || aid,
+                  )
+                  .join("、"),
             },
             {
               title: "安全属性",
               dataIndex: "property",
               width: 100,
-              render: (v) => properties[v],
+              render: (v, s) =>
+                (s.properties || [v]).map((p) => properties[p] || p).join("、"),
             },
             {
               title: "路径",
@@ -1347,7 +1371,12 @@ function Assessment() {
             {
               title: "残余风险",
               width: 110,
-              render: (_, s) => <Risk level={s.evaluation.residual} />,
+              render: (_, s) => (
+                <Risk
+                  level={s.evaluation.residual}
+                  target={s.evaluation.residual_status === "target"}
+                />
+              ),
             },
             {
               title: "状态",
@@ -1465,6 +1494,10 @@ function Treatment() {
                             review.evaluations.find(
                               (e) => e.scenario_id === s.id,
                             )?.residual
+                          }
+                          target={
+                            ws.decisions.find((d) => d.scenario_id === s.id)
+                              ?.residual_status === "target"
                           }
                         />
                       ),

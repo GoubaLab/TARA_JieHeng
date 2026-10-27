@@ -155,6 +155,35 @@ export function previewRisk(method, impact, feasibility) {
 }
 export function methodErrors(method) {
   const errors = [];
+  if (method.impact_aggregation === "coefficient_bands") {
+    if (method.risk_calculation !== "matrix")
+      errors.push("原始取值分档法须使用风险矩阵。");
+    for (const [key, length, label] of [
+      ["impact_scale", 4, "原始取值"],
+      ["impact_thresholds", 3, "影响阈值"],
+    ]) {
+      const a = method[key];
+      if (
+        !Array.isArray(a) ||
+        a.length !== length ||
+        a.some(
+          (v, i) => !Number.isFinite(v) || v < 0 || (i > 0 && v <= a[i - 1]),
+        )
+      )
+        errors.push(`${label}须为递增数值。`);
+    }
+    if (!dimensionKeys.some((k) => method.impact_coefficients[k] > 0))
+      errors.push("至少一个系数须大于 0。");
+  }
+  if (
+    method.attack_potential_thresholds &&
+    (method.attack_potential_thresholds.length !== 3 ||
+      method.attack_potential_thresholds.some(
+        (v, i, a) =>
+          !Number.isInteger(v) || v < 1 || v > 500 || (i > 0 && v <= a[i - 1]),
+      ))
+  )
+    errors.push("攻击潜力阈值须为 1–500 的递增整数。");
   const coefficient = method.impact_aggregation === "coefficient_sum";
   if (
     coefficient &&

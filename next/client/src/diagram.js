@@ -11,6 +11,7 @@ import { labelOffsetForDrag } from "./flow-label.js";
 import {
   entityTypes,
   isEntity,
+  isDiagramEndpoint,
   entityType,
   entityKindLabel,
   normalizedArchitecture,
@@ -26,6 +27,7 @@ import {
   operatingSystemForSave,
   communicationDetails,
   flowDashArray,
+  flowColor,
 } from "./communication.js";
 /* Independent SVG editor. Reuses only the locally authored pure geometry planner. */
 const clone = (v) => structuredClone(v);
@@ -38,6 +40,8 @@ const kinds = {
   external: "外部实体",
   service: "服务实体",
   boundary: "信任边界",
+  process_step: "处理过程",
+  data_store: "数据存储",
 };
 const sides = ["top", "right", "bottom", "left"];
 export class Diagram {
@@ -68,13 +72,18 @@ export class Diagram {
       const preference = sessionStorage.getItem(this.draftKey + ".flow-motion");
       if (preference !== null) this.flowMotion = preference === "on";
     } catch {}
-    root.innerHTML = `<div class="toolbar" role="toolbar" aria-label="架构绘图工具"><select name="new-entity-type" aria-label="新增实体类型" style="width:auto;min-width:100px">${Object.entries(
-      entityTypes,
+    root.innerHTML = `<div class="toolbar" role="toolbar" aria-label="架构绘图工具"><button class="btn small" data-dfd="view-mode" title="实体建模或展开内部 DFD">${graph.view_mode === "dfd" ? "展开 DFD" : "实体视图"}</button><select name="new-entity-type" aria-label="新增实体类型" style="width:auto;min-width:100px">${Object.entries(
+      {
+        ...entityTypes,
+        ...(graph.view_mode === "dfd"
+          ? { process_step: "处理过程", data_store: "数据存储" }
+          : {}),
+      },
     )
       .map(([key, label]) => `<option value="${key}">${label}</option>`)
       .join(
         "",
-      )}</select><button class="btn small" data-dfd="add-selected-entity">＋ 添加实体</button><button class="btn small" data-dfd="add-boundary">＋ 信任边界</button><span class="separator"></span><button class="btn small" data-dfd="undo" title="撤销">↶</button><button class="btn small" data-dfd="redo" title="重做">↷</button><button class="btn small" data-dfd="fit">适合画布</button><button class="btn small" data-dfd="lanes" aria-pressed="${graph.equal_spacing}">通道间距</button><button class="btn small" data-dfd="motion" aria-pressed="true" title="仅展示流向，不代表实时数据或时序">流动效果</button><button class="btn small" data-dfd="export-static">导出静态图</button><span class="spacer"></span><button class="btn primary small" data-dfd="save" title="保存架构并自动同步资产清单">保存架构</button></div><details style="padding:8px 12px;border-bottom:1px solid #e5e9f0;color:#687281;font-size:12px"><summary style="cursor:pointer">通信图例</summary><p style="margin:8px 0 0">实线：有线或未分类；虚线：无线；点线：逻辑连接。协议与无线图标显示在线路标签中。箭头表示数据流向，跨线桥表示交叉但不相连。选中连线后，拖动两端圆点换边、拖动方点调整线路。</p></details><div class="canvas-layout"><div class="canvas-stage"><svg role="group" aria-label="系统数据流图" tabindex="0"></svg></div><aside class="canvas-inspector"></aside></div><div class="canvas-hint"><span class="hint-text">选中连线后拖动圆点换边、方点调整线路；拖动标签改位置。空白处拖动平移，Ctrl + 滚轮缩放。</span><span class="save-state"></span></div>`;
+      )}</select><button class="btn small" data-dfd="add-selected-entity">＋ 添加节点</button><button class="btn small" data-dfd="add-boundary">＋ 信任边界</button><span class="separator"></span><button class="btn small" data-dfd="undo" title="撤销">↶</button><button class="btn small" data-dfd="redo" title="重做">↷</button><button class="btn small" data-dfd="fit">适合画布</button><button class="btn small" data-dfd="lanes" aria-pressed="${graph.equal_spacing}">通道间距</button><button class="btn small" data-dfd="motion" aria-pressed="true" title="仅展示流向，不代表实时数据或时序">流动效果</button><button class="btn small" data-dfd="numbers" aria-pressed="${graph.show_numbers !== false}">显示编号</button><button class="btn small" data-dfd="focus">专注画布</button><button class="btn small" data-dfd="export-static">导出静态图</button><span class="spacer"></span><button class="btn primary small" data-dfd="save" title="保存架构并自动同步资产清单">保存架构</button></div><details style="padding:8px 12px;border-bottom:1px solid #e5e9f0;color:#687281;font-size:12px"><summary style="cursor:pointer">图形与通信图例</summary><p style="margin:8px 0 0">白色卡片：设备；灰色卡片：外部实体；浅蓝色：处理过程或软件；浅绿色：数据存储；蓝色虚线框：信任边界。</p><p style="margin:8px 0 0">实线：有线或未分类；虚线：无线；点线：逻辑连接。协议与无线图标显示在线路标签中。红色表示强调的跨界流，浅灰色表示内部流，棕色表示电能流。箭头表示流向，跨线桥表示交叉但不相连。选中连线后，拖动两端圆点换边、拖动方点调整线路。</p></details><div class="canvas-layout"><div class="canvas-stage"><svg role="group" aria-label="系统数据流图" tabindex="0"></svg></div><aside class="canvas-inspector"></aside></div><div class="canvas-hint"><span class="hint-text">选中连线后拖动圆点换边、方点调整线路；拖动标签改位置。空白处拖动平移，Ctrl + 滚轮缩放。</span><span class="save-state"></span></div>`;
     this.svg = root.querySelector("svg");
     this.inspector = root.querySelector(".canvas-inspector");
     this.hint = root.querySelector(".hint-text");
@@ -303,6 +312,36 @@ export class Diagram {
       this.render();
       return;
     }
+    if (action === "focus") {
+      this.root.classList.toggle("canvas-focused");
+      this.fit();
+      return;
+    }
+    if (action === "numbers") {
+      const before = clone(this.graph);
+      this.graph.show_numbers = this.graph.show_numbers === false;
+      this.commit(before, false);
+      return;
+    }
+    if (action === "view-mode") {
+      const before = clone(this.graph);
+      if (
+        this.graph.view_mode === "dfd" &&
+        this.graph.nodes.some((n) =>
+          ["process_step", "data_store"].includes(n.kind),
+        )
+      ) {
+        this.message(
+          "当前含独立处理过程或数据存储，请保留展开 DFD 模式。",
+          true,
+        );
+        return;
+      }
+      this.graph.view_mode =
+        this.graph.view_mode === "dfd" ? "entities" : "dfd";
+      this.commit(before, false);
+      return;
+    }
     if (action === "export-static") {
       let output;
       try {
@@ -323,7 +362,7 @@ export class Diagram {
       link.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
       this.message(
-        "已导出静态 SVG，包含实体、内部组成、数据流和标签；无流动动画。",
+        "已导出纯图 SVG，保留当前通道间距与标签；无动画或附加明细。",
       );
       return;
     }
@@ -352,8 +391,10 @@ export class Diagram {
       const node = {
         id: "node_" + crypto.randomUUID(),
         name: kinds[kind],
-        kind: kind === "boundary" ? "boundary" : "entity",
-        ...(kind === "boundary"
+        kind: ["boundary", "process_step", "data_store"].includes(kind)
+          ? kind
+          : "entity",
+        ...(["boundary", "process_step", "data_store"].includes(kind)
           ? {}
           : {
               entityType: kind === "entity" ? "ecu" : kind,
@@ -551,7 +592,7 @@ export class Diagram {
     }
     if (port) {
       const source = this.graph.nodes.find((n) => n.id === node?.dataset.node);
-      if (!source || !isEntity(source)) {
+      if (!isDiagramEndpoint(source, this.graph)) {
         this.message("数据流只能从实体连接到另一个实体。", true);
         return;
       }
@@ -735,7 +776,7 @@ export class Diagram {
         ?.closest("[data-node]");
       if (!target || target.dataset.node === d.source) return this.render();
       const node = this.graph.nodes.find((n) => n.id === target.dataset.node);
-      if (!isEntity(node)) {
+      if (!isDiagramEndpoint(node, this.graph)) {
         this.message(
           "数据流只能连接不同实体；内部软件、存储和信任边界不作端点。",
           true,
@@ -805,6 +846,7 @@ export class Diagram {
     if (!flow) return "";
     return labelMarkup(flow, route, {
       selected: this.selected === flow.id,
+      dfd: this.graph.view_mode === "dfd",
       dragging: this.drag?.type === "label" && this.drag.id === flow.id,
     });
   }
@@ -826,9 +868,12 @@ export class Diagram {
     const renderNode = (node) =>
       nodeMarkup(
         this.displayGraph.nodes.find((n) => n.id === node.id) || node,
-        { selected: this.selected === node.id },
+        {
+          selected: this.selected === node.id,
+          dfd: this.graph.view_mode === "dfd",
+        },
       );
-    this.svg.innerHTML = `<defs><pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".8" fill="#d9d9d9"/></pattern><marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#8c8c8c"/></marker></defs><rect x="${this.view.x}" y="${this.view.y}" width="${this.view.w}" height="${this.view.h}" fill="url(#dots)"/>${this.graph.nodes
+    this.svg.innerHTML = `<defs><pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".8" fill="#d9d9d9"/></pattern><marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#8c8c8c"/></marker>${["normal", "critical", "internal", "energy"].map((kind) => `<marker id="arrowhead-${kind}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="${flowColor(kind === "energy" ? { channel_kind: kind } : { emphasis: kind })}"/></marker>`).join("")}</defs><rect x="${this.view.x}" y="${this.view.y}" width="${this.view.w}" height="${this.view.h}" fill="url(#dots)"/>${this.graph.nodes
       .filter((n) => n.kind === "boundary")
       .map(renderNode)
       .join("")}${routes
@@ -836,7 +881,7 @@ export class Diagram {
         const f = this.graph.flows.find((f) => f.id === r.id);
         if (!f) return "";
         const dash = flowDashArray(f);
-        return `<g data-flow="${e(r.id)}"><path d="${this.bridgePath(r, routes)}" fill="none" stroke="transparent" stroke-width="14"/><path class="flow-line ${this.selected === r.id ? "selected" : ""}" d="${this.bridgePath(r, routes)}" ${dash ? `stroke-dasharray="${dash}"` : ""} marker-end="url(#arrowhead)"/>${this.flowMotion ? `<path class="flow-pulse" d="${this.bridgePath(r, routes)}" aria-hidden="true"/>` : ""}</g>`;
+        return `<g data-flow="${e(r.id)}"><path d="${this.bridgePath(r, routes)}" fill="none" stroke="transparent" stroke-width="14"/><path class="flow-line ${this.selected === r.id ? "selected" : ""}" style="stroke:${this.selected === r.id ? "#1677ff" : flowColor(f)};stroke-width:${this.graph.view_mode === "dfd" ? 2.5 : 1.6}" d="${this.bridgePath(r, routes)}" ${dash ? `stroke-dasharray="${dash}"` : ""} marker-end="url(#arrowhead-${f.channel_kind === "energy" ? "energy" : f.emphasis || "normal"})"/>${this.flowMotion ? `<path class="flow-pulse" d="${this.bridgePath(r, routes)}" aria-hidden="true"/>` : ""}</g>`;
       })
       .join("")}${this.graph.nodes
       .filter((n) => n.kind !== "boundary")
@@ -847,6 +892,36 @@ export class Diagram {
       this.graph.flows.find((f) => f.id === this.selected),
       routes.find((r) => r.id === this.selected),
     )}${this.drag?.type === "endpoint" && this.drag.attachment ? `<circle cx="${this.drag.attachment.point.x}" cy="${this.drag.attachment.point.y}" r="11" fill="none" stroke="${this.drag.invalid ? "#ff4d4f" : "#1677ff"}" stroke-width="2" stroke-dasharray="3 3" pointer-events="none"/>` : ""}${this.drag?.type === "connect" ? `<path d="M ${this.drag.start.x} ${this.drag.start.y} L ${this.drag.current.x} ${this.drag.current.y}" stroke="#1677ff" stroke-width="2" stroke-dasharray="5 4" pointer-events="none"/>` : ""}`;
+    const modeButton = this.root.querySelector("[data-dfd=view-mode]");
+    if (modeButton)
+      modeButton.textContent =
+        this.graph.view_mode === "dfd" ? "展开 DFD" : "实体视图";
+    const numberButton = this.root.querySelector("[data-dfd=numbers]");
+    if (numberButton) {
+      numberButton.setAttribute(
+        "aria-pressed",
+        this.graph.show_numbers !== false,
+      );
+      numberButton.classList.toggle(
+        "primary",
+        this.graph.show_numbers !== false,
+      );
+    }
+    const palette = this.root.querySelector("[name=new-entity-type]");
+    if (palette && this.paletteMode !== (this.graph.view_mode || "entities")) {
+      const value = palette.value;
+      palette.innerHTML = Object.entries({
+        ...entityTypes,
+        ...(this.graph.view_mode === "dfd"
+          ? { process_step: "处理过程", data_store: "数据存储" }
+          : {}),
+      })
+        .map(([key, label]) => `<option value="${key}">${label}</option>`)
+        .join("");
+      if ([...(palette.options || [])].some((o) => o.value === value))
+        palette.value = value;
+      this.paletteMode = this.graph.view_mode || "entities";
+    }
     this.root.querySelector("[data-dfd=undo]").disabled = !this.undo.length;
     this.root.querySelector("[data-dfd=redo]").disabled = !this.redo.length;
     const lanes = this.root.querySelector("[data-dfd=lanes]");
@@ -857,7 +932,7 @@ export class Diagram {
     motion.classList.toggle("primary", this.flowMotion);
     this.root.querySelector(".save-state").textContent =
       (this.dirty ? "未保存更改 · " : "已保存 · ") +
-      `${this.graph.nodes.filter(isEntity).length} 个实体 / ${this.graph.flows.length} 条数据流${this.graph.nodes.some((n) => n.kind === "store") ? " · 有存储待归属" : ""}`;
+      `${this.graph.nodes.filter((n) => isDiagramEndpoint(n, this.graph)).length} 个节点 / ${this.graph.flows.length} 条连接${this.graph.nodes.some((n) => n.kind === "store") ? " · 有存储待归属" : ""}`;
   }
   readNodeEditor(node, { skipAttributeIndex = -1, skipChildId = null } = {}) {
     const field = (name) => this.inspector.querySelector(`[name=${name}]`),
@@ -1047,6 +1122,11 @@ export class Diagram {
         .join(
           "",
         )}</details><div class="section-gap"><button class="btn small danger" data-dfd="remove">移除数据流</button></div>`;
+      return;
+    }
+    if (this.graph.view_mode === "dfd") {
+      this.inspector.innerHTML =
+        '<p class="eyebrow">EXPANDED DFD</p><h3>展开数据流图</h3><p>外部实体、硬件接口、处理过程与数据存储分层展示；边界框用于表示信任域。</p><p>拖动节点调整位置，拖动四侧连接点创建连接。选中连接可修改方向接点、走线和标签。</p><p>红色：安全关键流；灰色：内部流；棕色：电能流。电能流不自动生成传输数据资产。</p><p>显示编号可切换自动编号前缀；原图编号可保留在名称中。专注画布可展开绘图区。</p><div class="notice">导出图始终静态。图形不替代威胁、影响及风险评估。</div>';
       return;
     }
     this.inspector.innerHTML =

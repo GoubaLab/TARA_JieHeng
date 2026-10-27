@@ -2709,6 +2709,639 @@
         },
         "description": "首次配置与其他写入会保存稳定序号。更改规则仅重新格式化显示编号，不重排或复用序号；冻结基线保留原规则。GET 不写库。默认 EN/TB/SW/DS/DF/AS/RS/AP/SR/EV，短横线，3 位。"
       }
+    },
+    "/workspaces/{id}/damage-scenarios": {
+      "post": {
+        "summary": "创建损害场景",
+        "operationId": "createDamageScenario",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutationResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DamageScenarioCreate"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/damage-scenarios/{resource_id}": {
+      "put": {
+        "summary": "更新损害场景",
+        "operationId": "replaceDamageScenario",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "name": "resource_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutationResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DamageScenarioUpdate"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "读取损害场景",
+        "operationId": "getDamageScenario",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "name": "resource_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DamageScenarioRecord"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/security-goals": {
+      "post": {
+        "summary": "创建安全目标",
+        "operationId": "createSecurityGoal",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutationResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SecurityGoalCreate"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/security-goals/{resource_id}": {
+      "put": {
+        "summary": "更新安全目标",
+        "operationId": "replaceSecurityGoal",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "name": "resource_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutationResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SecurityGoalUpdate"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "读取安全目标",
+        "operationId": "getSecurityGoal",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "name": "resource_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecurityGoalRecord"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/tara-imports": {
+      "post": {
+        "summary": "完整导入 TARA 工作簿",
+        "operationId": "createTaraImport",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutationResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaraImportInput"
+              }
+            }
+          }
+        },
+        "description": "仅空白工作产品项目。原子保存原文件、全部表页和原生工作产品；不覆盖现有记录。tara-chinese-v1 精确适配列结构和已核对的方法；未知表头、引用、方法或计算差异返回422。残余值作为 target 保留。项目方法待确认。"
+      }
+    },
+    "/workspaces/{id}/tara-import-previews": {
+      "post": {
+        "summary": "核对 TARA 导入（不写入）",
+        "operationId": "previewTaraImport",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          }
+        ],
+        "responses": {
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaraImportSummary"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaraImportInput"
+              }
+            }
+          }
+        },
+        "description": "仅空白工作产品项目。原子保存原文件、全部表页和原生工作产品；不覆盖现有记录。tara-chinese-v1 精确适配列结构和已核对的方法；未知表头、引用、方法或计算差异返回422。残余值作为 target 保留。项目方法待确认。"
+      }
+    },
+    "/workspaces/{id}/tara-imports/{resource_id}": {
+      "get": {
+        "summary": "读取导入来源表页和核对信息",
+        "operationId": "getTaraImport",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "name": "resource_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaraImport"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/tara-imports/{resource_id}/source": {
+      "get": {
+        "summary": "下载完全保留的原始 XLSX",
+        "operationId": "downloadTaraSource",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "name": "resource_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2922,6 +3555,30 @@
           },
           "route_layout": {
             "$ref": "#/components/schemas/RouteLayout"
+          },
+          "channel_kind": {
+            "type": "string",
+            "enum": [
+              "data",
+              "energy"
+            ],
+            "default": "data",
+            "description": "energy 为电能流，不自动生成传输数据资产。"
+          },
+          "emphasis": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "critical",
+              "internal"
+            ],
+            "default": "normal",
+            "description": "图中颜色标识，不替代风险评估。"
+          },
+          "show_label": {
+            "type": "boolean",
+            "default": true,
+            "description": "隐藏后仍可选中线路查看与修改名称，导出明细保留。"
           }
         },
         "required": [
@@ -2976,7 +3633,9 @@
               "process",
               "external",
               "store",
-              "boundary"
+              "boundary",
+              "process_step",
+              "data_store"
             ],
             "title": "Kind",
             "type": "string"
@@ -3136,7 +3795,8 @@
               }
             }
           }
-        ]
+        ],
+        "description": " 展开 DFD 独立使用 process_step（处理过程）和 data_store（数据存储）；不转换为物理实体，也不可嵌套实体属性或操作系统。"
       },
       "Architecture": {
         "additionalProperties": false,
@@ -3161,6 +3821,27 @@
             "default": true,
             "title": "Equal Spacing",
             "type": "boolean"
+          },
+          "view_mode": {
+            "type": "string",
+            "enum": [
+              "entities",
+              "dfd"
+            ],
+            "description": "缺省 entities，保持实体建模规则；dfd 允许处理过程、数据存储作为独立端点。"
+          },
+          "show_numbers": {
+            "type": "boolean",
+            "default": true,
+            "description": "画布自动编号前缀可见性，不改变编号登记。"
+          },
+          "asset_generation": {
+            "type": "string",
+            "enum": [
+              "automatic",
+              "catalog"
+            ],
+            "description": "默认 automatic：保存图同步派生资产。catalog：维护导入或人工资产清单，不自动生成重复资产。 写入省略此字段时保留当前模式。"
           }
         },
         "title": "Architecture",
@@ -3209,7 +3890,9 @@
                 "availability",
                 "authenticity",
                 "authorization",
-                "non_repudiation"
+                "non_repudiation",
+                "freshness",
+                "privacy"
               ],
               "type": "string"
             },
@@ -3227,6 +3910,28 @@
             ],
             "default": null,
             "title": "Reference"
+          },
+          "source_code": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "asset_type": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "group": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "function_refs": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
           }
         },
         "required": [
@@ -3286,6 +3991,21 @@
             ],
             "default": null,
             "title": "Reference"
+          },
+          "source_code": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "actor": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "vector": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "potential": {
+            "$ref": "#/components/schemas/AttackPotential"
           }
         },
         "required": [
@@ -3395,7 +4115,9 @@
               "availability",
               "authenticity",
               "authorization",
-              "non_repudiation"
+              "non_repudiation",
+              "freshness",
+              "privacy"
             ],
             "title": "Property",
             "type": "string"
@@ -3430,6 +4152,61 @@
             "maxItems": 50,
             "title": "References",
             "type": "array"
+          },
+          "source_code": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "asset_ids": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "damage_ids": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "properties": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 8,
+            "items": {
+              "type": "string",
+              "enum": [
+                "confidentiality",
+                "integrity",
+                "availability",
+                "authenticity",
+                "authorization",
+                "non_repudiation",
+                "freshness",
+                "privacy"
+              ]
+            }
+          },
+          "stride": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "cause": {
+            "type": "string",
+            "maxLength": 10000
+          },
+          "cal": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4
           }
         },
         "required": [
@@ -3516,6 +4293,53 @@
             "maxLength": 8000,
             "title": "Residual Rationale",
             "type": "string"
+          },
+          "controls": {
+            "type": "string",
+            "maxLength": 10000
+          },
+          "acceptance": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "acceptance_rationale": {
+            "type": "string",
+            "maxLength": 10000
+          },
+          "customer_confirmation": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "confirmed_at": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "declarant": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "goal_ids": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "cal": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4
+          },
+          "residual_status": {
+            "type": "string",
+            "enum": [
+              "target",
+              "validated"
+            ],
+            "description": "target 表示设计目标；validated 需要全部关联需求具有有效通过证据。"
           }
         },
         "required": [
@@ -3583,6 +4407,45 @@
             ],
             "default": null,
             "title": "Reference"
+          },
+          "source_code": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "scenario_ids": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "goal_ids": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "customer_refs": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "cal": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4
           }
         },
         "required": [
@@ -3687,7 +4550,8 @@
             "enum": [
               "maximum",
               "weighted_mean",
-              "coefficient_sum"
+              "coefficient_sum",
+              "coefficient_bands"
             ],
             "default": "maximum"
           },
@@ -3748,6 +4612,44 @@
           },
           "impact_coefficients": {
             "$ref": "#/components/schemas/ImpactCoefficients"
+          },
+          "impact_scale": {
+            "type": "array",
+            "minItems": 4,
+            "maxItems": 4,
+            "items": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1000000
+            },
+            "description": "严格递增。"
+          },
+          "impact_thresholds": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 3,
+            "items": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 400000000
+            },
+            "description": "严格递增。"
+          },
+          "attack_potential_thresholds": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 3,
+            "items": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500
+            },
+            "description": "严格递增。"
+          },
+          "severe_impact_floor": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 3
           }
         },
         "required": [
@@ -3757,7 +4659,7 @@
         ],
         "title": "Method",
         "type": "object",
-        "description": "影响0–3、可行性1–4、风险1–5。maximum取四维最高值且要求全部完整；weighted_mean按正权重归一并向上取整，零权重维度不参与、可缺评分，总权重须>0。场景取各路径最高风险；残余风险使用同算法。缺省扩展字段由运行时补默认值，不改写旧摘要。方法改动触发决策复核，冻结基线不变。 系数模式 coefficient_sum：SFOP总分=Σ(各维0..3×系数)，不归一不取整；只允许product，风险分值=总分×可行性，无+1。评估返回原始impact与score；残余impact接受小数，不能超过3×系数和。",
+        "description": "影响0–3、可行性1–4、风险1–5。maximum取四维最高值且要求全部完整；weighted_mean按正权重归一并向上取整，零权重维度不参与、可缺评分，总权重须>0。场景取各路径最高风险；残余风险使用同算法。缺省扩展字段由运行时补默认值，不改写旧摘要。方法改动触发决策复核，冻结基线不变。 系数模式 coefficient_sum：SFOP总分=Σ(各维0..3×系数)，不归一不取整；只允许product，风险分值=总分×可行性，无+1。评估返回原始impact与score；残余impact接受小数，不能超过3×系数和。 coefficient_bands：0..3 索引映射 impact_scale 后乘系数求和，按 impact_thresholds 下限分档；任一维为严重时最低 severe_impact_floor。仅用矩阵。五因子 AP 求和按 attack_potential_thresholds 下限把可行性从4逐级降至1。",
         "allOf": [
           {
             "if": {
@@ -3788,6 +4690,30 @@
                     "minimum": 1,
                     "maximum": 15
                   }
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "impact_aggregation": {
+                  "const": "coefficient_bands"
+                }
+              },
+              "required": [
+                "impact_aggregation"
+              ]
+            },
+            "then": {
+              "required": [
+                "impact_scale",
+                "impact_thresholds",
+                "risk_calculation"
+              ],
+              "properties": {
+                "risk_calculation": {
+                  "const": "matrix"
                 }
               }
             }
@@ -3881,7 +4807,9 @@
                 "availability",
                 "authenticity",
                 "authorization",
-                "non_repudiation"
+                "non_repudiation",
+                "freshness",
+                "privacy"
               ],
               "type": "string"
             },
@@ -3899,6 +4827,28 @@
             ],
             "default": null,
             "title": "Reference"
+          },
+          "source_code": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "asset_type": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "group": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "function_refs": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
           }
         },
         "required": [
@@ -3928,7 +4878,9 @@
               "availability",
               "authenticity",
               "authorization",
-              "non_repudiation"
+              "non_repudiation",
+              "freshness",
+              "privacy"
             ],
             "title": "Property",
             "type": "string"
@@ -3963,6 +4915,61 @@
             "maxItems": 50,
             "title": "References",
             "type": "array"
+          },
+          "source_code": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "asset_ids": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "damage_ids": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "properties": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 8,
+            "items": {
+              "type": "string",
+              "enum": [
+                "confidentiality",
+                "integrity",
+                "availability",
+                "authenticity",
+                "authorization",
+                "non_repudiation",
+                "freshness",
+                "privacy"
+              ]
+            }
+          },
+          "stride": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "cause": {
+            "type": "string",
+            "maxLength": 10000
+          },
+          "cal": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4
           }
         },
         "required": [
@@ -4019,6 +5026,45 @@
             ],
             "default": null,
             "title": "Reference"
+          },
+          "source_code": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "scenario_ids": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "goal_ids": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "customer_refs": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "cal": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4
           }
         },
         "required": [
@@ -4145,6 +5191,53 @@
             "maxLength": 8000,
             "title": "Residual Rationale",
             "type": "string"
+          },
+          "controls": {
+            "type": "string",
+            "maxLength": 10000
+          },
+          "acceptance": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "acceptance_rationale": {
+            "type": "string",
+            "maxLength": 10000
+          },
+          "customer_confirmation": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "confirmed_at": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "declarant": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "goal_ids": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "cal": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4
+          },
+          "residual_status": {
+            "type": "string",
+            "enum": [
+              "target",
+              "validated"
+            ],
+            "description": "target 表示设计目标；validated 需要全部关联需求具有有效通过证据。"
           }
         },
         "required": [
@@ -4216,6 +5309,9 @@
           "asset_sync": {
             "$ref": "#/components/schemas/AssetSyncSummary",
             "description": "Present when saving architecture; committed atomically and included in idempotency replay."
+          },
+          "import_summary": {
+            "$ref": "#/components/schemas/TaraImportSummary"
           }
         },
         "required": [
@@ -4311,7 +5407,9 @@
                 "availability",
                 "authenticity",
                 "authorization",
-                "non_repudiation"
+                "non_repudiation",
+                "freshness",
+                "privacy"
               ],
               "type": "string"
             },
@@ -4332,6 +5430,28 @@
           },
           "architecture_source": {
             "$ref": "#/components/schemas/ArchitectureAssetSource"
+          },
+          "source_code": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "asset_type": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "group": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "function_refs": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
           }
         },
         "required": [
@@ -4365,7 +5485,9 @@
               "availability",
               "authenticity",
               "authorization",
-              "non_repudiation"
+              "non_repudiation",
+              "freshness",
+              "privacy"
             ],
             "title": "Property",
             "type": "string"
@@ -4400,6 +5522,61 @@
             "maxItems": 50,
             "title": "References",
             "type": "array"
+          },
+          "source_code": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "asset_ids": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "damage_ids": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "properties": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 8,
+            "items": {
+              "type": "string",
+              "enum": [
+                "confidentiality",
+                "integrity",
+                "availability",
+                "authenticity",
+                "authorization",
+                "non_repudiation",
+                "freshness",
+                "privacy"
+              ]
+            }
+          },
+          "stride": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "cause": {
+            "type": "string",
+            "maxLength": 10000
+          },
+          "cal": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4
           }
         },
         "required": [
@@ -4460,6 +5637,45 @@
             ],
             "default": null,
             "title": "Reference"
+          },
+          "source_code": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "scenario_ids": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "goal_ids": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "customer_refs": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "cal": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4
           }
         },
         "required": [
@@ -4510,7 +5726,8 @@
             "type": "string"
           },
           "requirement_hash": {
-            "type": "string"
+            "type": "string",
+            "description": "普通需求为需求摘要；扩展 TARA 需求还包含关联目标和评估上下文，依据变化使旧验证失效。"
           },
           "recorded_at": {
             "type": "string",
@@ -4609,6 +5826,58 @@
           "decided_at": {
             "type": "string",
             "format": "date-time"
+          },
+          "controls": {
+            "type": "string",
+            "maxLength": 10000
+          },
+          "acceptance": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "acceptance_rationale": {
+            "type": "string",
+            "maxLength": 10000
+          },
+          "customer_confirmation": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "confirmed_at": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "declarant": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "goal_ids": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "cal": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4
+          },
+          "residual_status": {
+            "type": "string",
+            "enum": [
+              "target",
+              "validated"
+            ],
+            "description": "target 表示设计目标；validated 需要全部关联需求具有有效通过证据。"
+          },
+          "goal_hash": {
+            "type": "string",
+            "readOnly": true,
+            "description": "关联目标批准时的摘要；目标改变后需重新评审。"
           }
         },
         "required": [
@@ -4747,6 +6016,21 @@
           },
           "numbering_state": {
             "$ref": "#/components/schemas/NumberingState"
+          },
+          "damage_scenarios": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DamageScenarioRecord"
+            }
+          },
+          "security_goals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SecurityGoalRecord"
+            }
+          },
+          "tara_import": {
+            "$ref": "#/components/schemas/TaraImport"
           }
         },
         "required": [
@@ -5374,7 +6658,9 @@
                 "availability",
                 "authenticity",
                 "authorization",
-                "non_repudiation"
+                "non_repudiation",
+                "freshness",
+                "privacy"
               ],
               "type": "string"
             },
@@ -5392,6 +6678,28 @@
             ],
             "default": null,
             "title": "Reference"
+          },
+          "source_code": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "asset_type": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "group": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "function_refs": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
           }
         },
         "required": [
@@ -5425,7 +6733,9 @@
               "availability",
               "authenticity",
               "authorization",
-              "non_repudiation"
+              "non_repudiation",
+              "freshness",
+              "privacy"
             ],
             "title": "Property",
             "type": "string"
@@ -5460,6 +6770,61 @@
             "maxItems": 50,
             "title": "References",
             "type": "array"
+          },
+          "source_code": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "asset_ids": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "damage_ids": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "properties": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 8,
+            "items": {
+              "type": "string",
+              "enum": [
+                "confidentiality",
+                "integrity",
+                "availability",
+                "authenticity",
+                "authorization",
+                "non_repudiation",
+                "freshness",
+                "privacy"
+              ]
+            }
+          },
+          "stride": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "cause": {
+            "type": "string",
+            "maxLength": 10000
+          },
+          "cal": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4
           }
         },
         "required": [
@@ -5520,6 +6885,45 @@
             ],
             "default": null,
             "title": "Reference"
+          },
+          "source_code": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "scenario_ids": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "goal_ids": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "customer_refs": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "cal": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4
           }
         },
         "required": [
@@ -5641,7 +7045,7 @@
           },
           "security_properties": {
             "type": "array",
-            "maxItems": 6,
+            "maxItems": 8,
             "items": {
               "type": "string",
               "enum": [
@@ -5650,7 +7054,9 @@
                 "availability",
                 "authenticity",
                 "authorization",
-                "non_repudiation"
+                "non_repudiation",
+                "freshness",
+                "privacy"
               ]
             },
             "default": [],
@@ -5851,7 +7257,9 @@
                 "availability",
                 "authenticity",
                 "authorization",
-                "non_repudiation"
+                "non_repudiation",
+                "freshness",
+                "privacy"
               ],
               "type": "string"
             },
@@ -6130,6 +7538,750 @@
           }
         },
         "description": "服务端只读序号登记，按类型和内部 ID 索引，保留已删除记录的序号。path 键为 UTF-8 场景 ID 字节长度 + 冒号 + 场景 ID + 路径 ID。缺省历史快照按记录顺序只读投影。"
+      },
+      "AttackPotential": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "elapsed_time": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "expertise": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "knowledge": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "opportunity": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "equipment": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "elapsed_time",
+          "expertise",
+          "knowledge",
+          "opportunity",
+          "equipment"
+        ]
+      },
+      "AssetLink": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "asset_id": {
+            "type": "string"
+          },
+          "node_ids": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 200,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        },
+        "required": [
+          "asset_id",
+          "node_ids"
+        ]
+      },
+      "DamageScenario": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "source_code": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "id": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 10000,
+            "minLength": 1
+          },
+          "consequence": {
+            "type": "string",
+            "maxLength": 10000
+          },
+          "asset_ids": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "function_refs": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "properties": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 8,
+            "items": {
+              "type": "string",
+              "enum": [
+                "confidentiality",
+                "integrity",
+                "availability",
+                "authenticity",
+                "authorization",
+                "non_repudiation",
+                "freshness",
+                "privacy"
+              ]
+            }
+          },
+          "impact": {
+            "$ref": "#/components/schemas/Impact"
+          }
+        },
+        "required": [
+          "description",
+          "asset_ids",
+          "properties",
+          "impact"
+        ]
+      },
+      "DamageScenarioCreate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "source_code": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 10000,
+            "minLength": 1
+          },
+          "consequence": {
+            "type": "string",
+            "maxLength": 10000
+          },
+          "asset_ids": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "function_refs": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "properties": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 8,
+            "items": {
+              "type": "string",
+              "enum": [
+                "confidentiality",
+                "integrity",
+                "availability",
+                "authenticity",
+                "authorization",
+                "non_repudiation",
+                "freshness",
+                "privacy"
+              ]
+            }
+          },
+          "impact": {
+            "$ref": "#/components/schemas/Impact"
+          }
+        },
+        "required": [
+          "description",
+          "asset_ids",
+          "properties",
+          "impact"
+        ]
+      },
+      "DamageScenarioRecord": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "source_code": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "id": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 10000,
+            "minLength": 1
+          },
+          "consequence": {
+            "type": "string",
+            "maxLength": 10000
+          },
+          "asset_ids": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "function_refs": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "properties": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 8,
+            "items": {
+              "type": "string",
+              "enum": [
+                "confidentiality",
+                "integrity",
+                "availability",
+                "authenticity",
+                "authorization",
+                "non_repudiation",
+                "freshness",
+                "privacy"
+              ]
+            }
+          },
+          "impact": {
+            "$ref": "#/components/schemas/Impact"
+          }
+        },
+        "required": [
+          "description",
+          "asset_ids",
+          "properties",
+          "impact",
+          "id"
+        ]
+      },
+      "DamageScenarioUpdate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "source_code": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "id": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 10000,
+            "minLength": 1
+          },
+          "consequence": {
+            "type": "string",
+            "maxLength": 10000
+          },
+          "asset_ids": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "function_refs": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "properties": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 8,
+            "items": {
+              "type": "string",
+              "enum": [
+                "confidentiality",
+                "integrity",
+                "availability",
+                "authenticity",
+                "authorization",
+                "non_repudiation",
+                "freshness",
+                "privacy"
+              ]
+            }
+          },
+          "impact": {
+            "$ref": "#/components/schemas/Impact"
+          }
+        },
+        "required": [
+          "description",
+          "asset_ids",
+          "properties",
+          "impact"
+        ]
+      },
+      "SecurityGoal": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "source_code": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "id": {
+            "type": "string"
+          },
+          "statement": {
+            "type": "string",
+            "maxLength": 10000,
+            "minLength": 1
+          },
+          "scenario_ids": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "cal": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4
+          },
+          "theme": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "statement",
+          "scenario_ids",
+          "cal"
+        ]
+      },
+      "SecurityGoalCreate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "source_code": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "statement": {
+            "type": "string",
+            "maxLength": 10000,
+            "minLength": 1
+          },
+          "scenario_ids": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "cal": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4
+          },
+          "theme": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "statement",
+          "scenario_ids",
+          "cal"
+        ]
+      },
+      "SecurityGoalRecord": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "source_code": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "id": {
+            "type": "string"
+          },
+          "statement": {
+            "type": "string",
+            "maxLength": 10000,
+            "minLength": 1
+          },
+          "scenario_ids": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "cal": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4
+          },
+          "theme": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "statement",
+          "scenario_ids",
+          "cal",
+          "id"
+        ]
+      },
+      "SecurityGoalUpdate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "source_code": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "id": {
+            "type": "string"
+          },
+          "statement": {
+            "type": "string",
+            "maxLength": 10000,
+            "minLength": 1
+          },
+          "scenario_ids": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "cal": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4
+          },
+          "theme": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "statement",
+          "scenario_ids",
+          "cal"
+        ]
+      },
+      "TaraImportInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "filename": {
+            "type": "string",
+            "maxLength": 200,
+            "pattern": "^[^/\\\\]+\\.xlsx$"
+          },
+          "content_base64": {
+            "type": "string",
+            "contentEncoding": "base64",
+            "description": "XLSX 原始字节，最大 1,400,000 字节。"
+          },
+          "asset_links": {
+            "type": "array",
+            "maxItems": 500,
+            "items": {
+              "$ref": "#/components/schemas/AssetLink"
+            }
+          }
+        },
+        "required": [
+          "filename",
+          "content_base64"
+        ]
+      },
+      "TaraImportSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "sheets": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 20000
+          },
+          "cells": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 20000
+          },
+          "assets": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 20000
+          },
+          "damages": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 20000
+          },
+          "scenarios": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 20000
+          },
+          "paths": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 20000
+          },
+          "goals": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 20000
+          },
+          "requirements": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 20000
+          },
+          "id": {
+            "type": "string",
+            "maxLength": 10000
+          },
+          "filename": {
+            "type": "string",
+            "maxLength": 10000
+          },
+          "sha256": {
+            "type": "string",
+            "maxLength": 10000
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 10000
+          },
+          "method": {
+            "$ref": "#/components/schemas/Method"
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "filename",
+          "sha256",
+          "sheets",
+          "assets",
+          "damages",
+          "scenarios",
+          "paths",
+          "goals",
+          "requirements",
+          "diagnostics"
+        ]
+      },
+      "TaraSourceSheet": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "formulas": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "cell": {
+                  "type": "string",
+                  "maxLength": 10000
+                },
+                "formula": {
+                  "type": "string",
+                  "maxLength": 10000
+                },
+                "cached_value": {
+                  "type": "string",
+                  "maxLength": 10000
+                }
+              },
+              "required": []
+            }
+          },
+          "merges": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "visible": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "rows",
+          "formulas",
+          "merges",
+          "visible"
+        ]
+      },
+      "TaraImport": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 10000
+          },
+          "filename": {
+            "type": "string",
+            "maxLength": 10000
+          },
+          "sha256": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "imported_at": {
+            "type": "string",
+            "maxLength": 10000
+          },
+          "profile": {
+            "const": "tara-chinese-v1"
+          },
+          "sheets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaraSourceSheet"
+            }
+          },
+          "nonempty_cells": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 20000000
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "maxLength": 10000
+                },
+                "mime": {
+                  "type": "string",
+                  "maxLength": 10000
+                },
+                "content_base64": {
+                  "type": "string",
+                  "contentEncoding": "base64"
+                }
+              },
+              "required": []
+            }
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "filename",
+          "sha256",
+          "sheets",
+          "profile"
+        ]
       }
     },
     "parameters": {

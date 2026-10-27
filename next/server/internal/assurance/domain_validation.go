@@ -63,7 +63,7 @@ func dm(model string, required bool) dField {
 func db(value bool, strict bool) dField { return dField{kind: "bool", fallback: value, strict: strict} }
 func dop(field dField) dField           { field.omitAbsent = true; return field }
 
-var dProperties = []string{"confidentiality", "integrity", "availability", "authenticity", "authorization", "non_repudiation"}
+var dProperties = []string{"confidentiality", "integrity", "availability", "authenticity", "authorization", "non_repudiation", "freshness", "privacy"}
 var domainStamp = Stamp
 var domainIdentity = Identity
 
@@ -82,13 +82,13 @@ func dSchema(model string) map[string]dField {
 	case "OperatingSystem":
 		return map[string]dField{"family": ded("unknown", "unknown", "bare_metal", "rtos", "linux", "qnx", "windows", "android", "ios", "macos", "other"), "name": dsd("", 200), "version": dsd("", 200), "architecture": dsd("", 100), "notes": dsd("", 4000)}
 	case "Communication":
-		return map[string]dField{"medium": ded("unspecified", "unspecified", "wired", "wireless", "logical"), "technology": dsd("", 200), "range": ded("unspecified", "unspecified", "near_field", "local", "wide_area"), "purpose": dsd("", 4000), "security_properties": dl(de(dProperties...), 0, 6, false)}
+		return map[string]dField{"medium": ded("unspecified", "unspecified", "wired", "wireless", "logical"), "technology": dsd("", 200), "range": ded("unspecified", "unspecified", "near_field", "local", "wide_area"), "purpose": dsd("", 4000), "security_properties": dl(de(dProperties...), 0, 8, false)}
 	case "EntityAttribute":
 		return map[string]dField{"name": ds(1, 200), "value": dsd("", 4000)}
 	case "EntityChild":
 		return map[string]dField{"id": ds(1, 80), "name": ds(1, 200), "kind": de("software", "store"), "description": dsd("", 4000), "reference": dsn()}
 	case "Node":
-		return map[string]dField{"id": ds(1, 80), "name": ds(1, 200), "kind": ded("entity", "entity", "process", "external", "store", "boundary"), "entityType": ded(nil, "ecu", "external", "service", "device", "application", "cloud", "actor"), "children": dl(dm("EntityChild", true), 0, 200, false), "attributes": dl(dm("EntityAttribute", true), 0, 100, false), "x": dn("float", -10000, 10000, false), "y": dn("float", -10000, 10000, false), "width": dnd("float", 180, 60, 3000, false), "height": dnd("float", 80, 40, 3000, false), "description": dsd("", 4000), "reference": dsn(), "operating_system": dop(dm("OperatingSystem", true))}
+		return map[string]dField{"id": ds(1, 80), "name": ds(1, 200), "kind": ded("entity", "entity", "process", "external", "store", "boundary", "process_step", "data_store"), "entityType": ded(nil, "ecu", "external", "service", "device", "application", "cloud", "actor"), "children": dl(dm("EntityChild", true), 0, 200, false), "attributes": dl(dm("EntityAttribute", true), 0, 100, false), "x": dn("float", -10000, 10000, false), "y": dn("float", -10000, 10000, false), "width": dnd("float", 180, 60, 3000, false), "height": dnd("float", 80, 40, 3000, false), "description": dsd("", 4000), "reference": dsn(), "operating_system": dop(dm("OperatingSystem", true))}
 	case "LabelOffset":
 		return map[string]dField{"x": dnd("float", 0, -10000, 10000, true), "y": dnd("float", 0, -10000, 10000, true)}
 	case "RouteLayout":
@@ -96,9 +96,9 @@ func dSchema(model string) map[string]dField {
 	case "WirelessLayout":
 		return map[string]dField{"source_offset": dop(dm("LabelOffset", true)), "target_offset": dop(dm("LabelOffset", true)), "source_side": dop(de("top", "right", "bottom", "left")), "target_side": dop(de("top", "right", "bottom", "left")), "waypoint": dop(dm("LabelOffset", true))}
 	case "Flow":
-		return map[string]dField{"id": ds(1, 80), "name": ds(1, 200), "source": ds(0, 0), "target": ds(0, 0), "sourceSide": ded(nil, "top", "right", "bottom", "left"), "targetSide": ded(nil, "top", "right", "bottom", "left"), "labelOffset": dm("LabelOffset", false), "protocol": dsd("", 200), "description": dsd("", 4000), "communication": dop(dm("Communication", true)), "wireless_layout": dop(dm("WirelessLayout", true)), "route_layout": dop(dm("RouteLayout", true))}
+		return map[string]dField{"id": ds(1, 80), "name": ds(1, 200), "source": ds(0, 0), "target": ds(0, 0), "sourceSide": ded(nil, "top", "right", "bottom", "left"), "targetSide": ded(nil, "top", "right", "bottom", "left"), "labelOffset": dm("LabelOffset", false), "protocol": dsd("", 200), "description": dsd("", 4000), "communication": dop(dm("Communication", true)), "wireless_layout": dop(dm("WirelessLayout", true)), "route_layout": dop(dm("RouteLayout", true)), "channel_kind": dop(de("data", "energy")), "emphasis": dop(de("normal", "critical", "internal")), "show_label": dop(db(true, true))}
 	case "Architecture":
-		return map[string]dField{"nodes": dl(dm("Node", true), 0, 200, false), "flows": dl(dm("Flow", true), 0, 400, false), "equal_spacing": db(true, false)}
+		return map[string]dField{"nodes": dl(dm("Node", true), 0, 200, false), "flows": dl(dm("Flow", true), 0, 400, false), "equal_spacing": db(true, false), "view_mode": dop(de("entities", "dfd")), "show_numbers": dop(db(true, true))}
 	case "Asset":
 		return map[string]dField{"id": dsn(), "name": ds(1, 200), "description": dsd("", 6000), "node_ids": dl(ds(0, 0), 0, 0, false), "properties": dl(de(dProperties...), 1, 0, true), "reference": dsn()}
 	case "Impact":
@@ -318,7 +318,7 @@ func dValidateField(field dField, value any) (any, error) {
 	return nil, dError("未知校验类型")
 }
 func dValidateModel(model string, payload Object) (Object, error) {
-	schema := dSchema(model)
+	schema := taraSchema(model, dSchema(model))
 	if schema == nil {
 		return nil, dError("未知领域模型")
 	}
@@ -416,7 +416,10 @@ func dValidateModel(model string, payload Object) (Object, error) {
 			if node["kind"] == "store" {
 				return nil, dError("数据存储必须归属实体，请先为旧数据存储选择所属实体")
 			}
-			if node["kind"] == "entity" {
+			if (node["kind"] == "process_step" || node["kind"] == "data_store") && result["view_mode"] != "dfd" {
+				return nil, dError("处理过程和独立数据存储仅用于展开 DFD 模式")
+			}
+			if diagramEndpoint(result, node) {
 				entities[dStr(node["id"])] = true
 			}
 		}
@@ -424,7 +427,7 @@ func dValidateModel(model string, payload Object) (Object, error) {
 			flow := dObj(f)
 			identifiers = append(identifiers, dStr(flow["id"]))
 			if !entities[dStr(flow["source"])] || !entities[dStr(flow["target"])] || flow["source"] == flow["target"] {
-				return nil, dError("数据流只能连接两个不同实体，不能连接内部软件、数据存储或信任边界；旧存储归属形成自环时请先显式调整该数据流")
+				return nil, dError("连接必须使用当前模式的两个不同端点；实体模式连接实体，展开 DFD 可连接处理过程和独立数据存储；信任边界不能作为端点")
 			}
 		}
 		for _, id := range identifiers {
@@ -447,6 +450,19 @@ func dValidateModel(model string, payload Object) (Object, error) {
 	case "Communication":
 		result["security_properties"] = dUnique(dList(result["security_properties"]))
 	case "Method":
+		if result["impact_aggregation"] == "coefficient_bands" {
+			if result["risk_calculation"] != "matrix" || len(dList(result["impact_scale"])) != 4 || len(dList(result["impact_thresholds"])) != 3 {
+				return nil, dError("系数分档法需要四级原始取值、三个影响阈值和风险矩阵")
+			}
+		}
+		for _, key := range []string{"impact_scale", "impact_thresholds", "attack_potential_thresholds"} {
+			values := dList(result[key])
+			for i := 1; i < len(values); i++ {
+				if decimalRat(values[i]).Cmp(decimalRat(values[i-1])) <= 0 {
+					return nil, dError(key + " 必须严格递增")
+				}
+			}
+		}
 		matrix := dList(result["matrix"])
 		for i := 0; i < 4; i++ {
 			for j := 0; j < 4; j++ {
@@ -532,6 +548,12 @@ func dCasefold(s string) string {
 func ValidatePayload(action string, payload Object) (Object, error) {
 	models := map[string]string{"configure-numbering": "Numbering", "define-item": "Item", "replace-architecture": "Architecture", "record-asset": "Asset", "record-scenario": "Scenario", "decide-treatment": "Decision", "specify-requirement": "Requirement", "select-regulations": "RegulationSelection", "record-evidence": "Evidence", "adopt-method": "Method", "seal-baseline": "Baseline", "apply-reference-selection": "ReferenceSelection"}
 	model, ok := models[action]
+	if action == "record-damage" {
+		model, ok = "DamageScenario", true
+	}
+	if action == "record-goal" {
+		model, ok = "SecurityGoal", true
+	}
 	if !ok {
 		return nil, dError("未知领域操作")
 	}

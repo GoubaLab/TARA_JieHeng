@@ -19,6 +19,10 @@ func Risk(scenario, method Object) Object {
 	paths := dList(scenario["paths"])
 	complete := dBool(impact["rationale"]) && len(paths) > 0
 	maxImpact, ratedImpact := aggregateImpact(impact, method)
+	var bandScore any
+	if method["impact_aggregation"] == "coefficient_bands" {
+		maxImpact, bandScore, ratedImpact = bandedImpact(impact, method)
+	}
 	var impactValue any = maxImpact
 	var calculationImpact any = maxImpact
 	coefficient := method["impact_aggregation"] == "coefficient_sum"
@@ -32,7 +36,8 @@ func Risk(scenario, method Object) Object {
 	complete = complete && ratedImpact
 	for _, v := range paths {
 		p := dObj(v)
-		if p["feasibility"] == nil || !dBool(p["rationale"]) || !dBool(p["steps"]) {
+		_, _, rated := pathFeasibility(p, method)
+		if !rated || !dBool(p["rationale"]) || !dBool(p["steps"]) {
 			complete = false
 		}
 	}
@@ -47,9 +52,12 @@ func Risk(scenario, method Object) Object {
 	maxFeasibility, maxRisk := 0, 0
 	for _, v := range paths {
 		p := dObj(v)
-		feasibility := dInt(p["feasibility"])
+		feasibility, potential, _ := pathFeasibility(p, method)
 		level := calculatedRisk(calculationImpact, feasibility, method)
 		pathResult := Object{"id": p["id"], "level": level}
+		if len(dObj(p["potential"])) > 0 {
+			pathResult["attack_potential"], pathResult["feasibility"] = potential, feasibility
+		}
 		if coefficient {
 			_, pathResult["score"] = coefficientRisk(calculationImpact, feasibility, method)
 		}
@@ -62,6 +70,9 @@ func Risk(scenario, method Object) Object {
 		}
 	}
 	result := Object{"impact": impactValue, "feasibility": maxFeasibility, "level": maxRisk, "paths": rated}
+	if bandScore != nil {
+		result["impact_score"] = bandScore
+	}
 	if coefficient {
 		_, result["score"] = coefficientRisk(calculationImpact, maxFeasibility, method)
 	}
@@ -104,7 +115,7 @@ func AssessmentHash(ws, scenario Object) string {
 	}
 	for _, v := range dList(dObj(ws["architecture"])["flows"]) {
 		flow := Clone(dObj(v))
-		for _, key := range []string{"sourceSide", "targetSide", "labelOffset", "wireless_layout", "route_layout"} {
+		for _, key := range []string{"sourceSide", "targetSide", "labelOffset", "wireless_layout", "route_layout", "emphasis", "show_label"} {
 			delete(flow, key)
 		}
 		if value, present := flow["communication"]; present {
@@ -123,7 +134,18 @@ func AssessmentHash(ws, scenario Object) string {
 	if item["domain"] == "automotive" {
 		delete(item, "domain")
 	}
-	return Digest([]any{scenario, semanticMethod(dObj(ws["method"])), item, asset, Object{"nodes": nodes, "flows": flows}})
+	inputs := []any{scenario, semanticMethod(dObj(ws["method"])), item, asset, Object{"nodes": nodes, "flows": flows}}
+	if len(dList(scenario["asset_ids"])) > 0 {
+		linked := []any{}
+		for _, id := range scenarioAssets(scenario) {
+			a, _ := dFind(dList(ws["assets"]), id)
+			a = Clone(a)
+			delete(a, "architecture_source")
+			linked = append(linked, a)
+		}
+		inputs = append(inputs, linked)
+	}
+	return Digest(inputs)
 }
 func Review(ws Object) Object {
 	issues := []any{}
@@ -163,7 +185,7 @@ func Review(ws Object) Object {
 			found := false
 			for _, raw := range scenarios {
 				s := dObj(raw)
-				if s["asset_id"] == asset["id"] && s["property"] == property {
+				if dHas(scenarioAssets(s), asset["id"]) && dHas(scenarioProperties(s), property) {
 					found = true
 					break
 				}
@@ -190,7 +212,7 @@ func Review(ws Object) Object {
 		var latestID any
 		if latest != nil {
 			latestID = latest["id"]
-			if latest["requirement_hash"] == Digest(requirement) {
+			if latest["requirement_hash"] == requirementEvidenceHash(ws, requirement) {
 				status = dStr(latest["result"])
 			} else {
 				status = "stale"
@@ -217,7 +239,11 @@ func Review(ws Object) Object {
 				break
 			}
 		}
-		stale := decision != nil && decision["assessment_hash"] != AssessmentHash(ws, s)
+		stale := decision != nil && (decision["assessment_hash"] != AssessmentHash(ws, s) || goalDecisionStale(ws, decision))
+		residualStatus := decision["residual_status"]
+		if residualStatus == "validated" && !scenarioVerified(ws, s["id"]) {
+			residualStatus = "target"
+		}
 		var residual any
 		var residualScore any
 		if result["level"] == nil {
@@ -228,6 +254,12 @@ func Review(ws Object) Object {
 		} else if stale {
 			issue("treatment", "评估依据已变化，需要重新确认处置决策", s["id"])
 		} else {
+			if residualStatus == "target" {
+				issue("verification", "残余风险为设计目标，尚未完成控制验证与接受确认", s["id"])
+			}
+			if !dBool(decision["owner"]) {
+				issue("treatment", "处置责任人尚未填写", s["id"])
+			}
 			if decision["residual_impact"] == nil || decision["residual_feasibility"] == nil || !dBool(decision["residual_rationale"]) {
 				issue("treatment", "尚未独立评估残余风险并记录依据", s["id"])
 			} else {
@@ -240,7 +272,7 @@ func Review(ws Object) Object {
 			if decision["treatment"] == "reduce" {
 				hasRequirement := false
 				for _, raw := range dList(ws["requirements"]) {
-					if dObj(raw)["scenario_id"] == s["id"] {
+					if dHas(requirementScenarios(dObj(raw)), s["id"]) {
 						hasRequirement = true
 						break
 					}
@@ -256,6 +288,9 @@ func Review(ws Object) Object {
 		evaluation["scenario_id"] = s["id"]
 		evaluation["decision_stale"] = stale
 		evaluation["residual"] = residual
+		if decision != nil && decision["residual_status"] != nil {
+			evaluation["residual_status"] = residualStatus
+		}
 		if dObj(ws["method"])["impact_aggregation"] == "coefficient_sum" {
 			evaluation["residual_score"] = residualScore
 		}
@@ -293,14 +328,25 @@ func dUpsert(ws Object, collection string, value Object, prefix string) (string,
 }
 func Apply(original Object, action string, payload Object) (Object, string, error) {
 	ws := Clone(original)
+	preserveGoalSnapshots(ws)
 	if action != "seal-baseline" {
 		ensureRecordNumbers(ws)
 	}
 	entityID := dStr(ws["id"])
 	var err error
 	fail := func(message string) (Object, string, error) { return nil, "", dError(message) }
-	if action == "replace-architecture" {
+	if action == "import-tara" {
+		if err := applyTaraImport(ws, payload); err != nil {
+			return nil, "", err
+		}
+		entityID = dStr(dObj(ws["tara_import"])["id"])
+	} else if action == "replace-architecture" {
 		payload = Clone(payload)
+		if _, present := payload["asset_generation"]; !present {
+			if mode, ok := dObj(ws["architecture"])["asset_generation"]; ok {
+				payload["asset_generation"] = mode
+			}
+		}
 		stores, parents := map[string]bool{}, map[string]any{}
 		for _, v := range dList(dObj(ws["architecture"])["nodes"]) {
 			node := dObj(v)
@@ -335,7 +381,7 @@ func Apply(original Object, action string, payload Object) (Object, string, erro
 		ids := map[string]bool{}
 		for _, v := range dList(graph["nodes"]) {
 			node := dObj(v)
-			if node["kind"] == "entity" {
+			if diagramEndpoint(graph, node) {
 				ids[dStr(node["id"])] = true
 			}
 		}
@@ -360,6 +406,7 @@ func Apply(original Object, action string, payload Object) (Object, string, erro
 	} else if action == "apply-reference-selection" {
 		return nil, "", ErrReferenceDataUnavailable
 	} else {
+		payload = preserveTaraFields(ws, action, payload)
 		value, e := ValidatePayload(action, payload)
 		if e != nil {
 			return nil, "", e
@@ -367,11 +414,15 @@ func Apply(original Object, action string, payload Object) (Object, string, erro
 		switch action {
 		case "define-item":
 			ws["item"] = value
+		case "record-damage":
+			entityID, err = dUpsert(ws, "damage_scenarios", value, "damage")
+		case "record-goal":
+			entityID, err = dUpsert(ws, "security_goals", value, "goal")
 		case "record-asset":
 			ids := map[string]bool{}
 			for _, v := range dList(dObj(ws["architecture"])["nodes"]) {
 				node := dObj(v)
-				if node["kind"] == "entity" || node["kind"] == "process" || node["kind"] == "external" {
+				if diagramEndpoint(dObj(ws["architecture"]), node) || node["kind"] == "process" || node["kind"] == "external" {
 					ids[dStr(node["id"])] = true
 				}
 			}
@@ -430,7 +481,15 @@ func Apply(original Object, action string, payload Object) (Object, string, erro
 				}
 				value["residual_impact"] = normalized
 			}
+
+			if value["residual_status"] == "validated" && !scenarioVerified(ws, scenario["id"]) {
+				return fail("请先完成全部关联需求在当前目标与评估依据下的有效验证")
+			}
+
 			value["assessment_hash"] = AssessmentHash(ws, scenario)
+			if len(dList(value["goal_ids"])) > 0 {
+				value["goal_hash"] = linkedGoalsHash(ws, dList(value["goal_ids"]))
+			}
 			value["decided_at"] = domainStamp()
 			decisions := []any{}
 			for _, d := range dList(ws["decisions"]) {
@@ -458,7 +517,7 @@ func Apply(original Object, action string, payload Object) (Object, string, erro
 			if !dBool(requirement["allocation"]) || !dBool(requirement["verification"]) {
 				return fail("请先补全需求草稿的分配对象和验证方法")
 			}
-			value["requirement_hash"] = Digest(requirement)
+			value["requirement_hash"] = requirementEvidenceHash(ws, requirement)
 			value["recorded_at"] = domainStamp()
 			entityID, err = dUpsert(ws, "evidence", value, "evidence")
 		case "configure-numbering":
@@ -478,6 +537,11 @@ func Apply(original Object, action string, payload Object) (Object, string, erro
 			entityID = dStr(value["id"])
 		}
 		if err != nil {
+			return nil, "", err
+		}
+	}
+	if hasTaraLinks(ws) {
+		if err := refreshTaraLinks(ws); err != nil {
 			return nil, "", err
 		}
 	}

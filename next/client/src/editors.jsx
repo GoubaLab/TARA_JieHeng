@@ -1,3 +1,4 @@
+import { TaraFields, AttackPotentialFields } from "./TaraFields.jsx";
 import React, { useState, useEffect, useRef } from "react";
 import {
   Drawer,
@@ -174,7 +175,17 @@ export function EntityEditor({ editor, onClose }) {
     [error, setError] = useState("");
   const kind = editor?.kind;
   const configuredMethod = effectiveMethod(ws?.method);
-  const gradeOptions = levelOptions(configuredMethod.impact_levels);
+  const gradeOptions = levelOptions(configuredMethod.impact_levels).map(
+    (o, i) => ({
+      ...o,
+      label:
+        configuredMethod.impact_aggregation === "coefficient_bands" &&
+        configuredMethod.impact_scale
+          ? `${configuredMethod.impact_scale[i]} · ${configuredMethod.impact_levels[i].label}`
+          : o.label,
+    }),
+  );
+  const damageIds = Form.useWatch("damage_ids", form);
   const feasibilityOptions = levelOptions(
     configuredMethod.feasibility_levels,
     1,
@@ -251,6 +262,15 @@ export function EntityEditor({ editor, onClose }) {
           "residual_impact",
           "residual_feasibility",
           "residual_rationale",
+          "controls",
+          "goal_ids",
+          "cal",
+          "acceptance",
+          "acceptance_rationale",
+          "customer_confirmation",
+          "confirmed_at",
+          "declarant",
+          "residual_status",
         ],
       );
     if (kind === "requirement")
@@ -330,6 +350,10 @@ export function EntityEditor({ editor, onClose }) {
             "name",
             "description",
             "node_ids",
+            "source_code",
+            "asset_type",
+            "group",
+            "function_refs",
             "properties",
             "reference",
           ]),
@@ -346,6 +370,13 @@ export function EntityEditor({ editor, onClose }) {
             "impact",
             "paths",
             "references",
+            "source_code",
+            "asset_ids",
+            "damage_ids",
+            "properties",
+            "stride",
+            "cause",
+            "cal",
           ]),
           ...(editor.id ? { id: editor.id } : {}),
         };
@@ -368,6 +399,14 @@ export function EntityEditor({ editor, onClose }) {
           rationale: p.rationale || "",
         }));
         payload.references ||= [];
+        if (payload.asset_ids)
+          payload.asset_ids = [
+            ...new Set([...payload.asset_ids, payload.asset_id]),
+          ];
+        if (payload.properties)
+          payload.properties = [
+            ...new Set([...payload.properties, payload.property]),
+          ];
       }
       if (kind === "decision")
         payload = {
@@ -381,9 +420,18 @@ export function EntityEditor({ editor, onClose }) {
             "residual_impact",
             "residual_feasibility",
             "residual_rationale",
+            "controls",
+            "goal_ids",
+            "cal",
+            "acceptance",
+            "acceptance_rationale",
+            "customer_confirmation",
+            "confirmed_at",
+            "declarant",
+            "residual_status",
           ]),
-          goal: values.treatment === "reduce" ? values.goal || "" : "",
-          claim: values.treatment === "reduce" ? "" : values.claim || "",
+          goal: values.goal || "",
+          claim: values.claim || "",
           residual_impact: values.residual_impact ?? null,
           residual_feasibility: values.residual_feasibility ?? null,
         };
@@ -395,10 +443,19 @@ export function EntityEditor({ editor, onClose }) {
             "allocation",
             "verification",
             "standard_refs",
+            "source_code",
+            "scenario_ids",
+            "goal_ids",
+            "cal",
+            "customer_refs",
             "reference",
           ]),
           ...(editor.id ? { id: editor.id } : {}),
         };
+      if (kind === "requirement" && payload.scenario_ids)
+        payload.scenario_ids = [
+          ...new Set([...payload.scenario_ids, payload.scenario_id]),
+        ];
       await save(commands[kind], payload);
       message.success(
         kind === "baseline"
@@ -526,6 +583,7 @@ export function EntityEditor({ editor, onClose }) {
             style={{ display: error ? "block" : "none", marginBottom: 16 }}
           />
           <Form form={form} layout="vertical" requiredMark="optional">
+            <TaraFields kind={kind} ws={ws} />
             {kind === "item" && (
               <>
                 <Form.Item
@@ -715,7 +773,9 @@ export function EntityEditor({ editor, onClose }) {
                           n.kind === "store"
                             ? n.name + "（待归属实体）"
                             : n.name,
-                        disabled: n.kind === "store",
+                        disabled:
+                          n.kind === "store" &&
+                          ws.architecture.view_mode !== "dfd",
                       }))}
                   />
                 </Form.Item>
@@ -772,6 +832,7 @@ export function EntityEditor({ editor, onClose }) {
                 </Row>
                 <Form.Item name="damage" label="损害场景" rules={required}>
                   <TextArea
+                    disabled={!!damageIds?.length}
                     rows={3}
                     maxLength={10000}
                     placeholder="描述对人员、组织、业务或环境造成的具体不利后果"
@@ -786,11 +847,13 @@ export function EntityEditor({ editor, onClose }) {
                 </Form.Item>
                 <Divider>影响评估</Divider>
                 <Paragraph type="secondary">
-                  {configuredMethod.impact_aggregation === "coefficient_sum"
-                    ? "各维度乘对应系数后直接相加，保留原始总分，不归一化。零系数维度可留空。"
-                    : configuredMethod.impact_aggregation === "weighted_mean"
-                      ? "各维度按设置的权重计算，结果向上取整；权重为 0 的维度可留空。"
-                      : "四个维度独立判定并取最高影响。暂时无法确认时留空，系统不会生成最终风险值。"}
+                  {configuredMethod.impact_aggregation === "coefficient_bands"
+                    ? "按原始取值乘系数求和，再按项目阈值定影响等级；关联损害场景时采用最高影响。"
+                    : configuredMethod.impact_aggregation === "coefficient_sum"
+                      ? "各维度乘对应系数后直接相加，保留原始总分，不归一化。零系数维度可留空。"
+                      : configuredMethod.impact_aggregation === "weighted_mean"
+                        ? "各维度按设置的权重计算，结果向上取整；权重为 0 的维度可留空。"
+                        : "四个维度独立判定并取最高影响。暂时无法确认时留空，系统不会生成最终风险值。"}
                 </Paragraph>
                 <Row gutter={12}>
                   {dimensionKeys
@@ -817,6 +880,7 @@ export function EntityEditor({ editor, onClose }) {
                             allowClear
                             placeholder="待评估"
                             options={gradeOptions}
+                            disabled={!!damageIds?.length}
                           />
                         </Form.Item>
                       </Col>
@@ -842,6 +906,7 @@ export function EntityEditor({ editor, onClose }) {
                 />
                 <Form.Item name={["impact", "rationale"]} label="影响判定依据">
                   <TextArea
+                    disabled={!!damageIds?.length}
                     rows={3}
                     maxLength={6000}
                     placeholder="说明四维评级的依据、使用情景和证据"
@@ -918,6 +983,13 @@ export function EntityEditor({ editor, onClose }) {
                               >
                                 <TextArea rows={4} maxLength={10000} />
                               </Form.Item>
+                              <AttackPotentialFields
+                                field={field}
+                                form={form}
+                                configured={
+                                  !!configuredMethod.attack_potential_thresholds
+                                }
+                              />
                               <Form.Item
                                 name={[field.name, "feasibility"]}
                                 label="攻击可行性"
@@ -1443,6 +1515,9 @@ export function FlowEditor({ config, onClose }) {
       form.resetFields();
       form.setFieldsValue({
         ...pick(config.value, ["name", "protocol", "description"]),
+        channel_kind: config.value.channel_kind || "data",
+        emphasis: config.value.emphasis || "normal",
+        show_label: config.value.show_label !== false,
         communication: {
           ...blankCommunication(),
           ...config.value.communication,
@@ -1460,6 +1535,14 @@ export function FlowEditor({ config, onClose }) {
       );
       if (communication === undefined) delete values.communication;
       else values.communication = communication;
+      for (const [key, fallback] of [
+        ["channel_kind", "data"],
+        ["emphasis", "normal"],
+        ["show_label", true],
+      ]) {
+        if (values[key] === fallback && !Object.hasOwn(config.value, key))
+          delete values[key];
+      }
       config.done(values);
       onClose();
     } catch (e) {
@@ -1478,6 +1561,32 @@ export function FlowEditor({ config, onClose }) {
     >
       {error && <Alert type="error" title={error} className="section-card" />}
       <Form form={form} layout="vertical">
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item name="channel_kind" label="连接类别">
+              <Select
+                options={[
+                  { value: "data", label: "数据流" },
+                  { value: "energy", label: "电能流（不生成数据资产）" },
+                ]}
+              />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item name="emphasis" label="图中标识">
+              <Select
+                options={[
+                  { value: "normal", label: "一般连接" },
+                  { value: "critical", label: "安全关键流（红色）" },
+                  { value: "internal", label: "内部数据流（灰色）" },
+                ]}
+              />
+            </Form.Item>
+          </Col>
+        </Row>
+        <Form.Item name="show_label" valuePropName="checked">
+          <Checkbox>在画布显示连接名称</Checkbox>
+        </Form.Item>
         <Form.Item name="name" label="数据流名称" rules={required}>
           <Input maxLength={200} />
         </Form.Item>

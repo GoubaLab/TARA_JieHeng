@@ -108,6 +108,7 @@ function MethodSettings() {
   const watched = Form.useWatch([], { form, preserve: true });
   const method = effectiveMethod({ ...ws.method, ...watched });
   const coefficient = method.impact_aggregation === "coefficient_sum";
+  const banded = method.impact_aggregation === "coefficient_bands";
   const [sampleImpact, setSampleImpact] = useState(5.2);
   const [sampleFeasibility, setSampleFeasibility] = useState(2);
   useEffect(() => {
@@ -199,6 +200,21 @@ function MethodSettings() {
                         >
                           <Select
                             onChange={(v) => {
+                              if (v === "coefficient_bands")
+                                form.setFieldsValue({
+                                  risk_calculation: "matrix",
+                                  impact_scale: method.impact_scale || [
+                                    0, 10, 100, 1000,
+                                  ],
+                                  impact_thresholds:
+                                    method.impact_thresholds || [20, 100, 1000],
+                                  severe_impact_floor:
+                                    method.severe_impact_floor ?? 2,
+                                  attack_potential_thresholds:
+                                    method.attack_potential_thresholds || [
+                                      10, 14, 20,
+                                    ],
+                                });
                               if (v === "coefficient_sum")
                                 form.setFieldValue(
                                   "risk_calculation",
@@ -206,6 +222,10 @@ function MethodSettings() {
                                 );
                             }}
                             options={[
+                              {
+                                value: "coefficient_bands",
+                                label: "原始取值 × 系数 → 影响分档 → 风险矩阵",
+                              },
                               {
                                 value: "maximum",
                                 label: "最高维度（保守评估）",
@@ -222,9 +242,10 @@ function MethodSettings() {
                           />
                         </Form.Item>
                         <Paragraph type="secondary">
-                          四维分别评为
+                          默认四维分别评为
                           0–3。最高值法取最大值；加权平均法归一化并向上取整；系数法直接求和，保留小数、不归一化。权重或系数为
-                          0 的维度可留空。
+                          0
+                          的维度可留空。原始取值分档法使用下方独立量表，四维均需评定。
                         </Paragraph>
                         {dimensionKeys.map((key) => (
                           <Row gutter={16} key={key}>
@@ -240,12 +261,12 @@ function MethodSettings() {
                             <Col span={10}>
                               <Form.Item
                                 name={[
-                                  coefficient
+                                  coefficient || banded
                                     ? "impact_coefficients"
                                     : "impact_weights",
                                   key,
                                 ]}
-                                label={`维度 ${dimensionCodes[key]} · ${coefficient ? "乘数系数" : "相对权重"}`}
+                                label={`维度 ${dimensionCodes[key]} · ${coefficient || banded ? "乘数系数" : "相对权重"}`}
                                 rules={[
                                   {
                                     required: true,
@@ -259,8 +280,10 @@ function MethodSettings() {
                                 <InputNumber
                                   min={0}
                                   max={100}
-                                  precision={coefficient ? undefined : 0}
-                                  step={coefficient ? 0.1 : 1}
+                                  precision={
+                                    coefficient || banded ? undefined : 0
+                                  }
+                                  step={coefficient || banded ? 0.1 : 1}
                                   disabled={
                                     method.impact_aggregation === "maximum"
                                   }
@@ -285,6 +308,54 @@ function MethodSettings() {
                             description={`总分范围 0–${coefficientMaximum(method) ?? "待填写"}。风险分值 = SFOP总分 × 可行性；总分不加1、不归一化。`}
                           />
                         )}
+                        {banded && (
+                          <Card
+                            size="small"
+                            title="原始量表与分档阈值"
+                            className="section-card"
+                          >
+                            <Row gutter={12}>
+                              {[0, 1, 2, 3].map((i) => (
+                                <Col span={6} key={i}>
+                                  <Form.Item
+                                    name={["impact_scale", i]}
+                                    label={`等级 ${i} 原始值`}
+                                    rules={[{ required: true }]}
+                                  >
+                                    <InputNumber min={0} max={1000000} />
+                                  </Form.Item>
+                                </Col>
+                              ))}
+                            </Row>
+                            <Row gutter={12}>
+                              {[0, 1, 2].map((i) => (
+                                <Col span={8} key={i}>
+                                  <Form.Item
+                                    name={["impact_thresholds", i]}
+                                    label={`进入等级 ${i + 1} 的下限`}
+                                    rules={[{ required: true }]}
+                                  >
+                                    <InputNumber min={0} />
+                                  </Form.Item>
+                                </Col>
+                              ))}
+                            </Row>
+                            <Form.Item
+                              name="severe_impact_floor"
+                              label="任一维度严重时的最低综合等级"
+                            >
+                              <Select
+                                options={method.impact_levels.map(
+                                  (v, value) => ({ value, label: v.label }),
+                                )}
+                              />
+                            </Form.Item>
+                            <Text type="secondary">
+                              SFOP
+                              原始值乘对应系数求和，按以上下限分档后查风险矩阵。边界值归入较高等级。
+                            </Text>
+                          </Card>
+                        )}
                         <Levels
                           field="impact_levels"
                           rows={method.impact_levels}
@@ -303,6 +374,35 @@ function MethodSettings() {
                           可行性由评估人员依据攻击条件和证据选择 1–4
                           级；数值越高代表越容易实现攻击。可在这里维护组织的分级准则。
                         </Paragraph>
+                        {method.attack_potential_thresholds && (
+                          <Card
+                            size="small"
+                            title="五因子攻击潜力分档"
+                            className="section-card"
+                          >
+                            <Row gutter={12}>
+                              {[0, 1, 2].map((i) => (
+                                <Col span={8} key={i}>
+                                  <Form.Item
+                                    name={["attack_potential_thresholds", i]}
+                                    label={`进入${["中", "低", "极低"][i]}可行性的 AP 下限`}
+                                    rules={[{ required: true }]}
+                                  >
+                                    <InputNumber
+                                      min={1}
+                                      max={500}
+                                      precision={0}
+                                    />
+                                  </Form.Item>
+                                </Col>
+                              ))}
+                            </Row>
+                            <Text type="secondary">
+                              AP = ET + Ex + KoI + WoO + Eq；AP
+                              越高，攻击越困难。
+                            </Text>
+                          </Card>
+                        )}
                         <Levels
                           field="feasibility_levels"
                           rows={method.feasibility_levels}
@@ -327,6 +427,7 @@ function MethodSettings() {
                               },
                               {
                                 value: "product",
+                                disabled: banded,
                                 label: "影响 × 可行性（阈值分级）",
                               },
                             ]}
@@ -416,8 +517,10 @@ function MethodSettings() {
                                   <InputNumber
                                     min={coefficient ? 0 : 1}
                                     max={coefficient ? 4800 : 15}
-                                    precision={coefficient ? undefined : 0}
-                                    step={coefficient ? 0.1 : 1}
+                                    precision={
+                                      coefficient || banded ? undefined : 0
+                                    }
+                                    step={coefficient || banded ? 0.1 : 1}
                                     style={{ width: "100%" }}
                                   />
                                 </Form.Item>
@@ -451,9 +554,11 @@ function MethodSettings() {
                 <Text strong>
                   {coefficient
                     ? "系数直接求和 · 保留小数"
-                    : method.impact_aggregation === "weighted_mean"
-                      ? "加权平均 → 向上取整"
-                      : "取四维影响最高值"}
+                    : banded
+                      ? "原始取值 × 系数 → 影响分档"
+                      : method.impact_aggregation === "weighted_mean"
+                        ? "加权平均 → 向上取整"
+                        : "取四维影响最高值"}
                 </Text>
                 <br />
                 <Text type="secondary">

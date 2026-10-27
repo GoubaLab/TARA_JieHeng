@@ -15,6 +15,9 @@ test.afterEach(()=>{globalThis.fetch=originalFetch;});
 test('resource mutations carry version and idempotency headers, without a command envelope',async()=>{
   const calls=capture();
   const cases=[
+    ['import-tara',{filename:'synthetic.xlsx',content_base64:'UEs='},'POST','tara-imports'],
+    ['record-damage',{},'POST','damage-scenarios'],['record-damage',{id:'DS-001'},'PUT','damage-scenarios/DS-001'],
+    ['record-goal',{},'POST','security-goals'],['record-goal',{id:'CSG-01'},'PUT','security-goals/CSG-01'],
     ['define-item',{},'PUT','item'],['replace-architecture',{},'PUT','architecture'],
     ['record-asset',{name:'资产'},'POST','assets'],['record-asset',{id:'asset_1',name:'资产'},'PUT','assets/asset_1'],
     ['record-scenario',{title:'场景'},'POST','scenarios'],['record-scenario',{id:'scenario_1'},'PUT','scenarios/scenario_1'],

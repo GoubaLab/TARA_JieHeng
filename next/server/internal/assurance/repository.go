@@ -305,7 +305,11 @@ func (r *Repository) Change(ctx context.Context, key string, expected int64, req
 	if _, err = tx.ExecContext(ctx, "UPDATE workspaces SET body=? WHERE id=?", body, key); err != nil {
 		return nil, false, err
 	}
-	if err = repoEvent(ctx, tx, next, action, Object{"payload": effective, "entity_id": entityID}); err != nil {
+	eventPayload := effective
+	if action == "import-tara" {
+		eventPayload = taraSummary(next)
+	}
+	if err = repoEvent(ctx, tx, next, action, Object{"payload": eventPayload, "entity_id": entityID}); err != nil {
 		return nil, false, err
 	}
 	if action == "seal-baseline" {
@@ -320,6 +324,9 @@ func (r *Repository) Change(ctx context.Context, key string, expected int64, req
 	result := Object{"workspace_id": key, "revision": next["revision"], "entity_id": entityID}
 	if action == "replace-architecture" {
 		result["asset_sync"] = architectureAssetSummary(before, next)
+	}
+	if action == "import-tara" {
+		result["import_summary"] = taraSummary(next)
 	}
 	receipt, err := repoBody(result)
 	if err != nil {
