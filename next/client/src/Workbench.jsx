@@ -1327,11 +1327,26 @@ function Assessment() {
                   dataSource={s.paths}
                   columns={[
                     numberColumn(ws, "path", s.id),
-                    { title: "攻击路径", dataIndex: "name" },
+                    {
+                      title: "攻击路径",
+                      dataIndex: "name",
+                      render: (v, p) => (
+                        <>
+                          <div>{v}</div>
+                          {p.source_code?.startsWith("TPL:") && (
+                            <Tag title={p.source_code}>预置模板</Tag>
+                          )}
+                        </>
+                      ),
+                    },
                     {
                       title: "步骤与前提",
                       dataIndex: "steps",
-                      render: (v) => v || "待补充",
+                      render: (v) => (
+                        <div style={{ whiteSpace: "pre-wrap" }}>
+                          {v || "待补充"}
+                        </div>
+                      ),
                     },
                     {
                       title: "可行性",

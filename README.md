@@ -17,6 +17,7 @@
 | 企业模型 | 四种协议、用途模型、加密凭据、显式备用链、健康与用量、无密钥配置交换 |
 | 辅助分析 | 图片转原生 DFD、全流程草案、质量复核；来源追溯、人工采用、可恢复 |
 | 自动分析 | 8 条原创确定性规则、命中理由与前提、人工采用、去重和还原点，无需模型 |
+| 攻击路径 | 原创预置模板、按资产查看匹配线索、批量加入可编辑草稿；保留模板版本与项目路径编号 |
 | 企业知识 | 独立整理的 8 个公开漏洞案例、版本化待复核导入、CISA KEV 增量收集工具；语义和关键词检索 |
 | 内网交付 | 账号角色、项目成员、确定性交付检查、还原点与独立备份恢复 |
 | 开发接口 | 版本化资源 API、OpenAPI、并发修订检查、幂等写入和统一错误格式 |
@@ -48,6 +49,10 @@
 不依赖模型的规则分析，审阅后加入待评估工作产品。
 
 ![自动分析](next/docs/screenshots/automation-center.jpg)
+
+按资产条件筛选原创攻击路径模板，补充项目事实后继续评级；已添加模板会标记并避免重复。
+
+![攻击路径预置](next/docs/screenshots/attack-path-presets.jpg)
 
 ## 从源码运行
 
@@ -91,6 +96,7 @@ python3 next/tools/test_public_release.py
 前端布线测试读取构建产物，请先完成前端构建。Go 测试使用临时数据库和原创合成工作簿/法规数据，不依赖私有报告或法规全文。GitHub Actions 执行后端、前端和公开源码范围检查。
 
 - [产品调研与实施次序](next/PRODUCT_RESEARCH.md)
+- [攻击路径模板](next/ATTACK_PATH_TEMPLATES.md)
 - [确定性自动分析](next/AUTOMATION.md) · [公开知识积累](next/PUBLIC_KNOWLEDGE.md)
 - [功能和开发说明](next/README.md)
 - [领域与模块](next/ARCHITECTURE.md)

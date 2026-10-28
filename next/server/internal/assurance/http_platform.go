@@ -14,6 +14,7 @@ func (s *HTTPServer) platformRoutes() {
 		method, path string
 		fn           endpoint
 	}{
+		{"GET", "attack-path-templates", s.attackPathTemplates}, {"GET", "workspaces/{workspace_id}/attack-path-templates", s.workspaceAttackPathTemplates},
 		{"GET", "model-providers", s.providers}, {"POST", "model-providers", s.saveProvider}, {"GET", "model-providers/export", s.exportProviders}, {"POST", "model-provider-imports", s.importProviders}, {"PUT", "model-providers/{resource_id}", s.saveProvider}, {"POST", "model-providers/{resource_id}/model-discoveries", s.discoverModels}, {"POST", "model-providers/{resource_id}/connection-tests", s.testProvider},
 		{"GET", "prompt-templates", s.prompts}, {"POST", "prompt-templates", s.savePrompt}, {"PUT", "prompt-templates/{resource_id}", s.savePrompt},
 		{"GET", "knowledge-documents", s.knowledgeDocuments}, {"POST", "knowledge-documents", s.saveKnowledge}, {"GET", "knowledge-documents/{resource_id}", s.knowledgeDocument}, {"PUT", "knowledge-documents/{resource_id}", s.saveKnowledge}, {"POST", "knowledge-searches", s.knowledgeSearch},

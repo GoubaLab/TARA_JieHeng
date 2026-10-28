@@ -1,3 +1,5 @@
+import AttackPathTemplatePicker from "./AttackPathTemplatePicker.jsx";
+import { appendTemplatePaths } from "./attack-path-templates.js";
 import { TaraFields, AttackPotentialFields } from "./TaraFields.jsx";
 import React, { useState, useEffect, useRef } from "react";
 import {
@@ -192,6 +194,9 @@ export function EntityEditor({ editor, onClose }) {
   );
   const initialValues = useRef("");
   const [pathOpen, setPathOpen] = useState([]);
+  const [pathTemplatesOpen, setPathTemplatesOpen] = useState(false);
+  const pathValues = Form.useWatch("paths", form);
+  const pathProperty = Form.useWatch("property", form);
   const assetId = Form.useWatch("asset_id", form);
   const treatment = Form.useWatch("treatment", form);
   const scenarioId = Form.useWatch("scenario_id", form);
@@ -303,6 +308,7 @@ export function EntityEditor({ editor, onClose }) {
     form.setFieldsValue(value);
     initialValues.current = JSON.stringify(form.getFieldsValue(true));
     setPathOpen([]);
+    setPathTemplatesOpen(false);
     let active = true;
     const refs = [
       ...new Set(
@@ -966,6 +972,31 @@ export function EntityEditor({ editor, onClose }) {
                                 <Input />
                               </Form.Item>
                               <Form.Item
+                                name={[field.name, "source_code"]}
+                                hidden
+                              >
+                                <Input />
+                              </Form.Item>
+                              {form
+                                .getFieldValue([
+                                  "paths",
+                                  field.name,
+                                  "source_code",
+                                ])
+                                ?.startsWith("TPL:") && (
+                                <Paragraph type="secondary">
+                                  来源模板：
+                                  {form
+                                    .getFieldValue([
+                                      "paths",
+                                      field.name,
+                                      "source_code",
+                                    ])
+                                    .slice(4)}{" "}
+                                  · 已复制为项目路径，可继续编辑
+                                </Paragraph>
+                              )}
+                              <Form.Item
                                 name={[field.name, "reference"]}
                                 hidden
                               >
@@ -1011,7 +1042,7 @@ export function EntityEditor({ editor, onClose }) {
                           ),
                         }))}
                       />
-                      <Space style={{ marginTop: 12 }}>
+                      <Space wrap style={{ marginTop: 12 }}>
                         <Button
                           icon={<PlusOutlined />}
                           onClick={() => add(blankPath())}
@@ -1019,24 +1050,11 @@ export function EntityEditor({ editor, onClose }) {
                           增加攻击路径
                         </Button>
                         <Button
-                          disabled={!catalog?.categories.length}
-                          onClick={() =>
-                            setPicker({
-                              category: "techniques",
-                              multiple: true,
-                              onSelect: (rows) =>
-                                rows.forEach((r) =>
-                                  add({
-                                    ...blankPath(),
-                                    name: r.title,
-                                    steps: r.description || "",
-                                    reference: r.key,
-                                  }),
-                                ),
-                            })
-                          }
+                          icon={<DatabaseOutlined />}
+                          onClick={() => setPathTemplatesOpen(true)}
+                          disabled={fields.length >= 100}
                         >
-                          从参考资料选用
+                          从预置模板添加
                         </Button>
                       </Space>
                     </>
@@ -1313,6 +1331,34 @@ export function EntityEditor({ editor, onClose }) {
               </>
             )}
           </Form>
+          {kind === "scenario" && (
+            <AttackPathTemplatePicker
+              open={pathTemplatesOpen}
+              onClose={() => setPathTemplatesOpen(false)}
+              workspace={ws}
+              assetId={assetId}
+              property={pathProperty}
+              existingPaths={pathValues || form.getFieldValue("paths") || []}
+              onSelect={(templates) => {
+                const previous = form.getFieldValue("paths") || [];
+                const result = appendTemplatePaths(previous, templates);
+                form.setFieldValue("paths", result.paths);
+                setPathOpen((current) => [
+                  ...new Set([
+                    ...current,
+                    ...Array.from(
+                      { length: result.paths.length - previous.length },
+                      (_, i) => String(previous.length + i),
+                    ),
+                  ]),
+                ]);
+                setPathTemplatesOpen(false);
+                message.success(
+                  `已添加 ${result.added} 条路径草稿，保存风险场景后生效`,
+                );
+              }}
+            />
+          )}
         </>
       )}
     </Drawer>

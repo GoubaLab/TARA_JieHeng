@@ -2,7 +2,7 @@
   "openapi": "3.1.1",
   "info": {
     "title": "界衡威胁建模工作产品 API",
-    "version": "2.2.0",
+    "version": "2.2.1",
     "description": "通用威胁建模工作产品，汽车领域以 ISO/SAE 21434 为参考流程。Go 本地服务；版本前缀 /api/v1。写入使用 If-Match 与 Idempotency-Key；错误采用 RFC 9457。字段以 snake_case 为主，已有架构 entityType/sourceSide/targetSide/labelOffset 为兼容而保留。应用领域不自动决定法规适用性或评分算法。 企业模式提供会话与项目角色；模型任务为持久异步资源，草案采用需当前修订、幂等键和人工确认。安全方案的空项仅表示本机模式，不表示企业模式可匿名读取。"
   },
   "servers": [
@@ -5030,6 +5030,87 @@
                 "$ref": "#/components/schemas/KnowledgePackInput"
               }
             }
+          }
+        }
+      }
+    },
+    "/attack-path-templates": {
+      "get": {
+        "summary": "读取原创攻击路径模板",
+        "operationId": "listAttackPathTemplates",
+        "tags": [
+          "自动分析"
+        ],
+        "parameters": [],
+        "description": "只读本地目录，不修改项目、不调用模型。推荐是匹配线索，不证明漏洞适用。采用后作为可编辑路径随场景保存；source_code保留模板编号和版本，可行性保持待评估。",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttackPathTemplateCollection"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/attack-path-templates": {
+      "get": {
+        "summary": "读取原创攻击路径模板及项目匹配线索",
+        "operationId": "recommendAttackPathTemplates",
+        "tags": [
+          "自动分析"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "name": "asset_id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "property",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "confidentiality",
+                "integrity",
+                "availability",
+                "authenticity",
+                "authorization",
+                "freshness",
+                "privacy",
+                "non_repudiation"
+              ]
+            }
+          }
+        ],
+        "description": "只读本地目录，不修改项目、不调用模型。推荐是匹配线索，不证明漏洞适用。采用后作为可编辑路径随场景保存；source_code保留模板编号和版本，可行性保持待评估。",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttackPathTemplateCollection"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
           }
         }
       }
@@ -10946,6 +11027,138 @@
         ],
         "additionalProperties": false,
         "description": "entries最多50项；entries为空时review_required必须非空。metadata、review_required各自JSON编码不超过64KB；通知为待人工复核数据，不自动撤下资料。"
+      },
+      "AttackPathTemplate": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "version": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "category": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "entry_point": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "actor": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "objective": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "source_code": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "prerequisites": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 2000
+            }
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 2000
+            }
+          },
+          "controls_to_check": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 2000
+            }
+          },
+          "properties": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 2000
+            }
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 2000
+            }
+          },
+          "match": {
+            "type": "object",
+            "properties": {
+              "score": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "reasons": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 1000
+                }
+              }
+            },
+            "required": [
+              "score",
+              "reasons"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "name",
+          "category",
+          "summary",
+          "entry_point",
+          "actor",
+          "objective",
+          "source_code",
+          "prerequisites",
+          "steps",
+          "controls_to_check",
+          "properties",
+          "tags",
+          "match"
+        ]
+      },
+      "AttackPathTemplateCollection": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttackPathTemplate"
+            }
+          }
+        },
+        "required": [
+          "version",
+          "items"
+        ]
       }
     },
     "parameters": {

@@ -4762,6 +4762,81 @@
       }
     }
   }
+}</pre></details></section><section><h2><code>GET /api/v1/attack-path-templates</code></h2><h3>读取原创攻击路径模板</h3><p>只读本地目录，不修改项目、不调用模型。推荐是匹配线索，不证明漏洞适用。采用后作为可编辑路径随场景保存；source_code保留模板编号和版本，可行性保持待评估。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;读取原创攻击路径模板&quot;,
+  &quot;operationId&quot;: &quot;listAttackPathTemplates&quot;,
+  &quot;tags&quot;: [
+    &quot;自动分析&quot;
+  ],
+  &quot;parameters&quot;: [],
+  &quot;description&quot;: &quot;只读本地目录，不修改项目、不调用模型。推荐是匹配线索，不证明漏洞适用。采用后作为可编辑路径随场景保存；source_code保留模板编号和版本，可行性保持待评估。&quot;,
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/AttackPathTemplateCollection&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/workspaces/{id}/attack-path-templates</code></h2><h3>读取原创攻击路径模板及项目匹配线索</h3><p>只读本地目录，不修改项目、不调用模型。推荐是匹配线索，不证明漏洞适用。采用后作为可编辑路径随场景保存；source_code保留模板编号和版本，可行性保持待评估。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;读取原创攻击路径模板及项目匹配线索&quot;,
+  &quot;operationId&quot;: &quot;recommendAttackPathTemplates&quot;,
+  &quot;tags&quot;: [
+    &quot;自动分析&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;name&quot;: &quot;asset_id&quot;,
+      &quot;in&quot;: &quot;query&quot;,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    {
+      &quot;name&quot;: &quot;property&quot;,
+      &quot;in&quot;: &quot;query&quot;,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;enum&quot;: [
+          &quot;confidentiality&quot;,
+          &quot;integrity&quot;,
+          &quot;availability&quot;,
+          &quot;authenticity&quot;,
+          &quot;authorization&quot;,
+          &quot;freshness&quot;,
+          &quot;privacy&quot;,
+          &quot;non_repudiation&quot;
+        ]
+      }
+    }
+  ],
+  &quot;description&quot;: &quot;只读本地目录，不修改项目、不调用模型。推荐是匹配线索，不证明漏洞适用。采用后作为可编辑路径随场景保存；source_code保留模板编号和版本，可行性保持待评估。&quot;,
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/AttackPathTemplateCollection&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
 }</pre></details></section><section id="schema-Item"><details><summary>Item</summary><pre>{
   &quot;additionalProperties&quot;: false,
   &quot;properties&quot;: {
@@ -10574,4 +10649,134 @@
   ],
   &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;entries最多50项；entries为空时review_required必须非空。metadata、review_required各自JSON编码不超过64KB；通知为待人工复核数据，不自动撤下资料。&quot;
+}</pre></details></section><section id="schema-AttackPathTemplate"><details><summary>AttackPathTemplate</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;id&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;version&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;name&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 500
+    },
+    &quot;category&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;summary&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 2000
+    },
+    &quot;entry_point&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;actor&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 500
+    },
+    &quot;objective&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 2000
+    },
+    &quot;source_code&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;prerequisites&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;maxLength&quot;: 2000
+      }
+    },
+    &quot;steps&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;maxLength&quot;: 2000
+      }
+    },
+    &quot;controls_to_check&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;maxLength&quot;: 2000
+      }
+    },
+    &quot;properties&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;maxLength&quot;: 2000
+      }
+    },
+    &quot;tags&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;maxLength&quot;: 2000
+      }
+    },
+    &quot;match&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;score&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;reasons&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;,
+            &quot;maxLength&quot;: 1000
+          }
+        }
+      },
+      &quot;required&quot;: [
+        &quot;score&quot;,
+        &quot;reasons&quot;
+      ]
+    }
+  },
+  &quot;required&quot;: [
+    &quot;id&quot;,
+    &quot;version&quot;,
+    &quot;name&quot;,
+    &quot;category&quot;,
+    &quot;summary&quot;,
+    &quot;entry_point&quot;,
+    &quot;actor&quot;,
+    &quot;objective&quot;,
+    &quot;source_code&quot;,
+    &quot;prerequisites&quot;,
+    &quot;steps&quot;,
+    &quot;controls_to_check&quot;,
+    &quot;properties&quot;,
+    &quot;tags&quot;,
+    &quot;match&quot;
+  ]
+}</pre></details></section><section id="schema-AttackPathTemplateCollection"><details><summary>AttackPathTemplateCollection</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;version&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;items&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/AttackPathTemplate&quot;
+      }
+    }
+  },
+  &quot;required&quot;: [
+    &quot;version&quot;,
+    &quot;items&quot;
+  ]
 }</pre></details></section></html>

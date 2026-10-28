@@ -207,6 +207,14 @@ func Tables(ws Object, journal []Object, catalog *Catalog) []Object {
 		rows = append(rows, []any{code("scenario", s["id"]), s["title"], assets[libStr(s["asset_id"])]["name"], reportProperties[libStr(s["property"])], s["threat"], reportReferences(s["references"], catalog)})
 	}
 	add("威胁判定", []string{"场景标识", "风险场景", "资产", "安全属性", "威胁场景", "知识引用"}, rows, []int{38, 35, 28, 18, 80, 35}, "")
+	pathTemplateDetails := false
+	for _, scenario := range libRows(ws["scenarios"]) {
+		for _, path := range libRows(scenario["paths"]) {
+			if strings.HasPrefix(libStr(path["source_code"]), "TPL:") {
+				pathTemplateDetails = true
+			}
+		}
+	}
 	rows = [][]any{}
 	for _, s := range libRows(ws["scenarios"]) {
 		ev := evaluations[libStr(s["id"])]
@@ -224,7 +232,11 @@ func Tables(ws Object, journal []Object, catalog *Catalog) []Object {
 			if coefficient {
 				row = append(row, score)
 			}
-			rows = append(rows, append(row, level, p["rationale"], reportReference(p["reference"], catalog)))
+			row = append(row, level, p["rationale"], reportReference(p["reference"], catalog))
+			if pathTemplateDetails {
+				row = append(row, p["source_code"], p["actor"], p["vector"])
+			}
+			rows = append(rows, row)
 		}
 	}
 	riskColumns := []string{"场景标识", "路径标识", "攻击路径", "步骤与前提", "综合影响", "可行性", "风险值", "可行性依据", "来源引用"}
@@ -232,6 +244,10 @@ func Tables(ws Object, journal []Object, catalog *Catalog) []Object {
 	if coefficient {
 		riskColumns = []string{"场景标识", "路径标识", "攻击路径", "步骤与前提", "SFOP总分", "可行性", "风险分值", "风险等级", "可行性依据", "来源引用"}
 		riskWidths = []int{38, 38, 35, 80, 18, 18, 18, 14, 80, 28}
+	}
+	if pathTemplateDetails {
+		riskColumns = append(riskColumns, "路径来源编号 / 版本", "攻击者", "攻击向量")
+		riskWidths = append(riskWidths, 40, 45, 45)
 	}
 	add("风险评估", riskColumns, rows, riskWidths, "")
 	add("附件1 资产分类", []string{"安全属性", "识别提示"}, [][]any{{"机密性", "信息不被未授权主体获取"}, {"完整性", "信息或功能不被未授权修改"}, {"可用性", "授权主体能够在需要时使用"}, {"真实性", "数据或实体来源可确认"}, {"授权", "操作满足权限规则"}, {"不可抵赖性", "行为可关联到对应主体"}}, []int{24, 95}, "")

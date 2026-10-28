@@ -54,6 +54,15 @@ func taraReportTables(ws Object) []Object {
 		rows = append(rows, []any{taraRecordCode(s), s["title"], libJoin(scenarioAssets(s), "、"), taraPropertyNames(scenarioProperties(s)), libJoin(s["damage_ids"], "、"), s["stride"], s["cause"], s["cal"]})
 	}
 	add("威胁完整追溯", []string{"编号", "威胁场景", "全部关联资产", "全部受损属性", "关联损害", "STRIDE", "攻击原因", "CAL"}, rows, "")
+	templateOrigins := false
+	for _, scenario := range libRows(ws["scenarios"]) {
+		for _, path := range libRows(scenario["paths"]) {
+			if strings.HasPrefix(libStr(path["source_code"]), "TPL:") {
+				templateOrigins = true
+			}
+		}
+	}
+	recordCode := RecordCodes(ws)
 	rows = [][]any{}
 	for _, raw := range dList(ws["scenarios"]) {
 		s := dObj(raw)
@@ -65,10 +74,22 @@ func taraReportTables(ws Object) []Object {
 			if len(potential) > 0 {
 				potentialTotal = total
 			}
-			rows = append(rows, []any{taraRecordCode(p), taraRecordCode(s), p["actor"], p["vector"], p["steps"], potential["elapsed_time"], potential["expertise"], potential["knowledge"], potential["opportunity"], potential["equipment"], potentialTotal, reportLevel(method, "feasibility_levels", f, 1)})
+			pathCode := taraRecordCode(p)
+			if strings.HasPrefix(dStr(p["source_code"]), "TPL:") {
+				pathCode = recordCode("path", pathNumberKey(dStr(s["id"]), dStr(p["id"])))
+			}
+			row := []any{pathCode, taraRecordCode(s), p["actor"], p["vector"], p["steps"], potential["elapsed_time"], potential["expertise"], potential["knowledge"], potential["opportunity"], potential["equipment"], potentialTotal, reportLevel(method, "feasibility_levels", f, 1)}
+			if templateOrigins {
+				row = append(row, p["source_code"])
+			}
+			rows = append(rows, row)
 		}
 	}
-	add("攻击潜力工作产品", []string{"AP", "TS", "攻击者", "向量", "步骤", "ET", "Ex", "KoI", "WoO", "Eq", "AP值", "可行性"}, rows, "")
+	pathColumns := []string{"AP", "TS", "攻击者", "向量", "步骤", "ET", "Ex", "KoI", "WoO", "Eq", "AP值", "可行性"}
+	if templateOrigins {
+		pathColumns = append(pathColumns, "路径来源编号 / 版本")
+	}
+	add("攻击潜力工作产品", pathColumns, rows, "")
 	rows = [][]any{}
 	for _, raw := range dList(ws["security_goals"]) {
 		g := dObj(raw)
