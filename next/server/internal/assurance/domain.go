@@ -498,6 +498,15 @@ func Apply(original Object, action string, payload Object) (Object, string, erro
 				}
 			}
 			ws["decisions"] = append(decisions, value)
+			drafts := []any{}
+			for _, raw := range dList(ws["treatment_drafts"]) {
+				if dObj(raw)["scenario_id"] != value["scenario_id"] {
+					drafts = append(drafts, raw)
+				}
+			}
+			if ws["treatment_drafts"] != nil {
+				ws["treatment_drafts"] = drafts
+			}
 			entityID = dStr(value["scenario_id"])
 		case "specify-requirement":
 			if _, e := dFind(dList(ws["scenarios"]), value["scenario_id"]); e != nil {

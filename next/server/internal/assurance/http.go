@@ -42,6 +42,8 @@ type HTTPServer struct {
 	logger     *log.Logger
 	mux        *http.ServeMux
 	static     http.Handler
+	ai         *AIService
+	auth       *EnterpriseAuth
 }
 type endpoint func(http.ResponseWriter, *http.Request) error
 
@@ -49,7 +51,7 @@ func NewHTTPHandler(repo *Repository, catalog *Catalog, root string, logger *log
 	if logger == nil {
 		logger = log.New(io.Discard, "", 0)
 	}
-	s := &HTTPServer{repo, catalog, root, logger, http.NewServeMux(), http.FileServer(http.Dir(filepath.Join(root, "next", "web")))}
+	s := &HTTPServer{repository: repo, catalog: catalog, root: root, logger: logger, mux: http.NewServeMux(), static: http.FileServer(http.Dir(filepath.Join(root, "next", "web"))), ai: NewAIService(repo, catalog)}
 	s.routes()
 	return s
 }
@@ -61,6 +63,8 @@ func (s *HTTPServer) route(pattern string, fn endpoint) {
 	})
 }
 func (s *HTTPServer) routes() {
+	s.platformRoutes()
+	s.authRoutes()
 	for _, v := range []struct {
 		path string
 		fn   endpoint
@@ -152,8 +156,14 @@ func (s *HTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	sw.Header().Set("X-Content-Type-Options", "nosniff")
 	sw.Header().Set("Referrer-Policy", "no-referrer")
 	sw.Header().Set("Cache-Control", "no-store")
-	if e := localRequest(r); e != nil {
-		s.writeError(sw, r, e)
+	var accessError error
+	if s.auth != nil {
+		r, accessError = s.enterpriseRequest(r)
+	} else {
+		accessError = localRequest(r)
+	}
+	if accessError != nil {
+		s.writeError(sw, r, accessError)
 		return
 	}
 	if r.URL.Path == "/service" || strings.HasPrefix(r.URL.Path, "/service/") {

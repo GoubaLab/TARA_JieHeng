@@ -15,7 +15,11 @@ func (s *HTTPServer) health(w http.ResponseWriter, r *http.Request) error {
 	if _, e := httpQuery(r); e != nil {
 		return e
 	}
-	return writeJSON(w, r, 200, Object{"application": "jieheng", "mode": "local", "version": "2.1.0", "backend": "go", "outbound_connections": false, "excel_export": ExcelAvailable()})
+	mode := "local"
+	if s.auth != nil {
+		mode = "enterprise"
+	}
+	return writeJSON(w, r, 200, Object{"application": "jieheng", "mode": mode, "version": "2.2.0", "backend": "go", "outbound_connections": true, "outbound_policy": "configured_models_explicit_requests", "excel_export": ExcelAvailable()})
 }
 func (s *HTTPServer) document(name, media string) endpoint {
 	return func(w http.ResponseWriter, r *http.Request) error {
@@ -42,7 +46,13 @@ func (s *HTTPServer) listWorkspaces(w http.ResponseWriter, r *http.Request) erro
 	if e != nil {
 		return e
 	}
-	items, total, e := s.repository.List(r.Context(), o, l)
+	var items []Object
+	var total int
+	if s.auth != nil && principal(r)["role"] != "admin" {
+		items, total, e = s.repository.listForUser(r.Context(), actorID(r), o, l)
+	} else {
+		items, total, e = s.repository.List(r.Context(), o, l)
+	}
 	if e != nil {
 		return e
 	}
@@ -55,6 +65,9 @@ func (s *HTTPServer) createWorkspace(w http.ResponseWriter, r *http.Request) err
 	key, e := requestKey(r)
 	if e != nil {
 		return e
+	}
+	if s.auth != nil {
+		key = "create_" + Digest(Object{"actor": actorID(r), "key": key})
 	}
 	if len(r.Header.Values("If-Match")) > 0 {
 		return fail(400, "创建不接受版本前提", "创建项目不使用 If-Match")
@@ -95,6 +108,11 @@ func (s *HTTPServer) workspace(w http.ResponseWriter, r *http.Request) error {
 	if e != nil {
 		return e
 	}
+	role, e := s.projectRole(r, r.PathValue("workspace_id"))
+	if e != nil {
+		return e
+	}
+	w.Header().Set("X-Workspace-Role", role)
 	setETag(w, ws)
 	if source := dObj(ws["tara_import"]); source != nil {
 		delete(source, "original_base64")
@@ -217,6 +235,9 @@ func (s *HTTPServer) mutate(action, idField string, createID bool) endpoint {
 		payload, e := readPayload(w, r)
 		if e != nil {
 			return e
+		}
+		if user := principal(r); user != nil && (action == "record-evidence" || action == "seal-baseline") {
+			payload["reviewer"] = user["name"]
 		}
 		if createID {
 			if _, exists := payload["id"]; exists {

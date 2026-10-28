@@ -366,6 +366,32 @@ func Tables(ws Object, journal []Object, catalog *Catalog) []Object {
 		rows = append(rows, []any{key, entry["title"], entry["description"], related, state, source})
 	}
 	add("网络安全标准", []string{"引用编号", "条目 / 版本", "内容", "关联需求", "覆盖状态", "来源与核对说明"}, rows, []int{28, 50, 100, 50, 30, 80}, "")
+	if len(libRows(ws["automation_adoptions"])) > 0 {
+		rows = [][]any{}
+		for _, a := range libRows(ws["automation_adoptions"]) {
+			rows = append(rows, []any{a["id"], a["at"], a["owner"], a["base_revision"], a["rule_version"], libJoin(a["candidate_ids"], "、"), a["plan_hash"], a["checkpoint_id"]})
+		}
+		add("自动化分析追溯", []string{"记录", "采用时间", "责任人", "依据修订", "规则版本", "候选编号", "计划摘要", "还原点"}, rows, []int{30, 26, 20, 12, 30, 65, 70, 30}, "确定性规则生成待评估工作产品；匹配结果不等同于实际漏洞或已完成风险评估。")
+	}
+	if len(libRows(ws["ai_adoptions"])) > 0 {
+		rows = [][]any{}
+		for _, a := range libRows(ws["ai_adoptions"]) {
+			usage := libObj(a["usage"])
+			sources := []string{}
+			for _, source := range libRows(a["sources"]) {
+				sources = append(sources, libStr(source["id"])+" · "+libStr(source["name"])+" · "+libStr(source["edition"])+" · "+libStr(source["source"])+" · "+libStr(source["content_hash"]))
+			}
+			rows = append(rows, []any{a["job_id"], a["at"], a["owner"], a["base_revision"], a["prompt_name"], a["prompt_revision"], usage["model"], libJoin(a["citations"], "、"), strings.Join(sources, "\n"), a["checkpoint_id"]})
+		}
+		add("辅助分析追溯", []string{"任务", "采用时间", "责任人", "依据修订", "提示词", "提示词版本", "模型", "引用片段", "来源及内容摘要哈希", "还原点"}, rows, []int{30, 26, 20, 12, 30, 12, 30, 50, 90, 30}, "AI 草案经平台校验和工作人员采用。采用不代表已完成验证、风险接受或法规符合性确认。")
+	}
+	if len(libRows(ws["treatment_drafts"])) > 0 {
+		rows = [][]any{}
+		for _, d := range libRows(ws["treatment_drafts"]) {
+			rows = append(rows, []any{code("scenario", d["scenario_id"]), reportTreatments[libStr(d["treatment"])], d["rationale"], d["goal"], d["controls"], d["owner"], "待人工确认"})
+		}
+		add("处置待确认建议", []string{"场景", "建议方式", "依据", "目标", "措施", "责任人", "状态"}, rows, []int{20, 15, 70, 70, 70, 25, 20}, "仅供评审的建议，不作为已批准的风险处置或验证记录。")
+	}
 	return append(output, taraReportTables(ws)...)
 }
 

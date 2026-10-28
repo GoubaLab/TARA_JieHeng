@@ -1,3 +1,10 @@
+import ModelSettings from "./ModelSettings.jsx";
+import KnowledgeCenter from "./KnowledgeCenter.jsx";
+import AutomationCenter from "./AutomationCenter.jsx";
+import AIWorkspace from "./AIWorkspace.jsx";
+import QualityCenter from "./QualityCenter.jsx";
+import TeamSettings from "./TeamSettings.jsx";
+import { useAuth } from "./AuthGate.jsx";
 import TaraProducts from "./TaraProducts.jsx";
 import { recordCode, pathNumberKey, buildCodeIndex } from "./numbering.js";
 import React, {
@@ -54,6 +61,7 @@ import {
   ArrowRightOutlined,
   SettingOutlined,
   QuestionCircleOutlined,
+  ThunderboltOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   LinkOutlined,
@@ -101,6 +109,9 @@ const navItems = [
   ["treatment", <SafetyCertificateOutlined />],
   ["verification", <AuditOutlined />],
   ["settings", <SettingOutlined />],
+  ["automation", <ThunderboltOutlined />],
+  ["assistant", <QuestionCircleOutlined />],
+  ["quality", <CheckCircleOutlined />],
 ];
 const stageNames = {
   definition: "相关项定义",
@@ -176,6 +187,7 @@ function StatCards({ items }) {
   );
 }
 export default function Workbench() {
+  const auth = useAuth();
   const { message, modal } = AntApp.useApp();
   const [route, setRoute] = useState(location.hash);
   const [ws, setWs] = useState(null),
@@ -248,6 +260,7 @@ export default function Workbench() {
     return result;
   };
   const openIssue = (issue) => {
+    if (ws?.access_role === "viewer") return navigate(issue.stage, ws.id);
     if (issue.reference) {
       if (ws.assets.some((a) => a.id === issue.reference))
         return setEditor(
@@ -290,7 +303,17 @@ export default function Workbench() {
     reload,
     message,
     modal,
-    setEditor,
+    setEditor: (value) => {
+      if (value && ws?.access_role === "viewer") {
+        message.info("当前项目为只读权限");
+        return;
+      }
+      if (value?.kind === "baseline" && ws?.access_role === "analyst") {
+        message.info("建立基线需要项目评审权限");
+        return;
+      }
+      setEditor(value);
+    },
     setCreateOpen,
     setPicker,
     setRegulationPicker,
@@ -318,11 +341,22 @@ export default function Workbench() {
       type: "group",
       label: "资源目录",
       children: [
-        { key: "library", icon: <DatabaseOutlined />, label: "参考资料" },
+        { key: "knowledge", icon: <DatabaseOutlined />, label: "企业知识" },
+        { key: "library", icon: <DatabaseOutlined />, label: "历史引用说明" },
         { key: "regulations", icon: <AuditOutlined />, label: "法规数据库" },
       ],
     },
   ];
+  menu.push({
+    type: "group",
+    label: "平台管理",
+    children: [
+      { key: "models", icon: <SettingOutlined />, label: "模型服务" },
+      ...(auth.user.role === "admin"
+        ? [{ key: "team", icon: <ProjectOutlined />, label: "账户与权限" }]
+        : []),
+    ],
+  });
   const content =
     loading || (!error && (id ? ws?.id !== id || !review : !catalog)) ? (
       <div className="page-loading">
@@ -339,7 +373,13 @@ export default function Workbench() {
         extra={<Button onClick={reload}>重新加载</Button>}
       />
     ) : !id ? (
-      page === "regulations" ? (
+      page === "models" ? (
+        <ModelSettings />
+      ) : page === "knowledge" ? (
+        <KnowledgeCenter />
+      ) : page === "team" ? (
+        <TeamSettings />
+      ) : page === "regulations" ? (
         <RegulationsView />
       ) : page === "library" ? (
         <Library />
@@ -356,6 +396,12 @@ export default function Workbench() {
         treatment: <Treatment />,
         verification: <Verification />,
         settings: <AssessmentSettings />,
+        automation: <AutomationCenter />,
+        assistant: <AIWorkspace />,
+        quality: <QualityCenter />,
+        models: <ModelSettings />,
+        knowledge: <KnowledgeCenter />,
+        team: <TeamSettings />,
         library: <Library />,
         regulations: <RegulationsView />,
       }[page] || <Overview />
@@ -379,10 +425,16 @@ export default function Workbench() {
                   : domains[ws.item.domain]
                 : "通用威胁建模"}
             </Tag>
-            <Badge status="default" text="本地工作台" />
-            <Tooltip title="单机工作区；角色与多人审批尚未启用">
-              <QuestionCircleOutlined />
-            </Tooltip>
+            <Badge
+              status={auth.mode === "enterprise" ? "processing" : "default"}
+              text={auth.mode === "enterprise" ? "企业工作台" : "本地工作台"}
+            />
+            <Text type="secondary">{auth.user.name}</Text>
+            {auth.mode === "enterprise" && (
+              <Button size="small" onClick={auth.logout}>
+                退出
+              </Button>
+            )}
           </div>
         </Header>
         <Layout>
@@ -1469,7 +1521,21 @@ function Treatment() {
                             <Text type="secondary">{d.owner}</Text>
                           </Space>
                         ) : (
-                          <Tag>待决策</Tag>
+                          <Tag
+                            color={
+                              ws.treatment_drafts?.some(
+                                (v) => v.scenario_id === s.id,
+                              )
+                                ? "blue"
+                                : undefined
+                            }
+                          >
+                            {ws.treatment_drafts?.some(
+                              (v) => v.scenario_id === s.id,
+                            )
+                              ? "已有建议 · 待确认"
+                              : "待决策"}
+                          </Tag>
                         );
                       },
                     },

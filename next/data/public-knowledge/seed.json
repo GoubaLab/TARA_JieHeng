@@ -1,0 +1,175 @@
+{
+  "schema": "jieheng.knowledge-pack/1",
+  "pack_id": "jieheng-public-cases",
+  "version": "2026.10.28",
+  "entries": [
+    {
+      "id": "case.cve-2015-5611",
+      "name": "车载信息娱乐域跨越至 CAN 控制域",
+      "source": "https://github.com/CVEProject/cvelistV5/blob/main/cves/2015/5xxx/CVE-2015-5611.json",
+      "edition": "2026.10.28",
+      "tags": [
+        "汽车",
+        "Uconnect",
+        "蜂窝网络",
+        "CAN",
+        "信任边界"
+      ],
+      "content": "### 已核对事实\n官方 CVE 记录描述：部分 2013–2015 年 FCA 车型使用的 Uconnect 15.26.1 之前版本，在特定蜂窝网络可达条件下，存在经信息娱乐固件与 CAN 总线影响车辆功能的攻击链；记录以 2014 Jeep Cherokee 为演示对象。\n\n### 适用条件（项目审核时逐项确认）\n确认具体车型、Uconnect 软硬件与补丁状态；确认外部网络到信息娱乐服务的实际可达路径，以及该域到 CAN 控制功能的授权边界。\n\n### 不适用或证据不足\n不能因产品有 CAN、蜂窝通信或车机就认定存在该 CVE；其他车型、已修复版本、已阻断的网络路径需单独判断。官方旧记录的 affected 字段不完整，不能据此做全自动版本匹配。\n\n### 建模与防护建议（本项目原创推导）\n在 DFD 中分别标出蜂窝入口、信息娱乐进程、固件更新和控制总线边界；为跨域消息配置最小权限与命令白名单，并验证固件真实性。上述是从历史攻击链推导的设计建议，不是对所有车型的漏洞判定。\n\n### 验证启发（本项目原创推导）\n在隔离台架检查外部服务暴露、固件签名失败行为、信息娱乐域到安全相关报文的权限限制；记录被拒绝的路径和允许的业务路径，不在运行车辆执行扰动测试。\n\n### 证据链接\n- https://github.com/CVEProject/cvelistV5/blob/main/cves/2015/5xxx/CVE-2015-5611.json\n\n本条为待审核案例参考。CVE 关联本身不代表当前产品受影响，也不代替项目损害场景、攻击可行性和风险计算。",
+      "evidence_urls": [
+        "https://github.com/CVEProject/cvelistV5/blob/main/cves/2015/5xxx/CVE-2015-5611.json"
+      ],
+      "cve_ids": [
+        "CVE-2015-5611"
+      ]
+    },
+    {
+      "id": "case.cve-2021-22156",
+      "name": "QNX C 运行库内存分配整数溢出",
+      "source": "https://github.com/CVEProject/cvelistV5/blob/main/cves/2021/22xxx/CVE-2021-22156.json",
+      "edition": "2026.10.28",
+      "tags": [
+        "汽车",
+        "医疗设备",
+        "QNX",
+        "RTOS",
+        "内存安全"
+      ],
+      "content": "### 已核对事实\nBlackBerry 提交的 CVE 记录指出：部分旧版 QNX 的 C 运行库 calloc 存在整数溢出，可能导致拒绝服务或代码执行；记录列出 QNX SDP 6.5.0 SP1 及之前、OS for Medical 1.1 及之前、OS for Safety 1.0.1 及之前。\n\n### 适用条件（项目审核时逐项确认）\n确认设备实际链接的运行库版本与供应商补丁；还需证明不可信输入能控制相关分配参数并到达受影响调用路径，不能仅依据 OS 名称推定可远程利用。\n\n### 不适用或证据不足\n仅使用 QNX 品牌、未部署受影响运行库或有经验证回补的设备，不能直接套用；静态链接副本需要独立核验。\n\n### 建模与防护建议（本项目原创推导）\n将 OS、运行库与应用分层登记为实体内组件；对外部长度参与的分配建立边界检查，对关键服务设置资源上限、故障隔离与可恢复行为。\n\n### 验证启发（本项目原创推导）\n核对 SBOM 与固件中运行库版本；在测试构建中检查尺寸乘法边界、分配失败和服务恢复；供应商声明及补丁证据与测试结果一起留存。\n\n### 证据链接\n- https://github.com/CVEProject/cvelistV5/blob/main/cves/2021/22xxx/CVE-2021-22156.json\n- https://support.blackberry.com/kb/articleDetail?articleNumber=000082334\n\n本条为待审核案例参考。CVE 关联本身不代表当前产品受影响，也不代替项目损害场景、攻击可行性和风险计算。",
+      "evidence_urls": [
+        "https://github.com/CVEProject/cvelistV5/blob/main/cves/2021/22xxx/CVE-2021-22156.json",
+        "https://support.blackberry.com/kb/articleDetail?articleNumber=000082334"
+      ],
+      "cve_ids": [
+        "CVE-2021-22156"
+      ]
+    },
+    {
+      "id": "case.cve-2019-12255",
+      "name": "VxWorks IPnet TCP 处理边界缺陷",
+      "source": "https://www.windriver.com/security/announcements/tcp-ip-network-stack-ipnet-urgent11",
+      "edition": "2026.10.28",
+      "tags": [
+        "工业设备",
+        "嵌入式",
+        "VxWorks",
+        "RTOS",
+        "TCP/IP"
+      ],
+      "content": "### 已核对事实\n官方 CVE 记录将该问题描述为 VxWorks IPnet TCP 处理中的整数下溢及缓冲区溢出。Wind River 将其纳入 URGENT/11，并提供补丁；厂商明确指出并非全部问题都适用于每个受影响产品。\n\n### 适用条件（项目审核时逐项确认）\n确认使用的是受影响 IPnet 实现、具体 RTOS 构建及设备厂商补丁；确认攻击者能够向该 TCP 栈送达报文，结合网络边界判断入口。\n\n### 不适用或证据不足\n不能把所有 VxWorks、所有 RTOS 或所有 TCP 设备视为受影响。URGENT/11 的产品范围不能直接当作本 CVE 的精确版本判定表。\n\n### 建模与防护建议（本项目原创推导）\n把网络栈作为组件登记，分别记录监听服务和底层协议解析入口；采用厂商补丁、网络分区、访问限制与异常恢复。应用鉴权不等于底层协议栈已受保护。\n\n### 验证启发（本项目原创推导）\n核对设备固件与 IPnet 补丁证明；在仿真或隔离测试设备进行协议边界回归，观察异常报文是否影响控制任务和看门狗恢复。\n\n### 证据链接\n- https://www.windriver.com/security/announcements/tcp-ip-network-stack-ipnet-urgent11\n- https://github.com/CVEProject/cvelistV5/blob/main/cves/2019/12xxx/CVE-2019-12255.json\n\n本条为待审核案例参考。CVE 关联本身不代表当前产品受影响，也不代替项目损害场景、攻击可行性和风险计算。",
+      "evidence_urls": [
+        "https://www.windriver.com/security/announcements/tcp-ip-network-stack-ipnet-urgent11",
+        "https://github.com/CVEProject/cvelistV5/blob/main/cves/2019/12xxx/CVE-2019-12255.json"
+      ],
+      "cve_ids": [
+        "CVE-2019-12255"
+      ]
+    },
+    {
+      "id": "case.cve-2020-15782",
+      "name": "工业控制器通信入口绕过内存保护",
+      "source": "https://cert-portal.siemens.com/productcert/html/ssa-434534.html",
+      "edition": "2026.10.28",
+      "tags": [
+        "工业设备",
+        "PLC",
+        "Siemens",
+        "S7",
+        "访问控制"
+      ],
+      "content": "### 已核对事实\nSiemens SSA-434534 说明，部分 S7-1200/S7-1500 系列存在内存保护绕过；能访问 TCP 102 的未认证攻击者可能读写受保护内存。公告按产品列出修复方案，例如 S7-1200 V4.5.0、S7-1500 V2.9.2。\n\n### 适用条件（项目审核时逐项确认）\n匹配具体 CPU 型号、固件及公告适用范围；确认 TCP 102 从哪些区域可达，并核对 S7 通信访问保护是否启用。\n\n### 不适用或证据不足\n型号不匹配、版本已修复或补丁状态不明时不能直接判定；相关软件控制器和派生型号的修复版本不能照搬 CPU 的版本号。\n\n### 建模与防护建议（本项目原创推导）\n在模型中区分工程维护通道与过程业务通道；按厂商建议升级，限制工程端点和网络访问，并评估通信保护配置。权限边界应覆盖控制器内存和控制逻辑。\n\n### 验证启发（本项目原创推导）\n从不同网络区域核验端口访问策略；测试非授权工程站无法建立受限连接，补丁后重新验证合法下载与控制任务可用性，保留固件和配置证据。\n\n### 证据链接\n- https://cert-portal.siemens.com/productcert/html/ssa-434534.html\n- https://github.com/CVEProject/cvelistV5/blob/main/cves/2020/15xxx/CVE-2020-15782.json\n\n本条为待审核案例参考。CVE 关联本身不代表当前产品受影响，也不代替项目损害场景、攻击可行性和风险计算。",
+      "evidence_urls": [
+        "https://cert-portal.siemens.com/productcert/html/ssa-434534.html",
+        "https://github.com/CVEProject/cvelistV5/blob/main/cves/2020/15xxx/CVE-2020-15782.json"
+      ],
+      "cve_ids": [
+        "CVE-2020-15782"
+      ]
+    },
+    {
+      "id": "case.cve-2021-36260",
+      "name": "摄像机 Web 管理入口命令注入",
+      "source": "https://github.com/CVEProject/cvelistV5/blob/main/cves/2021/36xxx/CVE-2021-36260.json",
+      "edition": "2026.10.28",
+      "tags": [
+        "物联网",
+        "摄像机",
+        "Hikvision",
+        "HTTP",
+        "命令注入"
+      ],
+      "content": "### 已核对事实\nHikvision 提交的 CVE 记录指出，部分产品 Web 服务输入验证不足，可能产生命令注入。澳大利亚 ACSC 的通报明确：攻击者需要访问设备 Web 服务，并建议按产品清单更新固件及减少互联网暴露。\n\n### 适用条件（项目审核时逐项确认）\n依据厂商 HSRC-202109-01 清单确认型号、固件；识别 Web 管理入口在互联网、办公网和摄像机网段的实际暴露情况。\n\n### 不适用或证据不足\n不能把所有摄像机、所有海康产品或所有 OEM 设备直接标为受影响；OEM 需核对对应厂商公告。服务未暴露降低相关路径可达性，并不证明固件本身已修复。\n\n### 建模与防护建议（本项目原创推导）\n为管理服务建立独立信任边界，使用专用管理网络、最小权限和固件更新；设计上避免把外部输入拼接为系统命令，严格限定允许的操作与参数。\n\n### 验证启发（本项目原创推导）\n检查真实部署的管理端口及网络策略；在隔离环境验证异常输入被拒绝且不会触发额外系统操作，结合固件证明而非仅凭版本字符串验收。\n\n### 证据链接\n- https://github.com/CVEProject/cvelistV5/blob/main/cves/2021/36xxx/CVE-2021-36260.json\n- https://www.cyber.gov.au/alert/critical-vulnerability-certain-hikvision-products-ip-cameras\n- https://www.hikvision.com/en/support/cybersecurity/security-advisory/security-notification-command-injection-vulnerability-in-some-hikvision-products/\n\n本条为待审核案例参考。CVE 关联本身不代表当前产品受影响，也不代替项目损害场景、攻击可行性和风险计算。",
+      "evidence_urls": [
+        "https://github.com/CVEProject/cvelistV5/blob/main/cves/2021/36xxx/CVE-2021-36260.json",
+        "https://www.cyber.gov.au/alert/critical-vulnerability-certain-hikvision-products-ip-cameras",
+        "https://www.hikvision.com/en/support/cybersecurity/security-advisory/security-notification-command-injection-vulnerability-in-some-hikvision-products/"
+      ],
+      "cve_ids": [
+        "CVE-2021-36260"
+      ]
+    },
+    {
+      "id": "case.cve-2021-44228",
+      "name": "日志处理把不可信数据转为远程查找",
+      "source": "https://logging.apache.org/security.html",
+      "edition": "2026.10.28",
+      "tags": [
+        "互联网",
+        "Java",
+        "Log4j",
+        "供应链",
+        "输入处理"
+      ],
+      "content": "### 已核对事实\nApache 公告说明，特定版本 log4j-core 的 JNDI 查找可把攻击者控制的日志内容带入外部查找并造成代码执行；仅有 log4j-api 而没有 log4j-core 不受此 CVE 影响。后续独立 CVE 还修正了某些初始修复不充分的情形。\n\n### 适用条件（项目审核时逐项确认）\n核验运行时实际装载的 log4j-core、版本分支和配置；追踪用户输入、请求头等是否到达日志参数，并核查相关外联和命名服务路径。\n\n### 不适用或证据不足\n不能把所有 Java 程序、所有日志系统、log4net 或仅使用 log4j-api 的应用认定为受影响；不能把“已装 2.15.0”作为所有 Log4j 问题都已关闭的证据。\n\n### 建模与防护建议（本项目原创推导）\n模型需包含日志处理与后台出站连接；优先升级到受支持且修复相关问题的版本，控制出站目的地，清查打包、嵌套与静态副本。输入过滤只能作为辅助控制。\n\n### 验证启发（本项目原创推导）\n核对 SBOM 和运行时依赖；使用不会执行代码的受控标记测试输入到日志的路径，确认无非预期查找，并回归日志完整性、业务可用性与部署副本一致性。\n\n### 证据链接\n- https://logging.apache.org/security.html\n- https://github.com/CVEProject/cvelistV5/blob/main/cves/2021/44xxx/CVE-2021-44228.json\n\n本条为待审核案例参考。CVE 关联本身不代表当前产品受影响，也不代替项目损害场景、攻击可行性和风险计算。",
+      "evidence_urls": [
+        "https://logging.apache.org/security.html",
+        "https://github.com/CVEProject/cvelistV5/blob/main/cves/2021/44xxx/CVE-2021-44228.json"
+      ],
+      "cve_ids": [
+        "CVE-2021-44228"
+      ]
+    },
+    {
+      "id": "case.cve-2014-0160",
+      "name": "TLS 心跳越界读取泄露进程内存",
+      "source": "https://openssl-library.org/news/secadv/20140407.txt",
+      "edition": "2026.10.28",
+      "tags": [
+        "互联网",
+        "OpenSSL",
+        "TLS",
+        "信息泄露",
+        "密钥"
+      ],
+      "content": "### 已核对事实\nOpenSSL 2014 年公告说明，TLS 心跳处理缺少边界检查，可向相连的客户端或服务端泄露内存；受影响的是指定 1.0.1 和 1.0.2 beta 版本，历史修复包括 1.0.1g。\n\n### 适用条件（项目审核时逐项确认）\n确认实际使用的 TLS 库、构建版本、心跳功能及补丁；识别服务端和主动连接的客户端两个方向，以及进程内是否驻留敏感数据或密钥。\n\n### 不适用或证据不足\n不能因使用 TLS 就认定存在 Heartbleed；其他 TLS 实现、已修复构建或已禁用相关功能的构建需分别核实。历史最低修复版本不代表今天推荐的部署版本。\n\n### 建模与防护建议（本项目原创推导）\n将 TLS 终止点、内存中的秘密和证书生命周期纳入模型；使用受支持的修复版本，评估历史暴露期间是否需要轮换密钥、证书及会话凭据。补丁和泄露后的处置是两个工作项。\n\n### 验证启发（本项目原创推导）\n核验进程实际链接库、受控的心跳边界回归以及重启后版本；验证密钥轮换、旧会话失效与证书更新确实覆盖负载均衡器及后端副本。\n\n### 证据链接\n- https://openssl-library.org/news/secadv/20140407.txt\n- https://github.com/CVEProject/cvelistV5/blob/main/cves/2014/0xxx/CVE-2014-0160.json\n\n本条为待审核案例参考。CVE 关联本身不代表当前产品受影响，也不代替项目损害场景、攻击可行性和风险计算。",
+      "evidence_urls": [
+        "https://openssl-library.org/news/secadv/20140407.txt",
+        "https://github.com/CVEProject/cvelistV5/blob/main/cves/2014/0xxx/CVE-2014-0160.json"
+      ],
+      "cve_ids": [
+        "CVE-2014-0160"
+      ]
+    },
+    {
+      "id": "case.cve-2023-4863",
+      "name": "WebP 图像解析库的堆缓冲区溢出",
+      "source": "https://chromereleases.googleblog.com/2023/09/stable-channel-update-for-desktop_11.html",
+      "edition": "2026.10.28",
+      "tags": [
+        "互联网",
+        "桌面软件",
+        "多媒体",
+        "libwebp",
+        "供应链"
+      ],
+      "content": "### 已核对事实\nGoogle 2023-09-11 发布 Chrome 修复并指出 WebP 堆缓冲区溢出已有在野利用。官方 CVE 记录还列出 libwebp 1.3.2 之前版本，说明应检查组件依赖，不能只检查浏览器。\n\n### 适用条件（项目审核时逐项确认）\n确认应用是否实际使用受影响解码库处理不可信 WebP 图像；区分用户打开图片、自动缩略图、后台转码等入口，并核查供应商回补及运行时副本。\n\n### 不适用或证据不足\n仅安装图片相关软件或使用 WebP 格式不足以判定；未使用受影响库、修复构建或无法到达的解析路径应有相应证据。无须用户操作与否取决于具体应用入口，不能套用浏览器交互条件。\n\n### 建模与防护建议（本项目原创推导）\n把图片上传、预览、转码和缩略图生成作为独立处理节点；更新依赖，隔离解析进程，设置资源与权限限制，建立打包组件到应用发行版的追溯关系。\n\n### 验证启发（本项目原创推导）\n在隔离测试中进行畸形图片回归、模糊测试和内存检测；验证解析失败不会中断主流程，核对服务器、桌面客户端与嵌入副本均完成升级。\n\n### 证据链接\n- https://chromereleases.googleblog.com/2023/09/stable-channel-update-for-desktop_11.html\n- https://github.com/CVEProject/cvelistV5/blob/main/cves/2023/4xxx/CVE-2023-4863.json\n\n本条为待审核案例参考。CVE 关联本身不代表当前产品受影响，也不代替项目损害场景、攻击可行性和风险计算。",
+      "evidence_urls": [
+        "https://chromereleases.googleblog.com/2023/09/stable-channel-update-for-desktop_11.html",
+        "https://github.com/CVEProject/cvelistV5/blob/main/cves/2023/4xxx/CVE-2023-4863.json"
+      ],
+      "cve_ids": [
+        "CVE-2023-4863"
+      ]
+    }
+  ]
+}

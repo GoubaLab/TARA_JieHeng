@@ -34,3 +34,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: python3 next/tools/test_public_release.py
+      - run: python3 next/tools/test_public_knowledge.py

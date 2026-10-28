@@ -137,7 +137,7 @@ func dSchema(model string) map[string]dField {
 	case "ReferenceSelection":
 		return map[string]dField{"asset_id": ds(1, 100), "reference": ds(0, 0), "relationship_keys": dl(ds(0, 0), 1, 100, true), "include_controls": db(true, true)}
 	}
-	return nil
+	return platformModel(model)
 }
 func dTrim(s string) string {
 	return strings.TrimFunc(s, unicode.IsSpace)

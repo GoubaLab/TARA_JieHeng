@@ -2,8 +2,8 @@
   "openapi": "3.1.1",
   "info": {
     "title": "界衡威胁建模工作产品 API",
-    "version": "2.1.0",
-    "description": "通用威胁建模工作产品，汽车领域以 ISO/SAE 21434 为参考流程。Go 本地服务；版本前缀 /api/v1。写入使用 If-Match 与 Idempotency-Key；错误采用 RFC 9457。字段以 snake_case 为主，已有架构 entityType/sourceSide/targetSide/labelOffset 为兼容而保留。应用领域不自动决定法规适用性或评分算法。"
+    "version": "2.2.0",
+    "description": "通用威胁建模工作产品，汽车领域以 ISO/SAE 21434 为参考流程。Go 本地服务；版本前缀 /api/v1。写入使用 If-Match 与 Idempotency-Key；错误采用 RFC 9457。字段以 snake_case 为主，已有架构 entityType/sourceSide/targetSide/labelOffset 为兼容而保留。应用领域不自动决定法规适用性或评分算法。 企业模式提供会话与项目角色；模型任务为持久异步资源，草案采用需当前修订、幂等键和人工确认。安全方案的空项仅表示本机模式，不表示企业模式可匿名读取。"
   },
   "servers": [
     {
@@ -19,6 +19,21 @@
     },
     {
       "name": "服务"
+    },
+    {
+      "name": "模型服务"
+    },
+    {
+      "name": "辅助分析"
+    },
+    {
+      "name": "企业知识"
+    },
+    {
+      "name": "企业身份"
+    },
+    {
+      "name": "交付恢复"
     }
   ],
   "paths": {
@@ -218,6 +233,18 @@
                 "description": "创建的资源地址（仅创建响应）。",
                 "schema": {
                   "type": "string"
+                }
+              },
+              "X-Workspace-Role": {
+                "description": "当前访问者的有效项目角色，不进入工作产品正文。",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "admin",
+                    "reviewer",
+                    "analyst",
+                    "viewer"
+                  ]
                 }
               }
             },
@@ -3342,6 +3369,1670 @@
           }
         }
       }
+    },
+    "/model-providers": {
+      "get": {
+        "summary": "查询模型服务",
+        "operationId": "getModelProviders",
+        "tags": [
+          "模型服务"
+        ],
+        "parameters": [],
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AIProvider"
+                      },
+                      "minItems": 0,
+                      "maxItems": 10000
+                    }
+                  },
+                  "required": [],
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      },
+      "post": {
+        "summary": "创建模型服务",
+        "operationId": "postModelProviders",
+        "tags": [
+          "模型服务"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "description": "",
+        "responses": {
+          "201": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIProvider"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AIProviderInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/model-providers/{resource_id}": {
+      "put": {
+        "summary": "替换模型服务",
+        "operationId": "putModelProvidersResource_Id",
+        "tags": [
+          "模型服务"
+        ],
+        "parameters": [
+          {
+            "name": "resource_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIProvider"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AIProviderInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prompt-templates": {
+      "get": {
+        "summary": "查询辅助分析",
+        "operationId": "getPromptTemplates",
+        "tags": [
+          "辅助分析"
+        ],
+        "parameters": [],
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      },
+                      "minItems": 0,
+                      "maxItems": 10000
+                    }
+                  },
+                  "required": [],
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      },
+      "post": {
+        "summary": "创建辅助分析",
+        "operationId": "postPromptTemplates",
+        "tags": [
+          "辅助分析"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "description": "",
+        "responses": {
+          "201": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AIPromptInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prompt-templates/{resource_id}": {
+      "put": {
+        "summary": "替换辅助分析",
+        "operationId": "putPromptTemplatesResource_Id",
+        "tags": [
+          "辅助分析"
+        ],
+        "parameters": [
+          {
+            "name": "resource_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AIPromptInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/knowledge-documents": {
+      "get": {
+        "summary": "查询企业知识",
+        "operationId": "getKnowledgeDocuments",
+        "tags": [
+          "企业知识"
+        ],
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 100
+            }
+          }
+        ],
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      },
+                      "minItems": 0,
+                      "maxItems": 10000
+                    }
+                  },
+                  "required": [],
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      },
+      "post": {
+        "summary": "创建企业知识",
+        "operationId": "postKnowledgeDocuments",
+        "tags": [
+          "企业知识"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "description": "",
+        "responses": {
+          "201": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KnowledgeDocumentInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/knowledge-documents/{resource_id}": {
+      "put": {
+        "summary": "替换企业知识",
+        "operationId": "putKnowledgeDocumentsResource_Id",
+        "tags": [
+          "企业知识"
+        ],
+        "parameters": [
+          {
+            "name": "resource_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KnowledgeDocumentInput"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "读取资料正文",
+        "operationId": "getKnowledgeDocumentsResource_Id",
+        "tags": [
+          "企业知识"
+        ],
+        "parameters": [
+          {
+            "name": "resource_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/knowledge-searches": {
+      "post": {
+        "summary": "检索范围内知识",
+        "operationId": "postKnowledgeSearches",
+        "tags": [
+          "企业知识"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Client"
+          }
+        ],
+        "description": "关键词检索或选定向量模型混合检索。默认 8 条，禁止跨项目；external 服务须 allow_external=true。",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KnowledgeSearch"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/model-providers/export": {
+      "get": {
+        "summary": "导出无凭据服务配置",
+        "operationId": "getModelProvidersExport",
+        "tags": [
+          "模型服务"
+        ],
+        "parameters": [],
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/model-provider-imports": {
+      "post": {
+        "summary": "导入配置为停用服务",
+        "operationId": "postModelProviderImports",
+        "tags": [
+          "模型服务"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "description": "",
+        "responses": {
+          "201": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProviderImport"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/model-providers/{resource_id}/connection-tests": {
+      "post": {
+        "summary": "合成内容连接测试",
+        "operationId": "postModelProvidersResource_IdConnectionTests",
+        "tags": [
+          "模型服务"
+        ],
+        "parameters": [
+          {
+            "name": "resource_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          }
+        ],
+        "description": "可能消耗服务用量，不重放请求；不发送项目内容。",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "analysis",
+                      "vision",
+                      "embedding"
+                    ]
+                  }
+                },
+                "required": [],
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/model-providers/{resource_id}/model-discoveries": {
+      "post": {
+        "summary": "发现服务模型列表",
+        "operationId": "postModelProvidersResource_IdModelDiscoveries",
+        "tags": [
+          "模型服务"
+        ],
+        "parameters": [
+          {
+            "name": "resource_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          }
+        ],
+        "description": "主动请求所配置地址，不重放请求。",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/platform-events": {
+      "get": {
+        "summary": "最近 200 条平台管理记录",
+        "operationId": "getPlatformEvents",
+        "tags": [
+          "企业身份"
+        ],
+        "parameters": [],
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/auth/session": {
+      "get": {
+        "summary": "查询模式及当前登录身份",
+        "operationId": "getAuthSession",
+        "tags": [
+          "企业身份"
+        ],
+        "parameters": [],
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/auth/sessions": {
+      "post": {
+        "summary": "登录企业工作台",
+        "operationId": "postAuthSessions",
+        "tags": [
+          "企业身份"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Client"
+          }
+        ],
+        "description": "5 次失败限制 15 分钟；Secure/HttpOnly/SameSite=Strict Cookie，8 小时。",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "summary": "注销当前会话",
+        "operationId": "postAuthLogout",
+        "tags": [
+          "企业身份"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Client"
+          }
+        ],
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/enterprise/users": {
+      "get": {
+        "summary": "查询企业账户",
+        "operationId": "getEnterpriseUsers",
+        "tags": [
+          "企业身份"
+        ],
+        "parameters": [],
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      },
+      "post": {
+        "summary": "创建企业账户",
+        "operationId": "postEnterpriseUsers",
+        "tags": [
+          "企业身份"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Client"
+          }
+        ],
+        "description": "仅管理员。账号唯一，创建要求 12–72 字节口令；不提供幂等键重放。",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnterpriseUserInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/enterprise/users/{resource_id}": {
+      "put": {
+        "summary": "条件更新账号并撤销其会话",
+        "operationId": "putEnterpriseUsersResource_Id",
+        "tags": [
+          "企业身份"
+        ],
+        "parameters": [
+          {
+            "name": "resource_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnterpriseUserInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/ai-tasks": {
+      "get": {
+        "summary": "查询最近 100 个任务",
+        "operationId": "getWorkspacesWorkspace_IdAiTasks",
+        "tags": [
+          "辅助分析"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      },
+      "post": {
+        "summary": "创建持久化任务",
+        "operationId": "postWorkspacesWorkspace_IdAiTasks",
+        "tags": [
+          "辅助分析"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "description": "相同幂等键不会重复创建或调用模型。2 个执行槽、队列最多 12；外部服务必须明确允许。",
+        "responses": {
+          "202": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AITask"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AITaskInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/ai-tasks/{resource_id}": {
+      "get": {
+        "summary": "读取任务结果与来源",
+        "operationId": "getWorkspacesWorkspace_IdAiTasksResource_Id",
+        "tags": [
+          "辅助分析"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "resource_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AITask"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/ai-tasks/{resource_id}/cancellations": {
+      "post": {
+        "summary": "取消任务",
+        "operationId": "postWorkspacesWorkspace_IdAiTasksResource_IdCancellations",
+        "tags": [
+          "辅助分析"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "resource_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          }
+        ],
+        "description": "可重复调用，不会触发新模型调用。",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AITask"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/ai-tasks/{resource_id}/adoptions": {
+      "post": {
+        "summary": "审阅后原子采用草案",
+        "operationId": "postWorkspacesWorkspace_IdAiTasksResource_IdAdoptions",
+        "tags": [
+          "辅助分析"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "resource_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "description": "依据修订和来源版本须仍有效；先建立还原点再写入，整个事务只增加一次项目修订。",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AIAdoptionInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/ai-tasks/{resource_id}/retries": {
+      "post": {
+        "summary": "基于当前项目重新分析",
+        "operationId": "postWorkspacesWorkspace_IdAiTasksResource_IdRetries",
+        "tags": [
+          "辅助分析"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "resource_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "description": "使用新幂等键；服务配置变化时拒绝，需重新选择目的地。",
+        "responses": {
+          "202": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AITask"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "instructions": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 12000
+                  }
+                },
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/quality": {
+      "get": {
+        "summary": "确定性交付检查",
+        "operationId": "getWorkspacesWorkspace_IdQuality",
+        "tags": [
+          "交付恢复"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/checkpoints": {
+      "get": {
+        "summary": "查询最新 100 个还原点",
+        "operationId": "getWorkspacesWorkspace_IdCheckpoints",
+        "tags": [
+          "交付恢复"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      },
+      "post": {
+        "summary": "创建项目还原点",
+        "operationId": "postWorkspacesWorkspace_IdCheckpoints",
+        "tags": [
+          "交付恢复"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "description": "",
+        "responses": {
+          "201": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckpointInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/restorations": {
+      "post": {
+        "summary": "恢复为新修订并保留当前快照",
+        "operationId": "postWorkspacesWorkspace_IdRestorations",
+        "tags": [
+          "交付恢复"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RestorationInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/members": {
+      "get": {
+        "summary": "查询项目成员",
+        "operationId": "getWorkspacesWorkspace_IdMembers",
+        "tags": [
+          "企业身份"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/members/{resource_id}": {
+      "put": {
+        "summary": "设置项目成员或撤销成员资格",
+        "operationId": "putWorkspacesWorkspace_IdMembersResource_Id",
+        "tags": [
+          "企业身份"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "resource_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          }
+        ],
+        "description": "仅管理员；实际权限取账户角色和成员角色的较低值。",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "reviewer",
+                      "analyst",
+                      "viewer",
+                      "none"
+                    ]
+                  }
+                },
+                "required": [
+                  "role"
+                ],
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/automation-plan": {
+      "get": {
+        "summary": "根据模型生成确定性分析候选",
+        "description": "纯本地规则，不调用模型。返回规则版本、计划哈希、命中事实、前提、资产和候选状态。几何布局不改变计划哈希。",
+        "operationId": "getWorkspacesIdAutomationPlan",
+        "tags": [
+          "自动分析"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/workspaces/{id}/automation-adoptions": {
+      "post": {
+        "summary": "审阅后采用自动分析候选",
+        "description": "检查项目修订和计划哈希；先保存还原点，再原子追加未评分损害、威胁、路径及需求。重放同一请求不重复写入。",
+        "operationId": "postWorkspacesIdAutomationAdoptions",
+        "tags": [
+          "自动分析"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutomationAdoptionInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/knowledge-packs/public-cases": {
+      "get": {
+        "summary": "读取内置公开案例种子",
+        "description": "只读取本地包，不自动导入或启用，不联网抓取来源。",
+        "operationId": "getKnowledgePacksPublicCases",
+        "tags": [
+          "企业知识"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/knowledge-imports": {
+      "post": {
+        "summary": "导入待复核知识版本",
+        "description": "仅管理员。版本化导入为停用资料；相同源版本与内容去重，不覆盖人工编辑。review_required仅保留到回执和审计；启用通过知识文档PUT，须reviewed:true，新版启用会停用同源旧版。",
+        "operationId": "postKnowledgeImports",
+        "tags": [
+          "企业知识"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KnowledgePackInput"
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -6217,10 +7908,17 @@
             "type": "string"
           },
           "outbound_connections": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "支持按显式请求连接已配置模型服务；并不表示当前有活动连接。"
           },
           "excel_export": {
             "type": "boolean"
+          },
+          "outbound_policy": {
+            "type": "string",
+            "enum": [
+              "configured_models_explicit_requests"
+            ]
           }
         },
         "required": [
@@ -8282,6 +9980,972 @@
           "sheets",
           "profile"
         ]
+      },
+      "AIModels": {
+        "type": "object",
+        "properties": {
+          "analysis": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 200
+          },
+          "vision": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 200
+          },
+          "embedding": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 200
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "AIProviderInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "protocol": {
+            "type": "string",
+            "enum": [
+              "openai_chat",
+              "openai_responses",
+              "anthropic",
+              "ollama"
+            ]
+          },
+          "base_url": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "network_scope": {
+            "type": "string",
+            "enum": [
+              "internal",
+              "external"
+            ]
+          },
+          "models": {
+            "$ref": "#/components/schemas/AIModels"
+          },
+          "enabled": {
+            "type": "boolean",
+            "default": true
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000,
+            "default": 10
+          },
+          "timeout_seconds": {
+            "type": "integer",
+            "minimum": 5,
+            "maximum": 180,
+            "default": 90
+          },
+          "max_output_tokens": {
+            "type": "integer",
+            "minimum": 256,
+            "maximum": 32768,
+            "default": 8192
+          },
+          "retries": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2,
+            "default": 1
+          },
+          "notes": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "api_key": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 4096,
+            "writeOnly": true
+          },
+          "clear_key": {
+            "type": "boolean",
+            "writeOnly": true
+          },
+          "input_price_per_million": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100000,
+            "default": 0
+          },
+          "output_price_per_million": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100000,
+            "default": 0
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "USD",
+              "CNY"
+            ]
+          },
+          "chat_token_parameter": {
+            "type": "string",
+            "enum": [
+              "max_completion_tokens",
+              "max_tokens"
+            ]
+          },
+          "generation_path": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 200
+          },
+          "embedding_path": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 200
+          },
+          "models_path": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "name",
+          "protocol",
+          "base_url",
+          "network_scope",
+          "models"
+        ],
+        "additionalProperties": false
+      },
+      "AIProvider": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "protocol": {
+            "type": "string",
+            "enum": [
+              "openai_chat",
+              "openai_responses",
+              "anthropic",
+              "ollama"
+            ]
+          },
+          "base_url": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "network_scope": {
+            "type": "string",
+            "enum": [
+              "internal",
+              "external"
+            ]
+          },
+          "models": {
+            "$ref": "#/components/schemas/AIModels"
+          },
+          "enabled": {
+            "type": "boolean",
+            "default": true
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000,
+            "default": 10
+          },
+          "timeout_seconds": {
+            "type": "integer",
+            "minimum": 5,
+            "maximum": 180,
+            "default": 90
+          },
+          "max_output_tokens": {
+            "type": "integer",
+            "minimum": 256,
+            "maximum": 32768,
+            "default": 8192
+          },
+          "retries": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2,
+            "default": 1
+          },
+          "notes": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "input_price_per_million": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100000,
+            "default": 0
+          },
+          "output_price_per_million": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100000,
+            "default": 0
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "USD",
+              "CNY"
+            ]
+          },
+          "chat_token_parameter": {
+            "type": "string",
+            "enum": [
+              "max_completion_tokens",
+              "max_tokens"
+            ]
+          },
+          "generation_path": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 200
+          },
+          "embedding_path": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 200
+          },
+          "models_path": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 200
+          },
+          "id": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 100
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          },
+          "has_key": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 200
+          },
+          "updated_at": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 200
+          },
+          "health": {
+            "type": "object"
+          }
+        },
+        "required": [],
+        "additionalProperties": true
+      },
+      "AIPromptInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "diagram",
+              "analysis",
+              "review"
+            ]
+          },
+          "instructions": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16000
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "purpose",
+          "instructions"
+        ],
+        "additionalProperties": false
+      },
+      "KnowledgeDocumentInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "edition": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "content": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120000
+          },
+          "workspace_id": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 100
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "minItems": 0,
+            "maxItems": 30
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "reviewed": {
+            "type": "boolean",
+            "default": false,
+            "description": "公开导入资料每次启用保存均须明确复核，服务记录审核人及内容摘要。"
+          }
+        },
+        "required": [
+          "name",
+          "source",
+          "edition",
+          "content"
+        ],
+        "additionalProperties": false
+      },
+      "KnowledgeSearch": {
+        "type": "object",
+        "properties": {
+          "workspace_id": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 100
+          },
+          "query": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          },
+          "document_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "minItems": 0,
+            "maxItems": 100
+          },
+          "embedding_provider_id": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 100
+          },
+          "allow_external": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "additionalProperties": false
+      },
+      "AITaskInput": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "diagram",
+              "analysis",
+              "review",
+              "knowledge_index"
+            ]
+          },
+          "provider_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "minItems": 1,
+            "maxItems": 4
+          },
+          "prompt_id": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 120
+          },
+          "instructions": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 12000
+          },
+          "owner": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 200
+          },
+          "document_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "minItems": 0,
+            "maxItems": 100
+          },
+          "embedding_provider_id": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 100
+          },
+          "allow_external": {
+            "type": "boolean",
+            "default": false
+          },
+          "image_base64": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 1400000
+          },
+          "image_mime": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 40
+          }
+        },
+        "required": [
+          "kind",
+          "provider_ids"
+        ],
+        "additionalProperties": false
+      },
+      "AIProposal": {
+        "type": "object",
+        "properties": {
+          "summary": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 12000
+          },
+          "assumptions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000
+            },
+            "minItems": 0,
+            "maxItems": 100
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000
+            },
+            "minItems": 0,
+            "maxItems": 100
+          },
+          "citations": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000
+            },
+            "minItems": 0,
+            "maxItems": 100
+          },
+          "architecture": {
+            "$ref": "#/components/schemas/Architecture"
+          },
+          "assets": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "minItems": 0,
+            "maxItems": 100
+          },
+          "damage_scenarios": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "minItems": 0,
+            "maxItems": 100
+          },
+          "scenarios": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "minItems": 0,
+            "maxItems": 100
+          },
+          "security_goals": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "minItems": 0,
+            "maxItems": 100
+          },
+          "requirements": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "minItems": 0,
+            "maxItems": 100
+          },
+          "treatments": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "minItems": 0,
+            "maxItems": 100
+          }
+        },
+        "required": [
+          "summary",
+          "assumptions",
+          "questions",
+          "citations"
+        ],
+        "additionalProperties": false
+      },
+      "AITask": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 100
+          },
+          "workspace_id": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 100
+          },
+          "base_revision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "ready",
+              "needs_revision",
+              "failed",
+              "cancelled",
+              "interrupted",
+              "adopted",
+              "completed"
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "diagram",
+              "analysis",
+              "review",
+              "knowledge_index"
+            ]
+          },
+          "step": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 200
+          },
+          "proposal": {
+            "$ref": "#/components/schemas/AIProposal"
+          },
+          "providers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AIProvider"
+            },
+            "minItems": 0,
+            "maxItems": 5
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "minItems": 0,
+            "maxItems": 100
+          },
+          "attempts": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "minItems": 0,
+            "maxItems": 100
+          },
+          "usage": {
+            "type": "object"
+          },
+          "validation_error": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 10000
+          },
+          "error": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 10000
+          }
+        },
+        "required": [
+          "id",
+          "workspace_id",
+          "base_revision",
+          "status"
+        ],
+        "additionalProperties": true
+      },
+      "AIAdoptionInput": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "reviewed": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "owner",
+          "reviewed"
+        ],
+        "additionalProperties": false
+      },
+      "CheckpointInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "RestorationInput": {
+        "type": "object",
+        "properties": {
+          "checkpoint_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "checkpoint_id",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "EnterpriseUserInput": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 80
+          },
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 80
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "reviewer",
+              "analyst",
+              "viewer"
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 72,
+            "writeOnly": true
+          }
+        },
+        "required": [
+          "username",
+          "name",
+          "role",
+          "enabled"
+        ],
+        "additionalProperties": false
+      },
+      "LoginInput": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 80
+          },
+          "password": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 72,
+            "writeOnly": true
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ],
+        "additionalProperties": true
+      },
+      "ProviderImport": {
+        "type": "object",
+        "properties": {
+          "schema": {
+            "const": "jieheng.providers/1"
+          },
+          "credentials_included": {
+            "const": false
+          },
+          "providers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AIProviderInput"
+            },
+            "minItems": 1,
+            "maxItems": 50
+          }
+        },
+        "required": [
+          "schema",
+          "providers"
+        ],
+        "additionalProperties": true
+      },
+      "AutomationAdoptionInput": {
+        "type": "object",
+        "properties": {
+          "plan_hash": {
+            "type": "string",
+            "minLength": 64,
+            "maxLength": 64
+          },
+          "candidate_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 150
+            },
+            "minItems": 1,
+            "maxItems": 50
+          },
+          "owner": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "reviewed": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "plan_hash",
+          "candidate_ids",
+          "owner",
+          "reviewed"
+        ],
+        "additionalProperties": false
+      },
+      "KnowledgePackEntry": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000,
+            "pattern": "^https://"
+          },
+          "edition": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "content": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120000
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "minItems": 0,
+            "maxItems": 30
+          },
+          "evidence_urls": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1000,
+              "pattern": "^https://"
+            },
+            "minItems": 1,
+            "maxItems": 30
+          },
+          "cve_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 28,
+              "pattern": "^CVE-[0-9]{4}-[0-9]{4,19}$"
+            },
+            "minItems": 0,
+            "maxItems": 50
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "source",
+          "edition",
+          "content",
+          "evidence_urls"
+        ],
+        "additionalProperties": false,
+        "description": "source和evidence_urls须使用无账号信息的公开HTTPS格式；不解析或抓取URL。列表按集合去重排序。"
+      },
+      "KnowledgePackInput": {
+        "type": "object",
+        "properties": {
+          "schema": {
+            "type": "string",
+            "const": "jieheng.knowledge-pack/1"
+          },
+          "pack_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$"
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KnowledgePackEntry"
+            },
+            "minItems": 0,
+            "maxItems": 50
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "review_required": {
+            "type": "array",
+            "items": {},
+            "minItems": 0,
+            "maxItems": 100
+          }
+        },
+        "required": [
+          "schema",
+          "pack_id",
+          "version",
+          "entries"
+        ],
+        "additionalProperties": false,
+        "description": "entries最多50项；entries为空时review_required必须非空。metadata、review_required各自JSON编码不超过64KB；通知为待人工复核数据，不自动撤下资料。"
       }
     },
     "parameters": {
@@ -8375,6 +11039,20 @@
           }
         }
       }
+    },
+    "securitySchemes": {
+      "EnterpriseSession": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "jieheng_session",
+        "description": "企业模式必须登录；本机模式不认证。角色和项目成员在每次请求检查。"
+      }
     }
-  }
+  },
+  "security": [
+    {
+      "EnterpriseSession": []
+    },
+    {}
+  ]
 }

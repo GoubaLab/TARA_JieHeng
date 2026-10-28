@@ -63,3 +63,9 @@ test('project picker and history do not lose records beyond a page',async()=>{
   assert.equal(calls.length,4);
   assert.ok(calls.every(c=>c.url.startsWith('/api/v1/')));
 });
+test('effective project role is UI metadata and never enters exported work products',async()=>{
+ globalThis.fetch=async()=>new Response(JSON.stringify({id:'ws_1',revision:2}),{status:200,headers:{'Content-Type':'application/json','X-Workspace-Role':'viewer'}});
+ const ws=await request('/workspaces/ws_1');
+ assert.equal(ws.access_role,'viewer');
+ assert.deepEqual(JSON.parse(JSON.stringify(ws)),{id:'ws_1',revision:2});
+});

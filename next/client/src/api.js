@@ -18,6 +18,12 @@ export const treatments = {
 };
 export const pages = {
   overview: "项目总览",
+  models: "模型服务",
+  knowledge: "企业知识",
+  automation: "自动分析",
+  assistant: "辅助分析",
+  quality: "交付检查",
+  team: "账户与权限",
   tara: "TARA 工作产品",
   definition: "相关项定义",
   architecture: "架构与资产",
@@ -63,11 +69,19 @@ export async function request(path, options = {}) {
     throw new Error("服务未返回有效数据，请检查本地服务。");
   }
   if (!r.ok) {
+    if (r.status === 401 && typeof window !== "undefined")
+      window.dispatchEvent(new Event("jieheng-session-expired"));
     const e = new Error(body.detail || body.title || "操作未完成");
     e.status = r.status;
     e.requestId = body.request_id || r.headers.get("X-Request-ID");
     throw e;
   }
+  const accessRole = r.headers.get("X-Workspace-Role");
+  if (accessRole && body && typeof body === "object")
+    Object.defineProperty(body, "access_role", {
+      value: accessRole,
+      enumerable: false,
+    });
   return body;
 }
 export function command(ws, action, payload, requestId = crypto.randomUUID()) {

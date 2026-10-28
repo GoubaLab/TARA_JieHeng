@@ -57,6 +57,13 @@ class SourceReleaseTests(unittest.TestCase):
         self.assertTrue(release.source_allowed('next/docs/screenshots/numbering.png'))
         self.assertFalse(release.source_allowed('next/docs/screenshots/unreviewed.png'))
 
+    def test_reviewed_jfif_has_no_exif_comments_or_trailing_bytes(self):
+        data=(Path(__file__).parents[1]/'docs/screenshots/model-services.jpg').read_bytes()
+        release.validate_screenshot(data)
+        for segment in (b'\xff\xe1\x00\x08Exif\x00\x00', b'\xff\xfe\x00\x06note'):
+            with self.assertRaises(ValueError): release.validate_screenshot(data[:2]+segment+data[2:])
+        with self.assertRaises(ValueError): release.validate_screenshot(data+b'extra')
+
     def test_staging_tool_source_passes_its_own_audit(self):
         source=Path(release.__file__).read_text(encoding='utf-8')
         self.assertIsNone(re.search(release.LOCAL_OR_CREDENTIAL,source))

@@ -64,7 +64,7 @@ Idempotency-Key: b320291b-39d1-44df-800b-c26b8a445731
 
 ## 本地运行边界
 
-服务只监听回环地址，验证 Host 及写入 Origin，不开放跨域写入。`X-Workspace-Client` 是本地应用边界标识，不是身份认证；本版本仍是单机工作台。多人身份、角色权限和审批签名属于后续独立功能，不能把这层标识当作企业认证。
+服务只监听回环地址，验证 Host 及写入 Origin，不开放跨域写入。`X-Workspace-Client` 是本地应用边界标识，不是身份认证；本机模式不提供身份认证。企业模式启用 HTTPS 反向代理入口、会话登录、账户角色与项目成员检查；不能把该标识当作企业认证。审批电子签名尚未提供。
 
 报告和 PDF 以实际媒体类型返回；法规原件使用 inline 并支持物理页码定位；文件范围与缓存条件遵循 HTTP 的 206、304、416 响应，OpenAPI 单独声明。JSON/HTML/Excel 保留引用版本和来源核对边界；引用本身不构成标准符合性结论。静态画布导出继续在浏览器完成。
 
@@ -126,3 +126,22 @@ Idempotency-Key: b320291b-39d1-44df-800b-c26b8a445731
 导入时方法待确认、负责人和签署空项保持空，残余评估为 `residual_status="target"`，不得视为通过验证。改成 `validated` 前必须存在全部关联需求的有效通过记录；评审完整性仍独立检查。
 
 目标关联处置保存服务端 `goal_hash`，调用者不在输入中提交此字段。目标修改要求处置复核。扩展 TARA 的 `EvidenceRecord.requirement_hash` 同时绑定关联目标与评估上下文；普通旧需求保持原摘要兼容。后续复测失败或依据改变时，有效 `residual_status` 回到 target，评审不通过。
+
+
+## 企业平台与辅助分析接口
+
+完整字段以 OpenAPI 为准。企业模式使用 `jieheng_session` Cookie（Secure/HttpOnly/SameSite=Strict，8 小时）；本机模式 `/auth/session` 返回本地管理员。所有写操作仍要求 `X-Workspace-Client: jieheng`，企业模式核对 HTTPS Host/Origin 和当前成员权限。
+
+- `/model-providers`：GET/POST 服务；PUT `/{resource_id}` 条件替换。POST 以 Idempotency-Key 重放，PUT 以 If-Match 防覆盖。读取永不返回凭据；api_key 仅写入。`/export` 和 `/model-provider-imports` 为无凭据配置交换；导入停用。
+- `/model-providers/{resource_id}/model-discoveries`、`/connection-tests`：主动查询/测试（后者只发合成测试内容）。这些显式操作可能消耗供应商用量，不作为可无限重放的资源创建。
+- `/prompt-templates`：内置和组织模板；组织模板新增/条件替换，历史版本由服务端保留，任务固定模板版本。
+- `/knowledge-documents`：组织/项目文本资料，GET 支持 workspace_id，POST/PUT 分别用幂等键/版本；`/knowledge-searches` 以 POST 提交查询，读取检索结果，可选调用向量服务。
+- `/workspaces/{workspace_id}/ai-tasks`：GET 最新 100 个任务；POST 带 If-Match 与 Idempotency-Key，返回 202 和 Location，轮询 GET `/{resource_id}`。结果记录状态、步骤、来源、模型、Token、草案和校验结果，不含内部项目快照或凭据。
+- 任务 `/{resource_id}/cancellations` 可重复取消；`/retries` 带版本/新幂等键创建新任务，原任务保留；`/adoptions` 带版本/幂等键及 `{owner,reviewed:true}`，原子采用并返回还原点。任务不修改验证、签署或冻结基线。
+- `/workspaces/{workspace_id}/quality`：确定性缺口与覆盖检查；`/checkpoints` GET/POST，创建需 If-Match 与 Idempotency-Key；`/restorations` POST 同样需版本与幂等键，提交 checkpoint_id/reason，返回新修订。
+- `/auth/session` GET、`/auth/sessions` POST 登录、`/auth/logout` POST 注销；`/enterprise/users` 管理账号，PUT 需 If-Match；项目 `/members/{resource_id}` PUT 设置成员角色或 none。账户建立以唯一账号名约束，登录、账户建立、成员设置、主动模型测试和检索不提供 Idempotency-Key 重放语义。
+- `/platform-events` 返回最近 200 条管理记录，仅管理员可见。项目历史继续使用原有分页接口。
+
+任务状态：queued → running → ready / needs_revision / failed；可取消为 cancelled，重启遗留为 interrupted，成功采用为 adopted。知识索引成功为 completed。来源变化或旧修订拒绝采用，412 要刷新重新分析，409 表示状态或幂等冲突。队列满为 429；格式错误 422；企业未登录 401、权限不足 403、非项目成员 404。服务不会因刷新页面自动创建或重试模型任务。
+
+自动分析计划与采用接口见 [AUTOMATION.md](AUTOMATION.md)。公开知识包通过 `POST /knowledge-imports` 导入为停用待复核版本；修改导入资料并启用时，`PUT /knowledge-documents/{id}` 须提交 `reviewed:true`，同源旧启用版在同一事务内停用。导入保留来源、版本、内容指纹、CVE 和证据链接，重导不覆盖人工编辑。

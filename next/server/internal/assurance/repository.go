@@ -2,6 +2,7 @@ package assurance
 
 import (
 	"context"
+	"crypto/cipher"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -29,7 +30,11 @@ func (e *RevisionError) Error() string {
 }
 
 type PrepareChange func(action string, payload, current Object) (Object, error)
-type Repository struct{ db *sql.DB }
+type Repository struct {
+	db       *sql.DB
+	vault    cipher.AEAD
+	dataPath string
+}
 
 func NewRepository(path string) (*Repository, error) {
 	if path == "" {
@@ -44,6 +49,17 @@ func NewRepository(path string) (*Repository, error) {
 			return nil, err
 		}
 		if err = os.MkdirAll(filepath.Dir(abs), 0700); err != nil {
+			return nil, err
+		}
+		f, err := os.OpenFile(abs, os.O_CREATE|os.O_RDWR, 0600)
+		if err != nil {
+			return nil, err
+		}
+		if err = f.Chmod(0600); err != nil {
+			f.Close()
+			return nil, err
+		}
+		if err = f.Close(); err != nil {
 			return nil, err
 		}
 		u := url.URL{Scheme: "file", Path: abs}
@@ -72,7 +88,12 @@ func NewRepository(path string) (*Repository, error) {
 		db.Close()
 		return nil, err
 	}
-	return &Repository{db: db}, nil
+	r := &Repository{db: db}
+	if err = r.initPlatform(path); err != nil {
+		db.Close()
+		return nil, err
+	}
+	return r, nil
 }
 func (r *Repository) Close() error { return r.db.Close() }
 func repoNumber(v any) (int64, error) {
@@ -193,6 +214,15 @@ func (r *Repository) Create(ctx context.Context, title, description, key string)
 	if _, err = tx.ExecContext(ctx, "INSERT INTO workspaces(id,body) VALUES(?,?)", ws["id"], body); err != nil {
 		return nil, false, err
 	}
+	if user, ok := ctx.Value(principalContextKey{}).(map[string]any); ok {
+		role := dStr(user["role"])
+		if role == "admin" {
+			role = "reviewer"
+		}
+		if _, err = tx.ExecContext(ctx, "INSERT INTO enterprise_members(workspace_id,user_id,role) VALUES(?,?,?)", ws["id"], user["id"], role); err != nil {
+			return nil, false, err
+		}
+	}
 	if err = repoEvent(ctx, tx, ws, "open-workspace", Object{"title": title}); err != nil {
 		return nil, false, err
 	}
@@ -205,6 +235,10 @@ func (r *Repository) Create(ctx context.Context, title, description, key string)
 	return ws, false, nil
 }
 func repoEvent(ctx context.Context, tx *sql.Tx, ws Object, action string, details Object) error {
+	if user, ok := ctx.Value(principalContextKey{}).(map[string]any); ok {
+		details = Clone(details)
+		details["actor"] = user["id"]
+	}
 	body, err := repoBody(details)
 	if err != nil {
 		return err

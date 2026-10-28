@@ -1357,3 +1357,5 @@ a:focus-visible {
 .dfd-root.canvas-focused .canvas-inspector { display: none; }
 .dfd-root.canvas-focused .canvas-stage { min-height: 780px; }
 .dfd-root.canvas-focused .canvas-stage svg { height: 780px; }
+
+.login-screen{min-height:100vh;display:grid;place-items:center;background:#f5f7fa;padding:24px}.login-card{width:min(440px,100%)}.ai-diagram-preview{display:block;width:100%;min-height:220px;max-height:680px;object-fit:contain;border:1px solid #e5e9f0;background:white}.ai-source{border-bottom:1px solid #edf0f3;padding:8px 0}.ai-source:last-child{border-bottom:0}

@@ -36,4 +36,15 @@
 
 当前法规目录独立保留、按 manifest 校验来源与条款，收录范围限定到指定版本。图形动画仅表达方向，静态 SVG/HTML/Excel 均无流动动画；文字和完整明细避免仅靠颜色或画布卡片展示。
 
-接口细节见 [API_CONVENTIONS.md](API_CONVENTIONS.md)，版本契约见 [server/openapi.json](server/openapi.json)，扩展步骤见 [EXTENDING.md](EXTENDING.md)。本地工作台尚无认证、角色、租户隔离、动态插件或远程协同；不能直接作为互联网多租户服务暴露。
+接口细节见 [API_CONVENTIONS.md](API_CONVENTIONS.md)，版本契约见 [server/openapi.json](server/openapi.json)，扩展步骤见 [EXTENDING.md](EXTENDING.md)。企业模式已提供账号会话、组织角色与项目成员权限；本机模式无需登录。尚无多租户隔离、SSO/MFA 或动态插件；不能直接作为互联网多租户服务暴露。
+
+
+## 企业平台层
+
+`platform_store.go` 保存模型配置、AES-GCM 凭据、版本化提示词、知识和管理审计；`enterprise_auth.go` 处理企业会话、角色和项目成员。AI 由 `ai_provider.go` 四协议适配、`ai_knowledge.go` 检索、`ai_jobs.go` 有界持久任务和 `ai_proposal.go` 原生工作产品校验组成。领域层不调用模型；`workspace_recovery.go` 在事务内采用草案、建立/还原检查点，并保留来源追溯。未知损害评级可以保存，关联威胁风险保持待评估。
+
+`backup.go` 与 `cmd/jieheng-maintenance` 提供独立一致性快照、哈希核验、只还原到新目录；恢复会话清空。前端 AuthGate、ModelSettings、KnowledgeCenter、AIWorkspace、QualityCenter、TeamSettings 接入原工作台，AI 结果采用后继续使用原生 DFD、评分、处置、验证和报告。
+
+运行边界、密钥保管、部署步骤见 ENTERPRISE_DEPLOYMENT.md，提示词和知识契约见 AI_ASSISTANCE.md。
+
+确定性规则层 `automation_rules.go` 只读取模型事实并输出候选；`http_automation.go` 执行版本检查、还原点和原子采用。公开知识包由 `knowledge_import.go` 版本化导入，`knowledge_review.go` 在事务中处理人工启用与同源版本替换；向量检索只处理已启用资料。参见 [知识积累](PUBLIC_KNOWLEDGE.md)。

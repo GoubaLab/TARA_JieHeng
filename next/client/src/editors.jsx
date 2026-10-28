@@ -241,17 +241,18 @@ export function EntityEditor({ editor, onClose }) {
           };
     if (kind === "decision")
       value = pick(
-        ws.decisions.find((v) => v.scenario_id === editor.id) || {
-          scenario_id: editor.id,
-          treatment: "reduce",
-          owner: ws.item.owner,
-          rationale: "",
-          goal: "",
-          claim: "",
-          residual_impact: null,
-          residual_feasibility: null,
-          residual_rationale: "",
-        },
+        ws.decisions.find((v) => v.scenario_id === editor.id) ||
+          ws.treatment_drafts?.find((v) => v.scenario_id === editor.id) || {
+            scenario_id: editor.id,
+            treatment: "reduce",
+            owner: ws.item.owner,
+            rationale: "",
+            goal: "",
+            claim: "",
+            residual_impact: null,
+            residual_feasibility: null,
+            residual_rationale: "",
+          },
         [
           "scenario_id",
           "treatment",

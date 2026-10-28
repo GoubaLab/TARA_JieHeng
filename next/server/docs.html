@@ -1,4 +1,4 @@
-<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>界衡 API 文档</title><style>body{font:15px/1.7 system-ui,sans-serif;max-width:1100px;margin:40px auto;padding:0 24px;color:#172b4d;background:#f6f8fb}section{padding:20px;margin:16px 0;background:white;border:1px solid #e3e8ef;border-radius:8px}h2{font-size:18px;overflow-wrap:anywhere}pre{overflow:auto;background:#f6f8fb;padding:16px;font-size:13px}a{color:#1769ce}summary{cursor:pointer;font-weight:600}</style><h1>界衡 · 工作产品 API</h1><p>版本化接口：/api/v1。<a href="/api/v1/openapi.json">下载 OpenAPI 3.1.1</a> · <a href="/">返回应用</a></p><p>写入使用 X-Workspace-Client: jieheng 与 Idempotency-Key（8–100 个可见 ASCII 字符）。项目内写入另带当前 ETag 作为 If-Match。旧版本 412，缺少版本 428，同一幂等键不同内容 409，校验错误 422。错误为 application/problem+json，含 request_id。本地标识不是身份认证。</p><p>新增资源 201，替换资源 200。所有操作采用事务，运行数据库不随交付包分发。当前为单机工具；自有参考资料接入、流程步骤及报告二次开发请参阅 EXTENDING.md。</p><section><h2><code>GET /api/v1/health</code></h2><h3>服务能力与运行状态</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>界衡 API 文档</title><style>body{font:15px/1.7 system-ui,sans-serif;max-width:1100px;margin:40px auto;padding:0 24px;color:#172b4d;background:#f6f8fb}section{padding:20px;margin:16px 0;background:white;border:1px solid #e3e8ef;border-radius:8px}h2{font-size:18px;overflow-wrap:anywhere}pre{overflow:auto;background:#f6f8fb;padding:16px;font-size:13px}a{color:#1769ce}summary{cursor:pointer;font-weight:600}</style><h1>界衡 · 工作产品 API</h1><p>版本化接口：/api/v1。<a href="/api/v1/openapi.json">下载 OpenAPI 3.1.1</a> · <a href="/">返回应用</a></p><p>写入使用 X-Workspace-Client: jieheng 与 Idempotency-Key（8–100 个可见 ASCII 字符）。项目内写入另带当前 ETag 作为 If-Match。旧版本 412，缺少版本 428，同一幂等键不同内容 409，校验错误 422。错误为 application/problem+json，含 request_id。本地标识不是身份认证。</p><p>新增资源 201，替换资源 200。所有操作采用事务，运行数据库不随交付包分发。企业模式提供会话与项目权限；AI 任务返回 202。主动模型测试、登录、检索和账户建立等接口的幂等语义以各接口为准。部署和备份见 ENTERPRISE_DEPLOYMENT.md，模型及知识见 AI_ASSISTANCE.md。</p><section><h2><code>GET /api/v1/health</code></h2><h3>服务能力与运行状态</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
   &quot;summary&quot;: &quot;服务能力与运行状态&quot;,
   &quot;operationId&quot;: &quot;getHealth&quot;,
   &quot;tags&quot;: [
@@ -186,6 +186,18 @@
           &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
           &quot;schema&quot;: {
             &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;X-Workspace-Role&quot;: {
+          &quot;description&quot;: &quot;当前访问者的有效项目角色，不进入工作产品正文。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;,
+            &quot;enum&quot;: [
+              &quot;admin&quot;,
+              &quot;reviewer&quot;,
+              &quot;analyst&quot;,
+              &quot;viewer&quot;
+            ]
           }
         }
       },
@@ -3186,6 +3198,1570 @@
       &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
     }
   }
+}</pre></details></section><section><h2><code>GET /api/v1/model-providers</code></h2><h3>查询模型服务</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;查询模型服务&quot;,
+  &quot;operationId&quot;: &quot;getModelProviders&quot;,
+  &quot;tags&quot;: [
+    &quot;模型服务&quot;
+  ],
+  &quot;parameters&quot;: [],
+  &quot;description&quot;: &quot;&quot;,
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;,
+            &quot;properties&quot;: {
+              &quot;items&quot;: {
+                &quot;type&quot;: &quot;array&quot;,
+                &quot;items&quot;: {
+                  &quot;$ref&quot;: &quot;#/components/schemas/AIProvider&quot;
+                },
+                &quot;minItems&quot;: 0,
+                &quot;maxItems&quot;: 10000
+              }
+            },
+            &quot;required&quot;: [],
+            &quot;additionalProperties&quot;: true
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>POST /api/v1/model-providers</code></h2><h3>创建模型服务</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;创建模型服务&quot;,
+  &quot;operationId&quot;: &quot;postModelProviders&quot;,
+  &quot;tags&quot;: [
+    &quot;模型服务&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    }
+  ],
+  &quot;description&quot;: &quot;&quot;,
+  &quot;responses&quot;: {
+    &quot;201&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/AIProvider&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/AIProviderInput&quot;
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>PUT /api/v1/model-providers/{resource_id}</code></h2><h3>替换模型服务</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;替换模型服务&quot;,
+  &quot;operationId&quot;: &quot;putModelProvidersResource_Id&quot;,
+  &quot;tags&quot;: [
+    &quot;模型服务&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;name&quot;: &quot;resource_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    }
+  ],
+  &quot;description&quot;: &quot;&quot;,
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/AIProvider&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/AIProviderInput&quot;
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/prompt-templates</code></h2><h3>查询辅助分析</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;查询辅助分析&quot;,
+  &quot;operationId&quot;: &quot;getPromptTemplates&quot;,
+  &quot;tags&quot;: [
+    &quot;辅助分析&quot;
+  ],
+  &quot;parameters&quot;: [],
+  &quot;description&quot;: &quot;&quot;,
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;,
+            &quot;properties&quot;: {
+              &quot;items&quot;: {
+                &quot;type&quot;: &quot;array&quot;,
+                &quot;items&quot;: {
+                  &quot;type&quot;: &quot;object&quot;
+                },
+                &quot;minItems&quot;: 0,
+                &quot;maxItems&quot;: 10000
+              }
+            },
+            &quot;required&quot;: [],
+            &quot;additionalProperties&quot;: true
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>POST /api/v1/prompt-templates</code></h2><h3>创建辅助分析</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;创建辅助分析&quot;,
+  &quot;operationId&quot;: &quot;postPromptTemplates&quot;,
+  &quot;tags&quot;: [
+    &quot;辅助分析&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    }
+  ],
+  &quot;description&quot;: &quot;&quot;,
+  &quot;responses&quot;: {
+    &quot;201&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/AIPromptInput&quot;
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>PUT /api/v1/prompt-templates/{resource_id}</code></h2><h3>替换辅助分析</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;替换辅助分析&quot;,
+  &quot;operationId&quot;: &quot;putPromptTemplatesResource_Id&quot;,
+  &quot;tags&quot;: [
+    &quot;辅助分析&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;name&quot;: &quot;resource_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    }
+  ],
+  &quot;description&quot;: &quot;&quot;,
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/AIPromptInput&quot;
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/knowledge-documents</code></h2><h3>查询企业知识</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;查询企业知识&quot;,
+  &quot;operationId&quot;: &quot;getKnowledgeDocuments&quot;,
+  &quot;tags&quot;: [
+    &quot;企业知识&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;name&quot;: &quot;workspace_id&quot;,
+      &quot;in&quot;: &quot;query&quot;,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 0,
+        &quot;maxLength&quot;: 100
+      }
+    }
+  ],
+  &quot;description&quot;: &quot;&quot;,
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;,
+            &quot;properties&quot;: {
+              &quot;items&quot;: {
+                &quot;type&quot;: &quot;array&quot;,
+                &quot;items&quot;: {
+                  &quot;type&quot;: &quot;object&quot;
+                },
+                &quot;minItems&quot;: 0,
+                &quot;maxItems&quot;: 10000
+              }
+            },
+            &quot;required&quot;: [],
+            &quot;additionalProperties&quot;: true
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>POST /api/v1/knowledge-documents</code></h2><h3>创建企业知识</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;创建企业知识&quot;,
+  &quot;operationId&quot;: &quot;postKnowledgeDocuments&quot;,
+  &quot;tags&quot;: [
+    &quot;企业知识&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    }
+  ],
+  &quot;description&quot;: &quot;&quot;,
+  &quot;responses&quot;: {
+    &quot;201&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/KnowledgeDocumentInput&quot;
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>PUT /api/v1/knowledge-documents/{resource_id}</code></h2><h3>替换企业知识</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;替换企业知识&quot;,
+  &quot;operationId&quot;: &quot;putKnowledgeDocumentsResource_Id&quot;,
+  &quot;tags&quot;: [
+    &quot;企业知识&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;name&quot;: &quot;resource_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    }
+  ],
+  &quot;description&quot;: &quot;&quot;,
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/KnowledgeDocumentInput&quot;
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/knowledge-documents/{resource_id}</code></h2><h3>读取资料正文</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;读取资料正文&quot;,
+  &quot;operationId&quot;: &quot;getKnowledgeDocumentsResource_Id&quot;,
+  &quot;tags&quot;: [
+    &quot;企业知识&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;name&quot;: &quot;resource_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    }
+  ],
+  &quot;description&quot;: &quot;&quot;,
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>POST /api/v1/knowledge-searches</code></h2><h3>检索范围内知识</h3><p>关键词检索或选定向量模型混合检索。默认 8 条，禁止跨项目；external 服务须 allow_external=true。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;检索范围内知识&quot;,
+  &quot;operationId&quot;: &quot;postKnowledgeSearches&quot;,
+  &quot;tags&quot;: [
+    &quot;企业知识&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    }
+  ],
+  &quot;description&quot;: &quot;关键词检索或选定向量模型混合检索。默认 8 条，禁止跨项目；external 服务须 allow_external=true。&quot;,
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/KnowledgeSearch&quot;
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/model-providers/export</code></h2><h3>导出无凭据服务配置</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;导出无凭据服务配置&quot;,
+  &quot;operationId&quot;: &quot;getModelProvidersExport&quot;,
+  &quot;tags&quot;: [
+    &quot;模型服务&quot;
+  ],
+  &quot;parameters&quot;: [],
+  &quot;description&quot;: &quot;&quot;,
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>POST /api/v1/model-provider-imports</code></h2><h3>导入配置为停用服务</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;导入配置为停用服务&quot;,
+  &quot;operationId&quot;: &quot;postModelProviderImports&quot;,
+  &quot;tags&quot;: [
+    &quot;模型服务&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    }
+  ],
+  &quot;description&quot;: &quot;&quot;,
+  &quot;responses&quot;: {
+    &quot;201&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/ProviderImport&quot;
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>POST /api/v1/model-providers/{resource_id}/connection-tests</code></h2><h3>合成内容连接测试</h3><p>可能消耗服务用量，不重放请求；不发送项目内容。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;合成内容连接测试&quot;,
+  &quot;operationId&quot;: &quot;postModelProvidersResource_IdConnectionTests&quot;,
+  &quot;tags&quot;: [
+    &quot;模型服务&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;name&quot;: &quot;resource_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    }
+  ],
+  &quot;description&quot;: &quot;可能消耗服务用量，不重放请求；不发送项目内容。&quot;,
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;properties&quot;: {
+            &quot;role&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;enum&quot;: [
+                &quot;analysis&quot;,
+                &quot;vision&quot;,
+                &quot;embedding&quot;
+              ]
+            }
+          },
+          &quot;required&quot;: [],
+          &quot;additionalProperties&quot;: true
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>POST /api/v1/model-providers/{resource_id}/model-discoveries</code></h2><h3>发现服务模型列表</h3><p>主动请求所配置地址，不重放请求。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;发现服务模型列表&quot;,
+  &quot;operationId&quot;: &quot;postModelProvidersResource_IdModelDiscoveries&quot;,
+  &quot;tags&quot;: [
+    &quot;模型服务&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;name&quot;: &quot;resource_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    }
+  ],
+  &quot;description&quot;: &quot;主动请求所配置地址，不重放请求。&quot;,
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/platform-events</code></h2><h3>最近 200 条平台管理记录</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;最近 200 条平台管理记录&quot;,
+  &quot;operationId&quot;: &quot;getPlatformEvents&quot;,
+  &quot;tags&quot;: [
+    &quot;企业身份&quot;
+  ],
+  &quot;parameters&quot;: [],
+  &quot;description&quot;: &quot;&quot;,
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/auth/session</code></h2><h3>查询模式及当前登录身份</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;查询模式及当前登录身份&quot;,
+  &quot;operationId&quot;: &quot;getAuthSession&quot;,
+  &quot;tags&quot;: [
+    &quot;企业身份&quot;
+  ],
+  &quot;parameters&quot;: [],
+  &quot;description&quot;: &quot;&quot;,
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>POST /api/v1/auth/sessions</code></h2><h3>登录企业工作台</h3><p>5 次失败限制 15 分钟；Secure/HttpOnly/SameSite=Strict Cookie，8 小时。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;登录企业工作台&quot;,
+  &quot;operationId&quot;: &quot;postAuthSessions&quot;,
+  &quot;tags&quot;: [
+    &quot;企业身份&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    }
+  ],
+  &quot;description&quot;: &quot;5 次失败限制 15 分钟；Secure/HttpOnly/SameSite=Strict Cookie，8 小时。&quot;,
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/LoginInput&quot;
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>POST /api/v1/auth/logout</code></h2><h3>注销当前会话</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;注销当前会话&quot;,
+  &quot;operationId&quot;: &quot;postAuthLogout&quot;,
+  &quot;tags&quot;: [
+    &quot;企业身份&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    }
+  ],
+  &quot;description&quot;: &quot;&quot;,
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/enterprise/users</code></h2><h3>查询企业账户</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;查询企业账户&quot;,
+  &quot;operationId&quot;: &quot;getEnterpriseUsers&quot;,
+  &quot;tags&quot;: [
+    &quot;企业身份&quot;
+  ],
+  &quot;parameters&quot;: [],
+  &quot;description&quot;: &quot;&quot;,
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>POST /api/v1/enterprise/users</code></h2><h3>创建企业账户</h3><p>仅管理员。账号唯一，创建要求 12–72 字节口令；不提供幂等键重放。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;创建企业账户&quot;,
+  &quot;operationId&quot;: &quot;postEnterpriseUsers&quot;,
+  &quot;tags&quot;: [
+    &quot;企业身份&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    }
+  ],
+  &quot;description&quot;: &quot;仅管理员。账号唯一，创建要求 12–72 字节口令；不提供幂等键重放。&quot;,
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/EnterpriseUserInput&quot;
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>PUT /api/v1/enterprise/users/{resource_id}</code></h2><h3>条件更新账号并撤销其会话</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;条件更新账号并撤销其会话&quot;,
+  &quot;operationId&quot;: &quot;putEnterpriseUsersResource_Id&quot;,
+  &quot;tags&quot;: [
+    &quot;企业身份&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;name&quot;: &quot;resource_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    }
+  ],
+  &quot;description&quot;: &quot;&quot;,
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/EnterpriseUserInput&quot;
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/workspaces/{id}/ai-tasks</code></h2><h3>查询最近 100 个任务</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;查询最近 100 个任务&quot;,
+  &quot;operationId&quot;: &quot;getWorkspacesWorkspace_IdAiTasks&quot;,
+  &quot;tags&quot;: [
+    &quot;辅助分析&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;name&quot;: &quot;id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    }
+  ],
+  &quot;description&quot;: &quot;&quot;,
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>POST /api/v1/workspaces/{id}/ai-tasks</code></h2><h3>创建持久化任务</h3><p>相同幂等键不会重复创建或调用模型。2 个执行槽、队列最多 12；外部服务必须明确允许。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;创建持久化任务&quot;,
+  &quot;operationId&quot;: &quot;postWorkspacesWorkspace_IdAiTasks&quot;,
+  &quot;tags&quot;: [
+    &quot;辅助分析&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;name&quot;: &quot;id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    }
+  ],
+  &quot;description&quot;: &quot;相同幂等键不会重复创建或调用模型。2 个执行槽、队列最多 12；外部服务必须明确允许。&quot;,
+  &quot;responses&quot;: {
+    &quot;202&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/AITask&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/AITaskInput&quot;
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/workspaces/{id}/ai-tasks/{resource_id}</code></h2><h3>读取任务结果与来源</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;读取任务结果与来源&quot;,
+  &quot;operationId&quot;: &quot;getWorkspacesWorkspace_IdAiTasksResource_Id&quot;,
+  &quot;tags&quot;: [
+    &quot;辅助分析&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;name&quot;: &quot;id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    {
+      &quot;name&quot;: &quot;resource_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    }
+  ],
+  &quot;description&quot;: &quot;&quot;,
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/AITask&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>POST /api/v1/workspaces/{id}/ai-tasks/{resource_id}/cancellations</code></h2><h3>取消任务</h3><p>可重复调用，不会触发新模型调用。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;取消任务&quot;,
+  &quot;operationId&quot;: &quot;postWorkspacesWorkspace_IdAiTasksResource_IdCancellations&quot;,
+  &quot;tags&quot;: [
+    &quot;辅助分析&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;name&quot;: &quot;id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    {
+      &quot;name&quot;: &quot;resource_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    }
+  ],
+  &quot;description&quot;: &quot;可重复调用，不会触发新模型调用。&quot;,
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/AITask&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>POST /api/v1/workspaces/{id}/ai-tasks/{resource_id}/adoptions</code></h2><h3>审阅后原子采用草案</h3><p>依据修订和来源版本须仍有效；先建立还原点再写入，整个事务只增加一次项目修订。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;审阅后原子采用草案&quot;,
+  &quot;operationId&quot;: &quot;postWorkspacesWorkspace_IdAiTasksResource_IdAdoptions&quot;,
+  &quot;tags&quot;: [
+    &quot;辅助分析&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;name&quot;: &quot;id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    {
+      &quot;name&quot;: &quot;resource_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    }
+  ],
+  &quot;description&quot;: &quot;依据修订和来源版本须仍有效；先建立还原点再写入，整个事务只增加一次项目修订。&quot;,
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/AIAdoptionInput&quot;
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>POST /api/v1/workspaces/{id}/ai-tasks/{resource_id}/retries</code></h2><h3>基于当前项目重新分析</h3><p>使用新幂等键；服务配置变化时拒绝，需重新选择目的地。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;基于当前项目重新分析&quot;,
+  &quot;operationId&quot;: &quot;postWorkspacesWorkspace_IdAiTasksResource_IdRetries&quot;,
+  &quot;tags&quot;: [
+    &quot;辅助分析&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;name&quot;: &quot;id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    {
+      &quot;name&quot;: &quot;resource_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    }
+  ],
+  &quot;description&quot;: &quot;使用新幂等键；服务配置变化时拒绝，需重新选择目的地。&quot;,
+  &quot;responses&quot;: {
+    &quot;202&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/AITask&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;properties&quot;: {
+            &quot;instructions&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;minLength&quot;: 0,
+              &quot;maxLength&quot;: 12000
+            }
+          },
+          &quot;required&quot;: [],
+          &quot;additionalProperties&quot;: false
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/workspaces/{id}/quality</code></h2><h3>确定性交付检查</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;确定性交付检查&quot;,
+  &quot;operationId&quot;: &quot;getWorkspacesWorkspace_IdQuality&quot;,
+  &quot;tags&quot;: [
+    &quot;交付恢复&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;name&quot;: &quot;id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    }
+  ],
+  &quot;description&quot;: &quot;&quot;,
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/workspaces/{id}/checkpoints</code></h2><h3>查询最新 100 个还原点</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;查询最新 100 个还原点&quot;,
+  &quot;operationId&quot;: &quot;getWorkspacesWorkspace_IdCheckpoints&quot;,
+  &quot;tags&quot;: [
+    &quot;交付恢复&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;name&quot;: &quot;id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    }
+  ],
+  &quot;description&quot;: &quot;&quot;,
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>POST /api/v1/workspaces/{id}/checkpoints</code></h2><h3>创建项目还原点</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;创建项目还原点&quot;,
+  &quot;operationId&quot;: &quot;postWorkspacesWorkspace_IdCheckpoints&quot;,
+  &quot;tags&quot;: [
+    &quot;交付恢复&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;name&quot;: &quot;id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    }
+  ],
+  &quot;description&quot;: &quot;&quot;,
+  &quot;responses&quot;: {
+    &quot;201&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/CheckpointInput&quot;
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>POST /api/v1/workspaces/{id}/restorations</code></h2><h3>恢复为新修订并保留当前快照</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;恢复为新修订并保留当前快照&quot;,
+  &quot;operationId&quot;: &quot;postWorkspacesWorkspace_IdRestorations&quot;,
+  &quot;tags&quot;: [
+    &quot;交付恢复&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;name&quot;: &quot;id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    }
+  ],
+  &quot;description&quot;: &quot;&quot;,
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/RestorationInput&quot;
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/workspaces/{id}/members</code></h2><h3>查询项目成员</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;查询项目成员&quot;,
+  &quot;operationId&quot;: &quot;getWorkspacesWorkspace_IdMembers&quot;,
+  &quot;tags&quot;: [
+    &quot;企业身份&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;name&quot;: &quot;id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    }
+  ],
+  &quot;description&quot;: &quot;&quot;,
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>PUT /api/v1/workspaces/{id}/members/{resource_id}</code></h2><h3>设置项目成员或撤销成员资格</h3><p>仅管理员；实际权限取账户角色和成员角色的较低值。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;设置项目成员或撤销成员资格&quot;,
+  &quot;operationId&quot;: &quot;putWorkspacesWorkspace_IdMembersResource_Id&quot;,
+  &quot;tags&quot;: [
+    &quot;企业身份&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;name&quot;: &quot;id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    {
+      &quot;name&quot;: &quot;resource_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 200
+      }
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    }
+  ],
+  &quot;description&quot;: &quot;仅管理员；实际权限取账户角色和成员角色的较低值。&quot;,
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;properties&quot;: {
+            &quot;role&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;enum&quot;: [
+                &quot;reviewer&quot;,
+                &quot;analyst&quot;,
+                &quot;viewer&quot;,
+                &quot;none&quot;
+              ]
+            }
+          },
+          &quot;required&quot;: [
+            &quot;role&quot;
+          ],
+          &quot;additionalProperties&quot;: true
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/workspaces/{id}/automation-plan</code></h2><h3>根据模型生成确定性分析候选</h3><p>纯本地规则，不调用模型。返回规则版本、计划哈希、命中事实、前提、资产和候选状态。几何布局不改变计划哈希。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;根据模型生成确定性分析候选&quot;,
+  &quot;description&quot;: &quot;纯本地规则，不调用模型。返回规则版本、计划哈希、命中事实、前提、资产和候选状态。几何布局不改变计划哈希。&quot;,
+  &quot;operationId&quot;: &quot;getWorkspacesIdAutomationPlan&quot;,
+  &quot;tags&quot;: [
+    &quot;自动分析&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>POST /api/v1/workspaces/{id}/automation-adoptions</code></h2><h3>审阅后采用自动分析候选</h3><p>检查项目修订和计划哈希；先保存还原点，再原子追加未评分损害、威胁、路径及需求。重放同一请求不重复写入。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;审阅后采用自动分析候选&quot;,
+  &quot;description&quot;: &quot;检查项目修订和计划哈希；先保存还原点，再原子追加未评分损害、威胁、路径及需求。重放同一请求不重复写入。&quot;,
+  &quot;operationId&quot;: &quot;postWorkspacesIdAutomationAdoptions&quot;,
+  &quot;tags&quot;: [
+    &quot;自动分析&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;201&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/AutomationAdoptionInput&quot;
+        }
+      }
+    }
+  }
+}</pre></details></section><section><h2><code>GET /api/v1/knowledge-packs/public-cases</code></h2><h3>读取内置公开案例种子</h3><p>只读取本地包，不自动导入或启用，不联网抓取来源。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;读取内置公开案例种子&quot;,
+  &quot;description&quot;: &quot;只读取本地包，不自动导入或启用，不联网抓取来源。&quot;,
+  &quot;operationId&quot;: &quot;getKnowledgePacksPublicCases&quot;,
+  &quot;tags&quot;: [
+    &quot;企业知识&quot;
+  ],
+  &quot;parameters&quot;: [],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>POST /api/v1/knowledge-imports</code></h2><h3>导入待复核知识版本</h3><p>仅管理员。版本化导入为停用资料；相同源版本与内容去重，不覆盖人工编辑。review_required仅保留到回执和审计；启用通过知识文档PUT，须reviewed:true，新版启用会停用同源旧版。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;导入待复核知识版本&quot;,
+  &quot;description&quot;: &quot;仅管理员。版本化导入为停用资料；相同源版本与内容去重，不覆盖人工编辑。review_required仅保留到回执和审计；启用通过知识文档PUT，须reviewed:true，新版启用会停用同源旧版。&quot;,
+  &quot;operationId&quot;: &quot;postKnowledgeImports&quot;,
+  &quot;tags&quot;: [
+    &quot;企业知识&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;201&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/KnowledgePackInput&quot;
+        }
+      }
+    }
+  }
 }</pre></details></section><section id="schema-Item"><details><summary>Item</summary><pre>{
   &quot;additionalProperties&quot;: false,
   &quot;properties&quot;: {
@@ -6021,10 +7597,17 @@
       &quot;type&quot;: &quot;string&quot;
     },
     &quot;outbound_connections&quot;: {
-      &quot;type&quot;: &quot;boolean&quot;
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;description&quot;: &quot;支持按显式请求连接已配置模型服务；并不表示当前有活动连接。&quot;
     },
     &quot;excel_export&quot;: {
       &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;outbound_policy&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;configured_models_explicit_requests&quot;
+      ]
     }
   },
   &quot;required&quot;: [
@@ -8043,4 +9626,952 @@
     &quot;sheets&quot;,
     &quot;profile&quot;
   ]
+}</pre></details></section><section id="schema-AIModels"><details><summary>AIModels</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;analysis&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 0,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;vision&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 0,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;embedding&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 0,
+      &quot;maxLength&quot;: 200
+    }
+  },
+  &quot;required&quot;: [],
+  &quot;additionalProperties&quot;: false
+}</pre></details></section><section id="schema-AIProviderInput"><details><summary>AIProviderInput</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;name&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 120
+    },
+    &quot;protocol&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;openai_chat&quot;,
+        &quot;openai_responses&quot;,
+        &quot;anthropic&quot;,
+        &quot;ollama&quot;
+      ]
+    },
+    &quot;base_url&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 1000
+    },
+    &quot;network_scope&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;internal&quot;,
+        &quot;external&quot;
+      ]
+    },
+    &quot;models&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/AIModels&quot;
+    },
+    &quot;enabled&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;default&quot;: true
+    },
+    &quot;priority&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;maximum&quot;: 1000,
+      &quot;default&quot;: 10
+    },
+    &quot;timeout_seconds&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 5,
+      &quot;maximum&quot;: 180,
+      &quot;default&quot;: 90
+    },
+    &quot;max_output_tokens&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 256,
+      &quot;maximum&quot;: 32768,
+      &quot;default&quot;: 8192
+    },
+    &quot;retries&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;maximum&quot;: 2,
+      &quot;default&quot;: 1
+    },
+    &quot;notes&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 0,
+      &quot;maxLength&quot;: 2000
+    },
+    &quot;api_key&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 0,
+      &quot;maxLength&quot;: 4096,
+      &quot;writeOnly&quot;: true
+    },
+    &quot;clear_key&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;writeOnly&quot;: true
+    },
+    &quot;input_price_per_million&quot;: {
+      &quot;type&quot;: &quot;number&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;maximum&quot;: 100000,
+      &quot;default&quot;: 0
+    },
+    &quot;output_price_per_million&quot;: {
+      &quot;type&quot;: &quot;number&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;maximum&quot;: 100000,
+      &quot;default&quot;: 0
+    },
+    &quot;currency&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;USD&quot;,
+        &quot;CNY&quot;
+      ]
+    },
+    &quot;chat_token_parameter&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;max_completion_tokens&quot;,
+        &quot;max_tokens&quot;
+      ]
+    },
+    &quot;generation_path&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 0,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;embedding_path&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 0,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;models_path&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 0,
+      &quot;maxLength&quot;: 200
+    }
+  },
+  &quot;required&quot;: [
+    &quot;name&quot;,
+    &quot;protocol&quot;,
+    &quot;base_url&quot;,
+    &quot;network_scope&quot;,
+    &quot;models&quot;
+  ],
+  &quot;additionalProperties&quot;: false
+}</pre></details></section><section id="schema-AIProvider"><details><summary>AIProvider</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;name&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 120
+    },
+    &quot;protocol&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;openai_chat&quot;,
+        &quot;openai_responses&quot;,
+        &quot;anthropic&quot;,
+        &quot;ollama&quot;
+      ]
+    },
+    &quot;base_url&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 1000
+    },
+    &quot;network_scope&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;internal&quot;,
+        &quot;external&quot;
+      ]
+    },
+    &quot;models&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/AIModels&quot;
+    },
+    &quot;enabled&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;default&quot;: true
+    },
+    &quot;priority&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;maximum&quot;: 1000,
+      &quot;default&quot;: 10
+    },
+    &quot;timeout_seconds&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 5,
+      &quot;maximum&quot;: 180,
+      &quot;default&quot;: 90
+    },
+    &quot;max_output_tokens&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 256,
+      &quot;maximum&quot;: 32768,
+      &quot;default&quot;: 8192
+    },
+    &quot;retries&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;maximum&quot;: 2,
+      &quot;default&quot;: 1
+    },
+    &quot;notes&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 0,
+      &quot;maxLength&quot;: 2000
+    },
+    &quot;input_price_per_million&quot;: {
+      &quot;type&quot;: &quot;number&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;maximum&quot;: 100000,
+      &quot;default&quot;: 0
+    },
+    &quot;output_price_per_million&quot;: {
+      &quot;type&quot;: &quot;number&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;maximum&quot;: 100000,
+      &quot;default&quot;: 0
+    },
+    &quot;currency&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;USD&quot;,
+        &quot;CNY&quot;
+      ]
+    },
+    &quot;chat_token_parameter&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;max_completion_tokens&quot;,
+        &quot;max_tokens&quot;
+      ]
+    },
+    &quot;generation_path&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 0,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;embedding_path&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 0,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;models_path&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 0,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;id&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 0,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;revision&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;maximum&quot;: 2147483647
+    },
+    &quot;has_key&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;created_at&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 0,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;updated_at&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 0,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;health&quot;: {
+      &quot;type&quot;: &quot;object&quot;
+    }
+  },
+  &quot;required&quot;: [],
+  &quot;additionalProperties&quot;: true
+}</pre></details></section><section id="schema-AIPromptInput"><details><summary>AIPromptInput</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;name&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 120
+    },
+    &quot;purpose&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;diagram&quot;,
+        &quot;analysis&quot;,
+        &quot;review&quot;
+      ]
+    },
+    &quot;instructions&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 16000
+    },
+    &quot;enabled&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;name&quot;,
+    &quot;purpose&quot;,
+    &quot;instructions&quot;
+  ],
+  &quot;additionalProperties&quot;: false
+}</pre></details></section><section id="schema-KnowledgeDocumentInput"><details><summary>KnowledgeDocumentInput</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;name&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;source&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 1000
+    },
+    &quot;edition&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;content&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 120000
+    },
+    &quot;workspace_id&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 0,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;tags&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 80
+      },
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 30
+    },
+    &quot;enabled&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;reviewed&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;default&quot;: false,
+      &quot;description&quot;: &quot;公开导入资料每次启用保存均须明确复核，服务记录审核人及内容摘要。&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;name&quot;,
+    &quot;source&quot;,
+    &quot;edition&quot;,
+    &quot;content&quot;
+  ],
+  &quot;additionalProperties&quot;: false
+}</pre></details></section><section id="schema-KnowledgeSearch"><details><summary>KnowledgeSearch</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;workspace_id&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 0,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;query&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 4000
+    },
+    &quot;document_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 100
+      },
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 100
+    },
+    &quot;embedding_provider_id&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 0,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;allow_external&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;query&quot;
+  ],
+  &quot;additionalProperties&quot;: false
+}</pre></details></section><section id="schema-AITaskInput"><details><summary>AITaskInput</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;kind&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;diagram&quot;,
+        &quot;analysis&quot;,
+        &quot;review&quot;,
+        &quot;knowledge_index&quot;
+      ]
+    },
+    &quot;provider_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 100
+      },
+      &quot;minItems&quot;: 1,
+      &quot;maxItems&quot;: 4
+    },
+    &quot;prompt_id&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 0,
+      &quot;maxLength&quot;: 120
+    },
+    &quot;instructions&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 0,
+      &quot;maxLength&quot;: 12000
+    },
+    &quot;owner&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 0,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;document_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 100
+      },
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 100
+    },
+    &quot;embedding_provider_id&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 0,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;allow_external&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;default&quot;: false
+    },
+    &quot;image_base64&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 0,
+      &quot;maxLength&quot;: 1400000
+    },
+    &quot;image_mime&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 0,
+      &quot;maxLength&quot;: 40
+    }
+  },
+  &quot;required&quot;: [
+    &quot;kind&quot;,
+    &quot;provider_ids&quot;
+  ],
+  &quot;additionalProperties&quot;: false
+}</pre></details></section><section id="schema-AIProposal"><details><summary>AIProposal</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;summary&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 12000
+    },
+    &quot;assumptions&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 2000
+      },
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 100
+    },
+    &quot;questions&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 2000
+      },
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 100
+    },
+    &quot;citations&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 2000
+      },
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 100
+    },
+    &quot;architecture&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/Architecture&quot;
+    },
+    &quot;assets&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;object&quot;
+      },
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 100
+    },
+    &quot;damage_scenarios&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;object&quot;
+      },
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 100
+    },
+    &quot;scenarios&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;object&quot;
+      },
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 100
+    },
+    &quot;security_goals&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;object&quot;
+      },
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 100
+    },
+    &quot;requirements&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;object&quot;
+      },
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 100
+    },
+    &quot;treatments&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;object&quot;
+      },
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 100
+    }
+  },
+  &quot;required&quot;: [
+    &quot;summary&quot;,
+    &quot;assumptions&quot;,
+    &quot;questions&quot;,
+    &quot;citations&quot;
+  ],
+  &quot;additionalProperties&quot;: false
+}</pre></details></section><section id="schema-AITask"><details><summary>AITask</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;id&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 0,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;workspace_id&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 0,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;base_revision&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;maximum&quot;: 2147483647
+    },
+    &quot;status&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;queued&quot;,
+        &quot;running&quot;,
+        &quot;ready&quot;,
+        &quot;needs_revision&quot;,
+        &quot;failed&quot;,
+        &quot;cancelled&quot;,
+        &quot;interrupted&quot;,
+        &quot;adopted&quot;,
+        &quot;completed&quot;
+      ]
+    },
+    &quot;kind&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;diagram&quot;,
+        &quot;analysis&quot;,
+        &quot;review&quot;,
+        &quot;knowledge_index&quot;
+      ]
+    },
+    &quot;step&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 0,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;proposal&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/AIProposal&quot;
+    },
+    &quot;providers&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/AIProvider&quot;
+      },
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 5
+    },
+    &quot;sources&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;object&quot;
+      },
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 100
+    },
+    &quot;attempts&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;object&quot;
+      },
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 100
+    },
+    &quot;usage&quot;: {
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;validation_error&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 0,
+      &quot;maxLength&quot;: 10000
+    },
+    &quot;error&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 0,
+      &quot;maxLength&quot;: 10000
+    }
+  },
+  &quot;required&quot;: [
+    &quot;id&quot;,
+    &quot;workspace_id&quot;,
+    &quot;base_revision&quot;,
+    &quot;status&quot;
+  ],
+  &quot;additionalProperties&quot;: true
+}</pre></details></section><section id="schema-AIAdoptionInput"><details><summary>AIAdoptionInput</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;owner&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;reviewed&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;const&quot;: true
+    }
+  },
+  &quot;required&quot;: [
+    &quot;owner&quot;,
+    &quot;reviewed&quot;
+  ],
+  &quot;additionalProperties&quot;: false
+}</pre></details></section><section id="schema-CheckpointInput"><details><summary>CheckpointInput</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;name&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 200
+    }
+  },
+  &quot;required&quot;: [
+    &quot;name&quot;
+  ],
+  &quot;additionalProperties&quot;: false
+}</pre></details></section><section id="schema-RestorationInput"><details><summary>RestorationInput</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;checkpoint_id&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;reason&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 2000
+    }
+  },
+  &quot;required&quot;: [
+    &quot;checkpoint_id&quot;,
+    &quot;reason&quot;
+  ],
+  &quot;additionalProperties&quot;: false
+}</pre></details></section><section id="schema-EnterpriseUserInput"><details><summary>EnterpriseUserInput</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;username&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 2,
+      &quot;maxLength&quot;: 80
+    },
+    &quot;name&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 2,
+      &quot;maxLength&quot;: 80
+    },
+    &quot;role&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;admin&quot;,
+        &quot;reviewer&quot;,
+        &quot;analyst&quot;,
+        &quot;viewer&quot;
+      ]
+    },
+    &quot;enabled&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;password&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 0,
+      &quot;maxLength&quot;: 72,
+      &quot;writeOnly&quot;: true
+    }
+  },
+  &quot;required&quot;: [
+    &quot;username&quot;,
+    &quot;name&quot;,
+    &quot;role&quot;,
+    &quot;enabled&quot;
+  ],
+  &quot;additionalProperties&quot;: false
+}</pre></details></section><section id="schema-LoginInput"><details><summary>LoginInput</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;username&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 2,
+      &quot;maxLength&quot;: 80
+    },
+    &quot;password&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 72,
+      &quot;writeOnly&quot;: true
+    }
+  },
+  &quot;required&quot;: [
+    &quot;username&quot;,
+    &quot;password&quot;
+  ],
+  &quot;additionalProperties&quot;: true
+}</pre></details></section><section id="schema-ProviderImport"><details><summary>ProviderImport</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;schema&quot;: {
+      &quot;const&quot;: &quot;jieheng.providers/1&quot;
+    },
+    &quot;credentials_included&quot;: {
+      &quot;const&quot;: false
+    },
+    &quot;providers&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/AIProviderInput&quot;
+      },
+      &quot;minItems&quot;: 1,
+      &quot;maxItems&quot;: 50
+    }
+  },
+  &quot;required&quot;: [
+    &quot;schema&quot;,
+    &quot;providers&quot;
+  ],
+  &quot;additionalProperties&quot;: true
+}</pre></details></section><section id="schema-AutomationAdoptionInput"><details><summary>AutomationAdoptionInput</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;plan_hash&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 64,
+      &quot;maxLength&quot;: 64
+    },
+    &quot;candidate_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 150
+      },
+      &quot;minItems&quot;: 1,
+      &quot;maxItems&quot;: 50
+    },
+    &quot;owner&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;reviewed&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;const&quot;: true
+    }
+  },
+  &quot;required&quot;: [
+    &quot;plan_hash&quot;,
+    &quot;candidate_ids&quot;,
+    &quot;owner&quot;,
+    &quot;reviewed&quot;
+  ],
+  &quot;additionalProperties&quot;: false
+}</pre></details></section><section id="schema-KnowledgePackEntry"><details><summary>KnowledgePackEntry</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;id&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 100,
+      &quot;pattern&quot;: &quot;^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$&quot;
+    },
+    &quot;name&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;source&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 1000,
+      &quot;pattern&quot;: &quot;^https://&quot;
+    },
+    &quot;edition&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;content&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 120000
+    },
+    &quot;tags&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 80
+      },
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 30
+    },
+    &quot;evidence_urls&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 1000,
+        &quot;pattern&quot;: &quot;^https://&quot;
+      },
+      &quot;minItems&quot;: 1,
+      &quot;maxItems&quot;: 30
+    },
+    &quot;cve_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;maxLength&quot;: 28,
+        &quot;pattern&quot;: &quot;^CVE-[0-9]{4}-[0-9]{4,19}$&quot;
+      },
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 50
+    }
+  },
+  &quot;required&quot;: [
+    &quot;id&quot;,
+    &quot;name&quot;,
+    &quot;source&quot;,
+    &quot;edition&quot;,
+    &quot;content&quot;,
+    &quot;evidence_urls&quot;
+  ],
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;source和evidence_urls须使用无账号信息的公开HTTPS格式；不解析或抓取URL。列表按集合去重排序。&quot;
+}</pre></details></section><section id="schema-KnowledgePackInput"><details><summary>KnowledgePackInput</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;schema&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;const&quot;: &quot;jieheng.knowledge-pack/1&quot;
+    },
+    &quot;pack_id&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 100,
+      &quot;pattern&quot;: &quot;^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$&quot;
+    },
+    &quot;version&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;entries&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/KnowledgePackEntry&quot;
+      },
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 50
+    },
+    &quot;metadata&quot;: {
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;review_required&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {},
+      &quot;minItems&quot;: 0,
+      &quot;maxItems&quot;: 100
+    }
+  },
+  &quot;required&quot;: [
+    &quot;schema&quot;,
+    &quot;pack_id&quot;,
+    &quot;version&quot;,
+    &quot;entries&quot;
+  ],
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;entries最多50项；entries为空时review_required必须非空。metadata、review_required各自JSON编码不超过64KB；通知为待人工复核数据，不自动撤下资料。&quot;
 }</pre></details></section></html>

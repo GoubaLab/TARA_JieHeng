@@ -202,6 +202,7 @@ func refreshTaraLinks(ws Object) error {
 			texts, why := []string{}, []string{}
 			var highest *big.Rat
 			var chosen Object
+			complete := true
 			for _, id := range ids {
 				d, err := dFind(dList(ws["damage_scenarios"]), id)
 				if err != nil {
@@ -210,14 +211,18 @@ func refreshTaraLinks(ws Object) error {
 				impact := dObj(d["impact"])
 				rank, rated := damageImpactOrder(impact, method)
 				if !rated {
-					return dError("关联损害场景尚未完成影响评级")
+					complete = false
 				}
-				if highest == nil || rank.Cmp(highest) > 0 {
+				if rated && (highest == nil || rank.Cmp(highest) > 0) {
 					highest = rank
 					chosen = Clone(impact)
 				}
 				texts = append(texts, taraRecordCode(d)+" "+dStr(d["description"])+"\n道路使用者后果："+dStr(d["consequence"]))
 				why = append(why, fmt.Sprintf("%s：%s", dStr(id), dStr(impact["rationale"])))
+			}
+			if !complete {
+				chosen = Object{"safety": nil, "financial": nil, "operational": nil, "privacy": nil}
+				why = append(why, "关联损害场景尚待完整评级，当前风险保持待评估")
 			}
 			chosen["rationale"] = strings.Join(why, "\n")
 			s["impact"] = chosen
