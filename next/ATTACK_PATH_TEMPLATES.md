@@ -1,12 +1,10 @@
-> 公开源码版本：不附法规全文、历史资料、用户数据、二进制或前端构建产物。先按仓库根目录 README 构建；法规目录初始为空。
-
 # 攻击路径预置模板
 
 在「风险分析」中新增或编辑风险场景，进入「攻击路径与可行性」，点击「从预置模板添加」。可按分类和关键词查找，查看当前资产的匹配线索，再展开入口、攻击前提、有序步骤、攻击目标和待核对控制。选中后仅加入当前表单，保存风险场景才写入项目。
 
 ## 使用原则
 
-模板由本项目独立编写，适用于汽车、工业设备、物联网、云服务及其他软硬件系统的初步分析，不来自历史私有知识库。内容描述可复核的抽象攻击过程，不包含可执行攻击脚本，也不是漏洞扫描或已证实的攻击结论。
+预置模板适用于汽车、工业设备、物联网、云服务及其他软硬件系统的初步分析。每条模板定义入口、适用前提、攻击步骤、目标与控制检查项；采用后需结合实际项目核实。
 
 - 匹配线索根据资产关联、实体类型、操作系统、协议和安全属性产生。没有完整上下文时仍能浏览全部模板；未被推荐不代表不适用。
 - 采用后是独立、可编辑的项目路径。应改写成实际入口、组件、访问条件与目标，不把模板当作已完成评估。
@@ -18,7 +16,7 @@
 
 ## 开发接口
 
-- `GET /api/v1/attack-path-templates`：读取本地原创目录，不联网、不修改项目。
+- `GET /api/v1/attack-path-templates`：读取本地模板目录，不联网、不修改项目。
 - `GET /api/v1/workspaces/{id}/attack-path-templates?asset_id=...&property=...`：读取同一目录并附当前资产匹配线索，仍返回全部条目。项目成员权限照常生效。
 - 目录版本为 `jieheng.attack-path-templates/1`，单条模板有稳定 `id` 和独立 `version`。评分只表示推荐匹配程度，和攻击可行性、项目风险值无关。
 - 采用操作复用现有场景新增／更新接口，携带当前项目修订和幂等键。浏览和向表单添加模板都不持久化项目。
@@ -27,4 +25,4 @@
 
 ## 方法参考
 
-组织方式参考公开的一手资料：[CAPEC 攻击模式方法](https://capec.mitre.org/about/index.html)、[CAPEC-94 通信中间人模式](https://capec.mitre.org/data/definitions/94.html)、[CAPEC-122 权限滥用](https://capec.mitre.org/data/definitions/122.html)、[CWE-294 认证重放](https://cwe.mitre.org/data/definitions/294.html)。这里仅说明方法来源，未复制其目录正文、严重程度或概率；通用模式的评级不能直接成为项目评分。
+组织方式参考公开的一手资料：[CAPEC 攻击模式方法](https://capec.mitre.org/about/index.html)、[CAPEC-94 通信中间人模式](https://capec.mitre.org/data/definitions/94.html)、[CAPEC-122 权限滥用](https://capec.mitre.org/data/definitions/122.html)、[CWE-294 认证重放](https://cwe.mitre.org/data/definitions/294.html)。模板内容为独立工程分析；项目评分应依据实际损害与攻击可行性确定。

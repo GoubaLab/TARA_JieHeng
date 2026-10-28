@@ -1,10 +1,8 @@
-> 公开源码版本：不附法规全文、历史资料、用户数据、二进制或前端构建产物。先按仓库根目录 README 构建；法规目录初始为空。
+# 公开知识维护与复核
 
-# 公开知识的积累与复核
+知识维护遵循可追溯流程：**公开事实 → 原创分析 → 待复核 → 启用 → 检索 → 项目分析**。公开来源、CVE 编号和向量相似度都是参考证据，不会单独证明某个产品受影响。项目仍需确认组件、版本、配置、入口、攻击前提和现有措施，再形成自己的损害场景与风险结论。
 
-平台提供的是可追溯的知识积累流程：**公开事实 → 原创分析 → 待复核 → 启用 → 检索 → 项目分析**。公开来源、CVE 编号和向量相似度都是参考证据，不会单独证明某个产品受影响。项目仍需确认组件、版本、配置、入口、攻击前提和现有措施，再形成自己的损害场景与风险结论。
-
-## 从哪里开始
+## 内置案例
 
 内置知识包位于 `next/data/public-knowledge/seed.json`，包含 8 条原创分析：
 
@@ -19,7 +17,7 @@
 | Heartbleed / CVE-2014-0160 | TLS 内存泄露和泄露后的密钥处置 |
 | libwebp / CVE-2023-4863 | 图片解析与跨产品的组件依赖 |
 
-每条均区分事实、适用条件、不适用情形、原创防护建议、验证启发和证据链接。这 8 条是跨行业工作流的起点，不是完整漏洞扫描结果，也不是所有汽车、工业或互联网项目都要采用的风险清单。
+每条均区分事实、适用条件、不适用情形、原创防护建议、验证启发和证据链接。内置案例用于跨行业分析参考，不构成漏洞扫描结果或适用于所有项目的风险清单。
 
 ## 内网和离线导入
 
@@ -61,7 +59,7 @@ python3 next/tools/collect_public_knowledge.py \
   --limit 25
 ```
 
-只有主动执行下面的命令才会联网；在企业批准的联网环境使用：
+在线采集在企业批准的联网环境执行：
 
 ```sh
 python3 next/tools/collect_public_knowledge.py \
@@ -71,7 +69,7 @@ python3 next/tools/collect_public_knowledge.py \
   --limit 25
 ```
 
-离线文件由使用者提供，工具会标记 `collection_mode=offline-input`，不声称已验证它来自 CISA；联网模式则标记为固定官方 HTTPS 获取。首次接收离线文件时应核对传递渠道、源版本和摘要。
+离线文件由使用者提供，工具标记为 `collection_mode=offline-input`，该模式不提供来源身份验证；联网模式则标记为固定官方 HTTPS 获取。首次接收离线文件时应核对传递渠道、源版本和摘要。
 
 输出保留官方地址、`catalogVersion`、`dateReleased`、`captured_at`、规范化快照/记录摘要及 CC0 来源声明。每条候选明确标为“目录事实，尚未分析适用条件”，需要人员补齐产品版本、配置、前提、措施和验证。它不会生成攻击步骤或自动计算项目风险。
 
@@ -87,7 +85,7 @@ CVE Program 的撤回也要保留替代关系。例如官方将 `CVE-2023-5129` 
 
 ## 周期运行示例
 
-以下只是本地调度示例，不会自动安装任务，也不启用联网。安排一个每天运行的任务，工作目录设为仓库根目录，执行：
+以下示例适用于已有调度系统。将工作目录设为仓库根目录，每日执行：
 
 ```sh
 batch_stamp=$(date -u +%Y%m%dT%H%M%SZ)
@@ -114,6 +112,6 @@ CISA 官方 [kev-data](https://github.com/cisagov/kev-data) 的 [LICENSE](https:
 
 CVE、CWE、CAPEC、ATT&CK 各有 MITRE 条款，复制或分发其内容时要保留规定的版权与许可；不能把这些源一律标为 CC0。[CVE 条款](https://www.cve.org/legal/termsofuse)、[CWE 条款](https://cwe.mitre.org/about/termsofuse.html)、[CAPEC 条款](https://capec.mitre.org/about/termsofuse.html)、[ATT&CK 条款](https://attack.mitre.org/resources/legal-and-branding/terms-of-use/)
 
-内置 8 条案例只提供原创分析和简要事实摘要，不包含厂商公告、补丁、附件或旧私有知识库全文。外部链接的版权仍归各自权利人。BlackBerry 和 Hikvision 的部分页面本次无法直接读取，其事实使用对应厂商 CNA 提交的官方 CVE 记录核对；链接存在不等于已读取正文。NVD 当前 API 条款未在本次核验中成功取到正文，当前收集器不从 NVD 采集或分发内容。详见 `next/data/public-knowledge/README.md`。
+内置 8 条案例包含原创分析、简要事实摘要和证据链接，不附厂商公告全文、补丁或附件。BlackBerry 与 Hikvision 相关案例以对应厂商 CNA 提交的官方 CVE 记录作为事实依据。链接内容的版权归各自权利人。当前收集器仅支持 CISA KEV，不采集或分发 NVD 内容。案例来源与许可范围见 [公开案例知识包](data/public-knowledge/README.md)。
 
 后续接入其他来源前，应分别核实协议、许可、增量方式、撤回状态和版本范围表达；建立适配器与离线样例后再启用。CVE 数量和知识条目数量只是库存，实际质量来自适用条件、可追溯证据、复核记录以及在项目中的验证结果。

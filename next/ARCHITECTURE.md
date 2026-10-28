@@ -1,5 +1,3 @@
-> 公开源码版本：不附法规全文、历史资料、用户数据、二进制或前端构建产物。先按仓库根目录 README 构建；法规目录初始为空。
-
 # 模块与领域设计
 
 前端 React / Ant Design，后端 Go / net/http，持久化 SQLite（modernc.org/sqlite）。领域逻辑、资料读取、事务和静态报告在 Go 中执行；Excel 使用 Go 原生 Excelize 输出。前后端只通过版本化工作产品 API 通信。
@@ -11,7 +9,7 @@
 | `domain_method.go` | 方法默认值、四维最高值/加权平均/系数求和、统一初始/残余风险算法 |
 | `canonical.go` | 数值保真的 JSON 及兼容旧摘要的规范编码 |
 | `repository.go` | SQLite 事务、修订、幂等回执、变更日志与冻结基线 |
-| `catalog.go` / `automation.go` | 当前为空目录、撤下引用占位与选用禁用；自有资料扩展点 |
+| `catalog.go` / `automation.go` | 兼容参考目录接口、失效引用状态与自有资料适配扩展点 |
 | `regulations.go` | 版本、条款、来源摘要、父子引用关系和原件访问 |
 | `http.go` / `http_resources.go` | 资源接口、条件请求、媒体类型、同源边界和问题响应 |
 | `report.go` / `report_method.go` / `tara_report.go` | 17 类基础工作产品、扩展追溯与全部来源表页的静态投影 |
@@ -43,7 +41,7 @@
 
 `platform_store.go` 保存模型配置、AES-GCM 凭据、版本化提示词、知识和管理审计；`enterprise_auth.go` 处理企业会话、角色和项目成员。AI 由 `ai_provider.go` 四协议适配、`ai_knowledge.go` 检索、`ai_jobs.go` 有界持久任务和 `ai_proposal.go` 原生工作产品校验组成。领域层不调用模型；`workspace_recovery.go` 在事务内采用草案、建立/还原检查点，并保留来源追溯。未知损害评级可以保存，关联威胁风险保持待评估。
 
-`backup.go` 与 `cmd/jieheng-maintenance` 提供独立一致性快照、哈希核验、只还原到新目录；恢复会话清空。前端 AuthGate、ModelSettings、KnowledgeCenter、AIWorkspace、QualityCenter、TeamSettings 接入原工作台，AI 结果采用后继续使用原生 DFD、评分、处置、验证和报告。
+`backup.go` 与 `cmd/jieheng-maintenance` 提供独立一致性快照、哈希核验、只还原到新目录；恢复会话清空。前端 AuthGate、ModelSettings、KnowledgeCenter、AIWorkspace、QualityCenter、TeamSettings 接入原工作台，采用后的辅助分析结果进入统一的 DFD、评分、处置、验证和报告流程。
 
 运行边界、密钥保管、部署步骤见 ENTERPRISE_DEPLOYMENT.md，提示词和知识契约见 AI_ASSISTANCE.md。
 

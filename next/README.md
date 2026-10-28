@@ -1,24 +1,19 @@
-> 公开源码版本：不附法规全文、历史资料、用户数据、二进制或前端构建产物。先按仓库根目录 README 构建；法规目录初始为空。
-
 # 界衡 · 威胁建模平台
 
 Go / SQLite 后端与 React / Ant Design 前端实现的独立本地工作台。以可追溯的工作产品组织范围、实体、资产、威胁、风险、处置、需求、验证和报告。汽车领域以 ISO/SAE 21434 为参考流程；支持通用产品、互联网、物联网、机器人与具身智能、充电设施的领域上下文。
 
-## 启动
+## 构建与启动
 
-```sh
-./start.sh
-```
-
-打开 http://127.0.0.1:8790 。公开仓库只提供源码，首次运行需先构建 Go 和前端。运行数据默认写入 `next/var/assurance.sqlite3`，可用 `./start.sh --database /绝对路径/assurance.sqlite3 --port 8790` 指定数据库。服务仅监听本机回环地址，没有远端数据同步。
-
-开发构建：
+在仓库根目录执行：
 
 ```sh
 ./next/tools/build-go.sh
 npm ci --prefix next/client
 npm run build --prefix next/client
+./start.sh
 ```
+
+打开 http://127.0.0.1:8790 。运行数据默认写入 `next/var/assurance.sqlite3`。可用 `./start.sh --database /绝对路径/assurance.sqlite3 --port 8790` 指定数据库与端口。源码仓库不附二进制与前端构建产物；服务仅监听本机回环地址。
 
 后端要求 Go 1.25 或更新版本；其他平台应重新构建二进制。依赖版本由 go.mod/go.sum/package-lock.json 固定。正常运行不依赖 Python；`start.py` 仅为兼容启动器。
 
@@ -33,7 +28,7 @@ npm run build --prefix next/client
 
 所有环节可以直接切换，待办由工作产品实时计算。「交付检查」集中显示缺口和下一步，支持还原点。企业内网模式提供账号、项目成员和角色权限；可选模型服务支持图片建模、全流程草案、质量复核和知识检索，采用前需人工检查。没有合格电子签名或自动审批。
 
-新增入口与完整操作见 [辅助分析与模型服务](AI_ASSISTANCE.md)、[企业部署与备份恢复](ENTERPRISE_DEPLOYMENT.md)。
+模型服务配置与操作见 [辅助分析与模型服务](AI_ASSISTANCE.md)、[企业部署与备份恢复](ENTERPRISE_DEPLOYMENT.md)。
 
 ## 实体、OS 和通信
 
@@ -82,11 +77,11 @@ npm run build --prefix next/client
 
 ## 参考资料与法规
 
-发行版不包含历史非公开资料、原平台资产或运行数据库。参考资料目录为空，批量选用暂不可用。已有项目的旧引用仅返回“已撤下”的空占位；不提供原文，不允许用于新记录，也不能挪用到另一个记录。原记录可保留或删除其引用。项目正文和冻结历史不自动改写，项目数据由使用者自行管理。
+企业知识中心支持按来源和版本维护资料，复核启用后用于检索与辅助分析。兼容参考目录默认未配置，批量选用入口不可用；已失效的引用保留状态占位，不能用于新增记录。引用状态变化不会自动改写项目正文或冻结基线。
 
-法规目录独立保存于 `data/regulations/`，运行时验证本地摘要并读取，不联网更新。本公开版本使用空法规清单，不附带上述资料正文。节点包括章节、条款、列项、表格行与说明，不等于独立合规要求数量。
+法规目录位于 `data/regulations/`，按本地清单加载版本、条款和来源信息。源码仓库提供空清单；部署时按 [法规接入说明](data/regulations/README.md) 配置资料。应用校验内容摘要，不自动联网更新。目录可包含章节、条款、列项、表格行与说明；引用节点数量不等于独立合规要求数量。
 
-版本、来源、完整性范围、PDF 定位和重建方式见 [法规说明](data/regulations/README.md)。GB/T 44464 公开转载本仍标记 `partial`，需要与官方正文逐字对照；其中原件异常公式符号及交叉引用保留核对说明。R156 原始系列与修订独立保存，没有生成合订现行全文。
+每个法规版本独立记录来源、覆盖范围和原件定位。部分覆盖的资料标记为 `partial`；原始版本与修订版本分别保存，不隐式合并为现行全文。
 
 条款可勾选到项目或需求，按原文来源查看。勾选引用不等于符合性判断，不自动生成评分或验证结论。
 
@@ -94,23 +89,23 @@ npm run build --prefix next/client
 
 JSON 使用 `jieheng.work-products/1`；HTML 和 Excel 基础报告包含 17 类工作产品。扩展 TARA 项目追加 6 张追溯表及全部导入原表，因此表数为 23 + 来源表页数，包含方法依据、领域、OS、通信、风险与验证追溯。签批留空，未确认残余风险不代填。
 
-Excel 由 Go 原生 Excelize 生成，无需 Node、Office 或 Codex 专用组件。输出标准 `.xlsx`（OOXML），无宏、无执行公式；内容以文本单元格保存，防止输入被解释成公式。冻结标题行、中文列宽和说明批注便于复核。详见 [Excel 格式](EXCEL_EXPORT.md)。
+Excel 由 Go 原生 Excelize 生成，无需额外的 JavaScript 运行时或 Office 安装。输出标准 `.xlsx`（OOXML），无宏、无执行公式；内容以文本单元格保存，防止输入被解释成公式。冻结标题行、中文列宽和说明批注便于复核。详见 [Excel 格式](EXCEL_EXPORT.md)。
 
 ```sh
 (cd next/server && go test -race ./... && go vet ./...)
 node --test next/tests/*.mjs next/tests/*.cjs
 python3 next/tools/build-api-docs.py
-python3 next/tools/package.py
+python3 next/tools/test_public_release.py
 ```
 
-交付 `dist/jieheng-independent.zip` 使用路径白名单，并检查撤下资料文件/标识/正文指纹、重复成员和完整性。备份、缓存、项目数据库与旧交付包不进入新包。清理门禁降低误打包风险，独立新增的资料仍应由维护者确认可分发范围。
+公开源码发布由 `tools/public_release.py` 按文件白名单生成暂存目录，并检查路径、内容指纹和文件摘要。运行数据库、备份、缓存及项目资料不纳入发布范围。
 
 API 采用 `/api/v1` 资源路径、修订条件与幂等写入，详见 [接口约定](API_CONVENTIONS.md) 和 [OpenAPI](server/openapi.json)。领域模型和模块见 [架构说明](ARCHITECTURE.md)，流程、评分算法、自有资料和报告扩展见 [二次开发指南](EXTENDING.md)。当前没有运行时插件或动态流程设计器；增加步骤和任意维度需按指南修改源码。
 
 ## 确定性分析与公开知识
 
-「自动分析」提供 8 条原创规则，在不调用模型的情况下生成可审阅的候选和原生工作产品。企业知识支持公开案例包导入、逐条复核启用、同源版本替换以及 CISA KEV 增量收集。初始案例由公开 CVE 事实独立整理，未接入退休私有资料。见 [自动分析](AUTOMATION.md)、[知识积累](PUBLIC_KNOWLEDGE.md) 和 [产品调研](PRODUCT_RESEARCH.md)。
+「自动分析」提供 8 条内置规则，在不调用模型的情况下生成可审阅的候选和原生工作产品。企业知识支持公开案例包导入、逐条复核启用、同源版本替换以及 CISA KEV 增量收集。初始案例记录公开 CVE 事实、适用条件、工程分析和来源链接。见 [自动分析](AUTOMATION.md)、[知识积累](PUBLIC_KNOWLEDGE.md) 和 [产品调研](PRODUCT_RESEARCH.md)。
 
 ## 攻击路径模板
 
-风险场景编辑器支持从原创预置模板添加路径，按分类/关键词选择并查看资产匹配线索。模板采用后可编辑，评分保持待评估，保存场景时保留模板版本。使用与扩展见 [攻击路径模板](ATTACK_PATH_TEMPLATES.md)。
+风险场景编辑器支持从 16 类预置模板添加路径，按分类/关键词选择并查看资产匹配线索。模板采用后可编辑，评分保持待评估，保存场景时保留模板版本。使用与扩展见 [攻击路径模板](ATTACK_PATH_TEMPLATES.md)。

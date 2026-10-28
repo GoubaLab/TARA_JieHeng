@@ -1,10 +1,8 @@
-> 公开源码版本：不附法规全文、历史资料、用户数据、二进制或前端构建产物。先按仓库根目录 README 构建；法规目录初始为空。
-
 # Excel 导出与二次开发
 
 界衡通过 Go 原生库 `github.com/xuri/excelize/v2` 生成标准 `.xlsx`。依赖固定为 **v2.11.0**，使用 BSD-3-Clause 许可证，要求 Go **1.25.0 或更高版本**。版本依据为 [Excelize 官方介绍](https://xuri.me/excelize/en/)及[该版本的 go.mod](https://github.com/qax-os/excelize/blob/v2.11.0/go.mod)；具体依赖与校验摘要保存在 `server/go.mod` 和 `server/go.sum`。
 
-首次构建用 `go mod download` 获取公开依赖，然后正常构建后端。构建好的 Go 程序内置 Excel 能力，运行和导出时无需 Node、Python、Office 或 Codex 组件，也不联网获取组件。
+首次构建用 `go mod download` 获取公开依赖，然后正常构建后端。构建好的 Go 程序内置 Excel 能力，运行和导出时无需额外的脚本运行时或 Office 安装，也不联网获取组件。
 
 ```sh
 cd next/server
@@ -12,7 +10,7 @@ go mod download
 go build -o ../bin/jieheng ./cmd/jieheng
 ```
 
-网页中的“导出 Excel”以及 `GET /api/v1/workspaces/{id}/reports?format=xlsx` 使用同一实现。指定 `baseline_id` 可导出冻结基线。原有 `JIEHENG_REPORT_NODE`、`JIEHENG_ARTIFACT_MODULES`、`JIEHENG_WORKBOOK_SCRIPT` 设置不再参与 Go 导出；`assurance/workbook.mjs` 只保留退役提示，不提供另一套渲染实现。
+网页中的“导出 Excel”以及 `GET /api/v1/workspaces/{id}/reports?format=xlsx` 使用同一实现。指定 `baseline_id` 可导出冻结基线。导出由后端直接执行，依赖版本随 Go 模块固定。
 
 ## 内容与排版
 
@@ -48,7 +46,7 @@ cd next/server
 go test ./internal/assurance -run 'TestExcel' -count=1
 ```
 
-测试会实际生成并重新打开工作簿，核对 17 张表的数据、文本类型、公式样文字、中文样式、列宽、批注与冻结状态，以及损坏文件和不允许的活跃内容；不依赖私有工具或系统 Office 安装。
+测试会实际生成并重新打开工作簿，核对 17 张表的数据、文本类型、公式样文字、中文样式、列宽、批注与冻结状态，以及损坏文件和不允许的活跃内容；不依赖系统 Office 安装。
 
 
 采用 AI 草案后，额外导出「辅助分析追溯」表，记录任务、采用责任人、提示词版本、模型、引用来源和还原点。有未确认处置建议时增加「处置待确认建议」，明确区分建议与正式处置。没有使用 AI 的项目不增加这些工作表。以上同样适用于 HTML 打印报告，所有图形仍为静态。
