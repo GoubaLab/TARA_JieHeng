@@ -462,7 +462,7 @@ export default function TaraProducts() {
                 <Alert
                   type="success"
                   title="字段、关联关系及计算结果核对通过"
-                  description="按来源采用项目独立算法；残余风险作为目标保留，签署和验证状态保持未完成。"
+                  description="导入采用工作簿中的评估方法。残余风险记为目标值，验证与签署待完成。"
                 />
                 <Button type="primary" loading={busy} onClick={apply}>
                   导入到当前项目
@@ -487,7 +487,7 @@ export default function TaraProducts() {
           type="info"
           showIcon
           title={`${source.filename} · ${source.sheets.length} 个原始表页已保留`}
-          description="工作产品可独立编辑，原表保持不变。来源中的残余风险属于控制措施落地并验证后的目标；未填写的负责人、客户确认和签署信息保持待完成。资产沿用导入清单，保存 DFD 不会重复生成资产。"
+          description="工作产品支持编辑，来源表页保留为只读快照。残余风险为待验证目标，负责人和签署信息按实际情况补充。资产沿用导入清单。"
         />
       )}
       <Card>

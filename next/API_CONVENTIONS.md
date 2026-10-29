@@ -143,3 +143,7 @@ Idempotency-Key: b320291b-39d1-44df-800b-c26b8a445731
 任务状态：queued → running → ready / needs_revision / failed；可取消为 cancelled，重启遗留为 interrupted，成功采用为 adopted。知识索引成功为 completed。来源变化或旧修订拒绝采用，412 要刷新重新分析，409 表示状态或幂等冲突。队列满为 429；格式错误 422；企业未登录 401、权限不足 403、非项目成员 404。服务不会因刷新页面自动创建或重试模型任务。
 
 自动分析计划与采用接口见 [AUTOMATION.md](AUTOMATION.md)。公开知识包通过 `POST /knowledge-imports` 导入为停用待复核版本；修改导入资料并启用时，`PUT /knowledge-documents/{id}` 须提交 `reviewed:true`，同源旧启用版在同一事务内停用。导入保留来源、版本、内容指纹、CVE 和证据链接，重导不覆盖人工编辑。
+
+## 项目基本信息
+
+`PUT /api/v1/workspaces/{id}/profile` 更新项目名称与说明，请求体为 `{title, description}`。名称必填，最长 200 字符；说明可为空，最长 4,000 字符。接口要求项目写权限、`If-Match` 和 `Idempotency-Key`，变更写入修订与审计。该操作不修改工作产品、评分依据或冻结基线。

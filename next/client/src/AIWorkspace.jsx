@@ -231,7 +231,7 @@ function ProposalDetails({ task }) {
             {p.questions?.length > 0 && (
               <Alert
                 type="warning"
-                title="需要工作人员核对"
+                title="待确认项"
                 description={
                   <ol>
                     {p.questions.map((v, i) => (
@@ -248,7 +248,7 @@ function ProposalDetails({ task }) {
             >
               <GraphPreview graph={task.preview_architecture} />
               <Text type="secondary">
-                采用后成为平台原生图形，可以继续拖动节点、调整连线、标注协议并导出静态图。保存时仍会遵循项目的资产生成设置。
+                采用后可在架构画布中编辑与导出，资产按项目设置同步。
               </Text>
             </Card>
           )}
@@ -496,7 +496,7 @@ export default function AIWorkspace() {
       setReviewed(false);
       setFeedback("");
       tasks.refresh();
-      message.success("任务已创建，可离开页面后继续查看");
+      message.success("任务已创建，将在后台运行");
     } catch (e) {
       setError(e.message);
     } finally {
@@ -547,7 +547,7 @@ export default function AIWorkspace() {
     <>
       <PageTitle
         title="辅助建模与分析"
-        description="把图片、项目上下文和企业知识转为可审阅的工作产品草案；平台负责校验、风险计算和追溯。"
+        description="结合架构图片、项目资料和企业知识生成分析草案，经审阅后加入项目。"
         extra={
           <Space>
             <Button icon={<ReloadOutlined />} onClick={tasks.refresh}>
@@ -602,7 +602,7 @@ export default function AIWorkspace() {
           dataSource={tasks.data?.items || []}
           locale={{
             emptyText: (
-              <Empty description="尚无辅助任务。已有项目可直接复核，也可以从一张图开始建模。" />
+              <Empty description="暂无任务，可创建图片建模、项目分析或质量复核任务。" />
             ),
           }}
           columns={[
@@ -761,11 +761,11 @@ export default function AIWorkspace() {
               </Text>
             </Form.Item>
           )}
-          <Form.Item name="instructions" label="本次重点与补充要求">
+          <Form.Item name="instructions" label="分析重点">
             <Input.TextArea
               rows={4}
               maxLength={12000}
-              placeholder="例如：重点检查升级链路、调试接口和密钥存储；保留已有分析，只补充缺项。"
+              placeholder="例如：升级链路、调试接口和密钥存储的分析范围与关注事项。"
             />
           </Form.Item>
           <Row gutter={16}>
@@ -802,8 +802,8 @@ export default function AIWorkspace() {
           </Row>
           <Alert
             type="info"
-            title={`任务依据当前修订 ${ws.revision}`}
-            description="发送范围包括本次指令、项目工作产品和匹配的知识片段；图片建模还会发送所选图片。不发送账号密钥、原始工作簿文件或验证附件。结果不会自动覆盖项目，也不会生成通过记录或签署结论。"
+            title={`分析依据：项目修订 ${ws.revision}`}
+            description="发送内容：分析要求、项目工作产品和匹配的知识片段；图片建模还包含所选图片。账号密钥、原始工作簿及验证附件不在发送范围内。生成结果须审阅后采用，验证与签署由对应业务流程记录。"
           />
           {external.length > 0 && (
             <Alert
@@ -818,7 +818,7 @@ export default function AIWorkspace() {
             hidden={!external.length}
             valuePropName="checked"
           >
-            <Checkbox>允许本次任务向上述所选外部服务发送已说明的数据</Checkbox>
+            <Checkbox>允许此任务向上述外部服务发送所列数据</Checkbox>
           </Form.Item>
         </Form>
       </Modal>
@@ -858,7 +858,7 @@ export default function AIWorkspace() {
                   )}
                   <Alert
                     type="info"
-                    title="采用前自动保存还原点，整批写入在同一事务内完成。处置建议仍需人工确认；残余风险目标需验证。"
+                    title="采用前自动保存还原点。草案将整体加入项目，处置建议待确认，残余风险目标待验证。"
                   />
                   <Input
                     value={owner}
@@ -870,7 +870,7 @@ export default function AIWorkspace() {
                     checked={reviewed}
                     onChange={(e) => setReviewed(e.target.checked)}
                   >
-                    我已审阅草案、引用依据和待确认项，同意将其写入当前项目
+                    已审阅草案、引用依据和待确认项，确认加入项目
                   </Checkbox>
                   <Button
                     type="primary"
@@ -912,7 +912,7 @@ export default function AIWorkspace() {
                     value={feedback}
                     onChange={(e) => setFeedback(e.target.value)}
                     rows={3}
-                    placeholder="补充要求或修正意见；新任务将使用当前项目修订，保留原任务结果。"
+                    placeholder="填写补充要求或修正意见；原任务结果保留。"
                   />
                   <Button loading={busy} onClick={() => action("retries")}>
                     基于当前项目重新生成

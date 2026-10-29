@@ -69,6 +69,8 @@ var domainIdentity = Identity
 
 func dSchema(model string) map[string]dField {
 	switch model {
+	case "WorkspaceProfile":
+		return map[string]dField{"title": ds(1, 200), "description": ds(0, 4000)}
 	case "NumberPrefixes":
 		fields := map[string]dField{}
 		for key := range numberPrefixes {
@@ -546,7 +548,7 @@ func dCasefold(s string) string {
 	return b.String()
 }
 func ValidatePayload(action string, payload Object) (Object, error) {
-	models := map[string]string{"configure-numbering": "Numbering", "define-item": "Item", "replace-architecture": "Architecture", "record-asset": "Asset", "record-scenario": "Scenario", "decide-treatment": "Decision", "specify-requirement": "Requirement", "select-regulations": "RegulationSelection", "record-evidence": "Evidence", "adopt-method": "Method", "seal-baseline": "Baseline", "apply-reference-selection": "ReferenceSelection"}
+	models := map[string]string{"update-workspace-profile": "WorkspaceProfile", "configure-numbering": "Numbering", "define-item": "Item", "replace-architecture": "Architecture", "record-asset": "Asset", "record-scenario": "Scenario", "decide-treatment": "Decision", "specify-requirement": "Requirement", "select-regulations": "RegulationSelection", "record-evidence": "Evidence", "adopt-method": "Method", "seal-baseline": "Baseline", "apply-reference-selection": "ReferenceSelection"}
 	model, ok := models[action]
 	if action == "record-damage" {
 		model, ok = "DamageScenario", true

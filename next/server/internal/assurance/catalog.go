@@ -7,11 +7,11 @@ import (
 	"strings"
 )
 
-// These namespaces are recognized only to render references already saved in projects.
-// Their former datasets are deliberately not loaded or discoverable.
+// These namespaces support identifiers retained by existing project records.
+// Catalog entries are unavailable and cannot be assigned to new records.
 var withdrawnCategories = map[string]bool{"systems": true, "losses": true, "patterns": true, "techniques": true, "controls": true, "relationships": true, "checks": true, "methods": true, "criteria": true, "collections": true, "gb": true, "r155": true}
-var ErrReferenceWithdrawn = errors.New("历史参考资料已撤下，不能新增引用")
-var ErrReferenceDataUnavailable = errors.New("未配置可用的参考资料，不能生成参考知识草稿")
+var ErrReferenceWithdrawn = errors.New("引用已失效，请选择可用资料")
+var ErrReferenceDataUnavailable = errors.New("参考目录未配置，当前操作不可用")
 
 type Catalog struct{ Regulations *Regulations }
 
@@ -62,7 +62,7 @@ func (c *Catalog) Get(key string) (Object, error) {
 		return clause, nil
 	}
 	if withdrawnKey(key) {
-		return Object{"key": key, "title": "已撤下的历史引用", "description": "", "withdrawn": true, "citable": false}, nil
+		return Object{"key": key, "title": "引用已失效", "description": "", "withdrawn": true, "citable": false}, nil
 	}
 	return nil, libMissing(key)
 }
@@ -125,13 +125,13 @@ func (c *Catalog) validateReferenceField(value, previous any, standards bool) er
 	return nil
 }
 
-// ValidateReferences validates a new record, with no permission to reuse retired material.
+// ValidateReferences checks references without an existing record context.
 func (c *Catalog) ValidateReferences(action string, payload Object) error {
 	return c.ValidateReferencesForWorkspace(action, payload, nil)
 }
 
 // ValidateReferencesForWorkspace must receive the aggregate read inside the write transaction.
-// A retired key can survive only on its existing object and reference field, or be removed.
+// An unavailable key may remain only on its existing object and reference field, or be removed.
 func (c *Catalog) ValidateReferencesForWorkspace(action string, payload, current Object) error {
 	if action == "select-regulations" {
 		refs, supplied := payload["references"]

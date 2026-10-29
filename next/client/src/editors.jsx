@@ -152,7 +152,7 @@ export function ProjectCreator({ open, onClose }) {
         <Form.Item name="description" label="项目说明">
           <TextArea
             rows={3}
-            placeholder="说明产品、系统范围或本次分析目的"
+            placeholder="填写产品、系统范围和分析目的"
             maxLength={4000}
           />
         </Form.Item>
@@ -511,39 +511,43 @@ export function EntityEditor({ editor, onClose }) {
         );
       },
     });
-  const referenceField = (field, label, category, multiple = false) => (
-    <Form.Item label={label}>
-      <Space orientation="vertical" style={{ width: "100%" }}>
-        <Form.Item name={field} noStyle>
-          <Select
-            mode={multiple ? "multiple" : undefined}
-            open={false}
-            allowClear
-            placeholder={
-              catalog?.categories.length
-                ? "从参考资料中选择"
-                : "未配置可选参考资料"
-            }
-            options={Object.entries(labels).map(([value, label]) => ({
-              value,
-              label,
-            }))}
-            labelRender={(p) => (
-              <span>{labels[p.value] || "已关联参考条目"}</span>
-            )}
-          />
-        </Form.Item>
-        <Button
-          size="small"
-          icon={<DatabaseOutlined />}
-          disabled={!catalog?.categories.length}
-          onClick={() => chooseReference(field, category, multiple)}
-        >
-          浏览并选择
-        </Button>
-      </Space>
-    </Form.Item>
-  );
+  const referenceField = (field, label, category, multiple = false) => {
+    if (!catalog?.categories.length && !form.getFieldValue(field)) return null;
+    return (
+      <Form.Item label={label}>
+        <Space orientation="vertical" style={{ width: "100%" }}>
+          <Form.Item name={field} noStyle>
+            <Select
+              mode={multiple ? "multiple" : undefined}
+              open={false}
+              allowClear
+              placeholder={
+                catalog?.categories.length
+                  ? "从参考资料中选择"
+                  : "未配置可选参考资料"
+              }
+              options={Object.entries(labels).map(([value, label]) => ({
+                value,
+                label,
+              }))}
+              labelRender={(p) => (
+                <span>{labels[p.value] || "已关联参考条目"}</span>
+              )}
+            />
+          </Form.Item>
+          {catalog?.categories.length > 0 && (
+            <Button
+              size="small"
+              icon={<DatabaseOutlined />}
+              onClick={() => chooseReference(field, category, multiple)}
+            >
+              浏览并选择
+            </Button>
+          )}
+        </Space>
+      </Form.Item>
+    );
+  };
   const selectedScenario = ws?.scenarios.find(
     (s) => s.id === (kind === "decision" ? editor?.id : scenarioId),
   );
@@ -623,7 +627,7 @@ export function EntityEditor({ editor, onClose }) {
                 >
                   <TextArea
                     rows={3}
-                    placeholder="本次分析包括的组件、外部交互和不在范围内的内容"
+                    placeholder="填写分析范围、外部交互及排除项"
                     maxLength={10000}
                   />
                 </Form.Item>
@@ -669,7 +673,7 @@ export function EntityEditor({ editor, onClose }) {
                   type="info"
                   showIcon
                   title="项目评估方法"
-                  description="当前矩阵是组织示例，不是 ISO/SAE 21434 规定的固定算法。请根据组织方法确认；调整后原处置决策需要复核。"
+                  description="使用前请确认组织适用的评估方法。方法变更后，相关处置决策需要复核。"
                   className="section-card"
                 />
                 <Form.Item name="name" label="方法名称" rules={required}>
@@ -1248,7 +1252,7 @@ export function EntityEditor({ editor, onClose }) {
                   </Button>
                 </Form.Item>
                 <Text type="secondary">
-                  引用保留文档版本与条号；已撤下的历史引用仅保留关联标记。
+                  引用记录包含文档版本与条号；失效引用需要核对或替换。
                 </Text>
               </>
             )}
@@ -1500,8 +1504,8 @@ export function ReferenceDetail({ referenceKey, onClose }) {
             <Alert
               type="warning"
               showIcon
-              title="该历史参考资料已撤下"
-              description="正文不再提供，也不能作为新增记录的参考。已有项目中的关联标记保留，便于后续核对或替换。"
+              title="引用不可用"
+              description="来源内容不可用，无法用于新增记录。请核对现有引用或选择其他来源。"
               className="section-card"
             />
           )}
@@ -1528,7 +1532,7 @@ export function ReferenceDetail({ referenceKey, onClose }) {
           <Divider />
           <Text type="secondary">
             {entry.withdrawn
-              ? "撤下记录不包含原始资料内容。"
+              ? "该引用仅保留来源标识。"
               : "项目编辑不会修改此条目。"}
           </Text>
         </>

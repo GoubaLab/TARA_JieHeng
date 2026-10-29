@@ -374,7 +374,7 @@ export function KnowledgeAutomation({ config, onClose }) {
         <Alert
           type="warning"
           showIcon
-          title="以下引用在本地资料中缺失，不会生成对应内容"
+          title="以下引用缺失，对应内容将跳过"
           description={
             <Space orientation="vertical" size={4}>
               {row.missing_paths.length > 0 && (
@@ -543,7 +543,7 @@ export function KnowledgeAutomation({ config, onClose }) {
           <Alert
             type="error"
             showIcon
-            title="本次选用未确认完成"
+            title="选用结果待确认"
             description={`${saveError.message}${saveError.status === 409 ? " 请刷新预览后核对所选内容。" : " 可保留当前选择重试，或刷新预览核对已选用状态。"}`}
             action={
               <Button
@@ -580,7 +580,7 @@ export function KnowledgeAutomation({ config, onClose }) {
                 type="warning"
                 showIcon
                 title={`全部关联知识中，${missingRows.length} 项存在缺失引用`}
-                description={`缺失攻击路径引用 ${missingPathCount} 条、控制措施引用 ${missingControlCount} 条。对应内容不会生成，可展开条目查看具体原因；此提示包含筛选后未显示的条目。`}
+                description={`缺失攻击路径引用 ${missingPathCount} 条、控制措施引用 ${missingControlCount} 条。对应内容将跳过，可展开条目查看原因；统计包含筛选外条目。`}
                 action={
                   <Button
                     size="small"
@@ -775,7 +775,7 @@ export function KnowledgeAutomation({ config, onClose }) {
               <Alert
                 type="warning"
                 showIcon
-                title={`已选内容涉及 ${selectedMissing} 条缺失引用，对应内容不会生成。请展开条目核对。`}
+                title={`已选内容涉及 ${selectedMissing} 条缺失引用，对应内容将跳过。请展开条目核对。`}
               />
             )}
           </>

@@ -2,7 +2,7 @@
   "openapi": "3.1.1",
   "info": {
     "title": "界衡威胁建模工作产品 API",
-    "version": "2.2.1",
+    "version": "2.2.2",
     "description": "通用威胁建模工作产品，汽车领域以 ISO/SAE 21434 为参考流程。Go 本地服务；版本前缀 /api/v1。写入使用 If-Match 与 Idempotency-Key；错误采用 RFC 9457。字段以 snake_case 为主，已有架构 entityType/sourceSide/targetSide/labelOffset 为兼容而保留。应用领域不自动决定法规适用性或评分算法。 企业模式提供会话与项目角色；模型任务为持久异步资源，草案采用需当前修订、幂等键和人工确认。安全方案的空项仅表示本机模式，不表示企业模式可匿名读取。"
   },
   "servers": [
@@ -5113,6 +5113,75 @@
             "$ref": "#/components/responses/Problem"
           }
         }
+      }
+    },
+    "/workspaces/{id}/profile": {
+      "put": {
+        "summary": "更新项目基本信息",
+        "operationId": "replaceWorkspaceProfile",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutationResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkspaceProfile"
+              }
+            }
+          }
+        },
+        "description": "替换项目名称和说明。需要项目分析权限、当前 If-Match 和独立 Idempotency-Key。成功后产生新修订与审计记录；工作产品、评分依据、验证记录和冻结基线保持不变。"
       }
     }
   },
@@ -11159,6 +11228,27 @@
           "version",
           "items"
         ]
+      },
+      "WorkspaceProfile": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "title",
+          "description"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "项目名称；首尾空白会移除，不能全为空白。"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 4000,
+            "description": "项目说明；允许空字符串。"
+          }
+        }
       }
     },
     "parameters": {

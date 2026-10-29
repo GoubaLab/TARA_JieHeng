@@ -327,6 +327,9 @@ func dUpsert(ws Object, collection string, value Object, prefix string) (string,
 	return dStr(value["id"]), nil
 }
 func Apply(original Object, action string, payload Object) (Object, string, error) {
+	if action == "update-workspace-profile" {
+		return applyWorkspaceProfile(original, payload)
+	}
 	ws := Clone(original)
 	preserveGoalSnapshots(ws)
 	if action != "seal-baseline" {

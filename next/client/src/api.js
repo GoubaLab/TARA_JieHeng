@@ -36,6 +36,7 @@ export const pages = {
 };
 export const actions = {
   "open-workspace": "创建项目",
+  "update-workspace-profile": "更新项目基本信息",
   "import-tara": "导入完整 TARA",
   "record-damage": "更新损害场景",
   "record-goal": "更新安全目标",

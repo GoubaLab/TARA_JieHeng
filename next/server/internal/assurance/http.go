@@ -96,7 +96,7 @@ func (s *HTTPServer) routes() {
 		method, path, action, idField string
 		createID                      bool
 	}{
-		{"PUT", "numbering", "configure-numbering", "", false}, {"PUT", "item", "define-item", "", false}, {"PUT", "architecture", "replace-architecture", "", false},
+		{"PUT", "profile", "update-workspace-profile", "", false}, {"PUT", "numbering", "configure-numbering", "", false}, {"PUT", "item", "define-item", "", false}, {"PUT", "architecture", "replace-architecture", "", false},
 		{"POST", "assets", "record-asset", "", true}, {"PUT", "assets/{resource_id}", "record-asset", "id", false},
 		{"POST", "scenarios", "record-scenario", "", true}, {"PUT", "scenarios/{resource_id}", "record-scenario", "id", false},
 		{"PUT", "scenarios/{resource_id}/treatment", "decide-treatment", "scenario_id", false},

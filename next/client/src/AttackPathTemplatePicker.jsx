@@ -195,8 +195,8 @@ export default function AttackPathTemplatePicker({
         <Space orientation="vertical" size={16} style={{ width: "100%" }}>
           <Alert
             type="info"
-            title="按项目条件选择，再补充实际攻击链"
-            description="模板会加入当前场景的编辑表单，保存场景后生效。入口、前提和控制实施情况仍需核实，影响与可行性不会自动评分。"
+            title="选择适用的攻击路径"
+            description="所选路径保存场景后生效。采用后可编辑步骤、核对前提与控制，并完成影响和可行性评估。"
           />
           <Space wrap>
             <Text type="secondary">当前资产：{asset?.name || "尚未选择"}</Text>
@@ -397,7 +397,7 @@ export default function AttackPathTemplatePicker({
           />
           <Text type="secondary">
             模板版本：{catalog?.version || "—"}
-            。匹配线索仅用于排序，未匹配模板仍可在核对条件后选用。
+            。按资产条件排序，也可查看全部模板。
           </Text>
         </Space>
       </Modal>
@@ -466,12 +466,12 @@ export default function AttackPathTemplatePicker({
             <Card size="small" title="攻击步骤">
               <TextList items={detail.steps} ordered />
             </Card>
-            <Card size="small" title="待核对的控制">
+            <Card size="small" title="控制检查项">
               <TextList items={detail.controls_to_check} />
             </Card>
             <Alert
               type="warning"
-              title="这是分析起点，未认定入口可达、漏洞存在或控制缺失。请改写为项目实际路径后再评估。"
+              title="采用后请补充实际入口、访问条件和控制状态，再进行可行性评估。"
             />
           </Space>
         )}

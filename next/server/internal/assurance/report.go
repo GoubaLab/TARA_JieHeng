@@ -11,7 +11,7 @@ var reportProperties = map[string]string{"confidentiality": "机密性", "integr
 var reportImpacts = []string{"可忽略", "中等", "重大", "严重"}
 var reportFeasibility = []string{"很低", "低", "中", "高"}
 var reportTreatments = map[string]string{"reduce": "降低", "avoid": "规避", "share": "分担", "retain": "保留"}
-var reportActions = map[string]string{"open-workspace": "建立工作区", "define-item": "更新相关项定义", "replace-architecture": "保存系统架构", "record-asset": "记录资产", "record-scenario": "更新风险场景", "decide-treatment": "确认风险处置", "specify-requirement": "更新安全需求", "record-evidence": "记录验证证据", "configure-numbering": "更新编号规则", "adopt-method": "确认评估方法", "seal-baseline": "建立评审基线", "select-regulations": "选择项目法规条款", "apply-reference-selection": "批量选用参考知识", "import-tara": "导入完整 TARA", "record-damage": "更新损害场景", "record-goal": "更新安全目标"}
+var reportActions = map[string]string{"update-workspace-profile": "更新项目基本信息", "open-workspace": "建立工作区", "define-item": "更新相关项定义", "replace-architecture": "保存系统架构", "record-asset": "记录资产", "record-scenario": "更新风险场景", "decide-treatment": "确认风险处置", "specify-requirement": "更新安全需求", "record-evidence": "记录验证证据", "configure-numbering": "更新编号规则", "adopt-method": "确认评估方法", "seal-baseline": "建立评审基线", "select-regulations": "选择项目法规条款", "apply-reference-selection": "批量选用参考知识", "import-tara": "导入完整 TARA", "record-damage": "更新损害场景", "record-goal": "更新安全目标"}
 
 func reportImpact(v any) string {
 	if v == nil {
@@ -356,7 +356,7 @@ func Tables(ws Object, journal []Object, catalog *Catalog) []Object {
 		}
 		source := ""
 		if libBool(entry["withdrawn"]) {
-			state = "来源已撤下，仅保留历史引用标识；不能据此确认符合性"
+			state = "引用已失效；仅保留标识，符合性依据需重新核对"
 			entry["description"] = ""
 		}
 		if strings.HasPrefix(key, "reg:") && !libBool(entry["withdrawn"]) {
@@ -387,7 +387,7 @@ func Tables(ws Object, journal []Object, catalog *Catalog) []Object {
 		for _, a := range libRows(ws["automation_adoptions"]) {
 			rows = append(rows, []any{a["id"], a["at"], a["owner"], a["base_revision"], a["rule_version"], libJoin(a["candidate_ids"], "、"), a["plan_hash"], a["checkpoint_id"]})
 		}
-		add("自动化分析追溯", []string{"记录", "采用时间", "责任人", "依据修订", "规则版本", "候选编号", "计划摘要", "还原点"}, rows, []int{30, 26, 20, 12, 30, 65, 70, 30}, "确定性规则生成待评估工作产品；匹配结果不等同于实际漏洞或已完成风险评估。")
+		add("自动化分析追溯", []string{"记录", "采用时间", "责任人", "依据修订", "规则版本", "候选编号", "计划摘要", "还原点"}, rows, []int{30, 26, 20, 12, 30, 65, 70, 30}, "记录分析规则及采用来源。风险评级、控制实施和验证状态以对应工作产品为准。")
 	}
 	if len(libRows(ws["ai_adoptions"])) > 0 {
 		rows = [][]any{}
@@ -399,14 +399,14 @@ func Tables(ws Object, journal []Object, catalog *Catalog) []Object {
 			}
 			rows = append(rows, []any{a["job_id"], a["at"], a["owner"], a["base_revision"], a["prompt_name"], a["prompt_revision"], usage["model"], libJoin(a["citations"], "、"), strings.Join(sources, "\n"), a["checkpoint_id"]})
 		}
-		add("辅助分析追溯", []string{"任务", "采用时间", "责任人", "依据修订", "提示词", "提示词版本", "模型", "引用片段", "来源及内容摘要哈希", "还原点"}, rows, []int{30, 26, 20, 12, 30, 12, 30, 50, 90, 30}, "AI 草案经平台校验和工作人员采用。采用不代表已完成验证、风险接受或法规符合性确认。")
+		add("辅助分析追溯", []string{"任务", "采用时间", "责任人", "依据修订", "提示词", "提示词版本", "模型", "引用片段", "来源及内容摘要哈希", "还原点"}, rows, []int{30, 26, 20, 12, 30, 12, 30, 50, 90, 30}, "记录模型草案及采用来源。验证、风险接受和法规符合性以相应评审记录为准。")
 	}
 	if len(libRows(ws["treatment_drafts"])) > 0 {
 		rows = [][]any{}
 		for _, d := range libRows(ws["treatment_drafts"]) {
 			rows = append(rows, []any{code("scenario", d["scenario_id"]), reportTreatments[libStr(d["treatment"])], d["rationale"], d["goal"], d["controls"], d["owner"], "待人工确认"})
 		}
-		add("处置待确认建议", []string{"场景", "建议方式", "依据", "目标", "措施", "责任人", "状态"}, rows, []int{20, 15, 70, 70, 70, 25, 20}, "仅供评审的建议，不作为已批准的风险处置或验证记录。")
+		add("处置待确认建议", []string{"场景", "建议方式", "依据", "目标", "措施", "责任人", "状态"}, rows, []int{20, 15, 70, 70, 70, 25, 20}, "处置草案须经负责人确认后纳入正式风险处置。验证结果单独记录。")
 	}
 	return append(output, taraReportTables(ws)...)
 }

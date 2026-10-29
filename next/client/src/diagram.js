@@ -83,7 +83,7 @@ export class Diagram {
       .map(([key, label]) => `<option value="${key}">${label}</option>`)
       .join(
         "",
-      )}</select><button class="btn small" data-dfd="add-selected-entity">＋ 添加节点</button><button class="btn small" data-dfd="add-boundary">＋ 信任边界</button><span class="separator"></span><button class="btn small" data-dfd="undo" title="撤销">↶</button><button class="btn small" data-dfd="redo" title="重做">↷</button><button class="btn small" data-dfd="fit">适合画布</button><button class="btn small" data-dfd="lanes" aria-pressed="${graph.equal_spacing}">通道间距</button><button class="btn small" data-dfd="motion" aria-pressed="true" title="仅展示流向，不代表实时数据或时序">流动效果</button><button class="btn small" data-dfd="numbers" aria-pressed="${graph.show_numbers !== false}">显示编号</button><button class="btn small" data-dfd="focus">专注画布</button><button class="btn small" data-dfd="export-static">导出静态图</button><span class="spacer"></span><button class="btn primary small" data-dfd="save" title="保存架构并自动同步资产清单">保存架构</button></div><details style="padding:8px 12px;border-bottom:1px solid #e5e9f0;color:#687281;font-size:12px"><summary style="cursor:pointer">图形与通信图例</summary><p style="margin:8px 0 0">白色卡片：设备；灰色卡片：外部实体；浅蓝色：处理过程或软件；浅绿色：数据存储；蓝色虚线框：信任边界。</p><p style="margin:8px 0 0">实线：有线或未分类；虚线：无线；点线：逻辑连接。协议与无线图标显示在线路标签中。红色表示强调的跨界流，浅灰色表示内部流，棕色表示电能流。箭头表示流向，跨线桥表示交叉但不相连。选中连线后，拖动两端圆点换边、拖动方点调整线路。</p></details><div class="canvas-layout"><div class="canvas-stage"><svg role="group" aria-label="系统数据流图" tabindex="0"></svg></div><aside class="canvas-inspector"></aside></div><div class="canvas-hint"><span class="hint-text">选中连线后拖动圆点换边、方点调整线路；拖动标签改位置。空白处拖动平移，Ctrl + 滚轮缩放。</span><span class="save-state"></span></div>`;
+      )}</select><button class="btn small" data-dfd="add-selected-entity">＋ 添加节点</button><button class="btn small" data-dfd="add-boundary">＋ 信任边界</button><span class="separator"></span><button class="btn small" data-dfd="undo" title="撤销">↶</button><button class="btn small" data-dfd="redo" title="重做">↷</button><button class="btn small" data-dfd="fit">适合画布</button><button class="btn small" data-dfd="lanes" aria-pressed="${graph.equal_spacing}">通道间距</button><button class="btn small" data-dfd="motion" aria-pressed="true" title="显示数据流方向动画">流动效果</button><button class="btn small" data-dfd="numbers" aria-pressed="${graph.show_numbers !== false}">显示编号</button><button class="btn small" data-dfd="focus">专注画布</button><button class="btn small" data-dfd="export-static">导出静态图</button><span class="spacer"></span><button class="btn primary small" data-dfd="save" title="保存架构并自动同步资产清单">保存架构</button></div><details style="padding:8px 12px;border-bottom:1px solid #e5e9f0;color:#687281;font-size:12px"><summary style="cursor:pointer">图形与通信图例</summary><p style="margin:8px 0 0">白色卡片：设备；灰色卡片：外部实体；浅蓝色：处理过程或软件；浅绿色：数据存储；蓝色虚线框：信任边界。</p><p style="margin:8px 0 0">实线：有线或未分类；虚线：无线；点线：逻辑连接。协议与无线图标显示在线路标签中。红色表示强调的跨界流，浅灰色表示内部流，棕色表示电能流。箭头表示流向，跨线桥表示交叉但不相连。选中连线后，拖动两端圆点换边、拖动方点调整线路。</p></details><div class="canvas-layout"><div class="canvas-stage"><svg role="group" aria-label="系统数据流图" tabindex="0"></svg></div><aside class="canvas-inspector"></aside></div><div class="canvas-hint"><span class="hint-text">选中连线后拖动圆点换边、方点调整线路；拖动标签改位置。空白处拖动平移，Ctrl + 滚轮缩放。</span><span class="save-state"></span></div>`;
     this.svg = root.querySelector("svg");
     this.inspector = root.querySelector(".canvas-inspector");
     this.hint = root.querySelector(".hint-text");
@@ -196,7 +196,7 @@ export class Diagram {
     const result = routeConnections(this.graph);
     if (result.conflicts.length) {
       this.message(
-        "连接空间不足，请调整实体间距或连接边。本次几何修改未应用。",
+        "连接空间不足，请调整实体间距或连接边。布局未更改。",
         true,
       );
       return false;
@@ -1051,7 +1051,7 @@ export class Diagram {
       ? `<section class="entity-inspector-section"><h3>内部组成 <span class="entity-count">${(node.children || []).length}</span></h3><p>软件与数据存储归属当前实体；数据流连接实体之间。</p>${(node.children || []).map((child, index) => `<div class="entity-child-editor" data-child-row="${e(child.id)}"><div class="entity-child-heading"><strong>${child.kind === "store" ? "数据存储" : "软件"}</strong><button class="btn small danger" data-dfd="remove-child" data-child="${e(child.id)}" aria-label="移除内部组成 ${index + 1}">移除</button></div><label>名称<input name="child-name" aria-label="内部组成 ${index + 1} 名称" value="${e(child.name)}" maxlength="200"></label><label>说明<textarea name="child-description" aria-label="内部组成 ${index + 1} 说明" rows="2" maxlength="4000">${e(child.description)}</textarea></label></div>`).join("")}<div class="entity-child-actions"><button class="btn small" data-dfd="add-software">＋ 软件</button><button class="btn small" data-dfd="add-store">＋ 数据存储</button></div></section>`
       : "";
     const migration = legacyStore
-      ? `<section class="entity-inspector-section"><h3>设置所属实体</h3><p>这是旧版独立存储记录。请选择实际所属实体；归属后保留原标识、描述与引用，同时转接相关的数据流和资产关联。</p><div class="field"><label for="store-parent">所属实体</label><select id="store-parent" name="store-parent"><option value="">请选择实体</option>${this.graph.nodes
+      ? `<section class="entity-inspector-section"><h3>设置所属实体</h3><p>此数据存储尚未归属实体。请选择所属实体；归属后保留原标识、描述与引用，同时转接相关的数据流和资产关联。</p><div class="field"><label for="store-parent">所属实体</label><select id="store-parent" name="store-parent"><option value="">请选择实体</option>${this.graph.nodes
           .filter(isEntity)
           .map(
             (parent) =>
@@ -1068,7 +1068,7 @@ export class Diagram {
       children +
       `<button class="btn small primary" data-dfd="apply-node">应用修改</button>` +
       migration +
-      `<div class="section-gap"><button class="btn small danger" data-dfd="remove">${node.kind === "boundary" ? "移除边界" : legacyStore ? "移除旧存储记录" : "移除实体"}</button></div><p>修改和移除可在保存前撤销。已关联资产的实体需先解除关联。</p>`;
+      `<div class="section-gap"><button class="btn small danger" data-dfd="remove">${node.kind === "boundary" ? "移除边界" : legacyStore ? "移除数据存储" : "移除实体"}</button></div><p>修改和移除可在保存前撤销。已关联资产的实体需先解除关联。</p>`;
   }
   inspect() {
     const e = this.esc,
@@ -1130,6 +1130,6 @@ export class Diagram {
       return;
     }
     this.inspector.innerHTML =
-      '<p class="eyebrow">SYSTEM MODEL</p><h3>构建系统视图</h3><p>在工具栏选择设备、应用、云服务、参与者等实体类型。软件和数据存储在实体内部维护。</p><p>选中实体可维护操作系统、属性与内部组成。拖动四侧连接点到另一实体即可创建数据流，再设置有线、无线或逻辑连接及协议。</p><div class="notice green">流动效果仅用于展示方向，不代表真实流量或时序；导出的图始终静态。</div><p>所有数据流的标签默认居中，可拖动调整；无线直接以虚线和协议图标标识。选中连线后拖动圆点换边、方点调整线路。<br>Ctrl + 滚轮缩放<br>空白处拖动平移<br>Ctrl / ⌘ + Z 撤销</p>';
+      '<p class="eyebrow">系统架构</p><h3>构建系统视图</h3><p>在工具栏选择设备、应用、云服务、参与者等实体类型。软件和数据存储在实体内部维护。</p><p>选中实体可维护操作系统、属性与内部组成。拖动四侧连接点到另一实体即可创建数据流，再设置有线、无线或逻辑连接及协议。</p><div class="notice green">画布支持流向动画，导出使用静态图。</div><p>所有数据流的标签默认居中，可拖动调整；无线直接以虚线和协议图标标识。选中连线后拖动圆点换边、方点调整线路。<br>Ctrl + 滚轮缩放<br>空白处拖动平移<br>Ctrl / ⌘ + Z 撤销</p>';
   }
 }

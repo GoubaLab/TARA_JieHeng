@@ -4837,6 +4837,72 @@
       &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
     }
   }
+}</pre></details></section><section><h2><code>PUT /api/v1/workspaces/{id}/profile</code></h2><h3>更新项目基本信息</h3><p>替换项目名称和说明。需要项目分析权限、当前 If-Match 和独立 Idempotency-Key。成功后产生新修订与审计记录；工作产品、评分依据、验证记录和冻结基线保持不变。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;更新项目基本信息&quot;,
+  &quot;operationId&quot;: &quot;replaceWorkspaceProfile&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/MutationResult&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/WorkspaceProfile&quot;
+        }
+      }
+    }
+  },
+  &quot;description&quot;: &quot;替换项目名称和说明。需要项目分析权限、当前 If-Match 和独立 Idempotency-Key。成功后产生新修订与审计记录；工作产品、评分依据、验证记录和冻结基线保持不变。&quot;
 }</pre></details></section><section id="schema-Item"><details><summary>Item</summary><pre>{
   &quot;additionalProperties&quot;: false,
   &quot;properties&quot;: {
@@ -10779,4 +10845,24 @@
     &quot;version&quot;,
     &quot;items&quot;
   ]
+}</pre></details></section><section id="schema-WorkspaceProfile"><details><summary>WorkspaceProfile</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;required&quot;: [
+    &quot;title&quot;,
+    &quot;description&quot;
+  ],
+  &quot;properties&quot;: {
+    &quot;title&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 200,
+      &quot;description&quot;: &quot;项目名称；首尾空白会移除，不能全为空白。&quot;
+    },
+    &quot;description&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 4000,
+      &quot;description&quot;: &quot;项目说明；允许空字符串。&quot;
+    }
+  }
 }</pre></details></section></html>

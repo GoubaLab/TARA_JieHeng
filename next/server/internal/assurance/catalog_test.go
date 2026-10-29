@@ -57,7 +57,7 @@ func TestCatalogWithdrawnAndSnapshotIgnored(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		libraryEqual(t, entry, Object{"key": key, "title": "已撤下的历史引用", "description": "", "withdrawn": true, "citable": false})
+		libraryEqual(t, entry, Object{"key": key, "title": "引用已失效", "description": "", "withdrawn": true, "citable": false})
 	}
 	if _, err := c.Search("unconfigured", "", 0, 10); !errors.Is(err, ErrReferenceNotFound) {
 		t.Fatalf("unexpected category result: %v", err)

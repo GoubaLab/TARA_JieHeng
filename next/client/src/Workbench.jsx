@@ -1,3 +1,4 @@
+import WorkspaceProfileEditor from "./WorkspaceProfileEditor.jsx";
 import ModelSettings from "./ModelSettings.jsx";
 import KnowledgeCenter from "./KnowledgeCenter.jsx";
 import AutomationCenter from "./AutomationCenter.jsx";
@@ -55,6 +56,7 @@ import {
   PlusOutlined,
   ReloadOutlined,
   ExportOutlined,
+  EditOutlined,
   SearchOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
@@ -199,6 +201,7 @@ export default function Workbench() {
     [collapsed, setCollapsed] = useState(false),
     [editor, setEditor] = useState(null),
     [createOpen, setCreateOpen] = useState(false),
+    [profileID, setProfileID] = useState(null),
     [picker, setPicker] = useState(null),
     [reference, setReference] = useState(null),
     [automation, setAutomation] = useState(null),
@@ -212,6 +215,7 @@ export default function Workbench() {
   activeWorkspaceId.current = id;
   useEffect(() => {
     setEditor(null);
+    setProfileID(null);
     setPicker(null);
     setAutomation(null);
     setFlow(null);
@@ -315,6 +319,7 @@ export default function Workbench() {
       setEditor(value);
     },
     setCreateOpen,
+    setProfileID,
     setPicker,
     setRegulationPicker,
     setReference,
@@ -342,7 +347,9 @@ export default function Workbench() {
       label: "资源目录",
       children: [
         { key: "knowledge", icon: <DatabaseOutlined />, label: "企业知识" },
-        { key: "library", icon: <DatabaseOutlined />, label: "历史引用说明" },
+        ...(catalog?.categories?.length
+          ? [{ key: "library", icon: <DatabaseOutlined />, label: "参考资料" }]
+          : []),
         { key: "regulations", icon: <AuditOutlined />, label: "法规数据库" },
       ],
     },
@@ -509,6 +516,11 @@ export default function Workbench() {
         </Layout>
       </Layout>
       <ProjectCreator open={createOpen} onClose={() => setCreateOpen(false)} />
+      <WorkspaceProfileEditor
+        workspaceID={profileID}
+        onClose={() => setProfileID(null)}
+        onSaved={() => reload({ quiet: true })}
+      />
       <EntityEditor editor={editor} onClose={() => setEditor(null)} />
       <ReferencePicker config={picker} onClose={() => setPicker(null)} />
       <ReferenceDetail
@@ -528,7 +540,8 @@ export default function Workbench() {
   );
 }
 function Projects() {
-  const { projects, setCreateOpen } = useWorkbench();
+  const { projects, setCreateOpen, setProfileID } = useWorkbench();
+  const { user } = useAuth();
   const [q, setQ] = useState("");
   const rows = projects.filter((p) => match([p.title, p.description], q));
   return (
@@ -585,6 +598,7 @@ function Projects() {
           rowKey="id"
           pagination={compactPage}
           dataSource={rows}
+          scroll={{ x: 1080 }}
           locale={{
             emptyText: (
               <Empty description="暂无项目，创建项目后即可开始分析">
@@ -598,6 +612,7 @@ function Projects() {
             {
               title: "项目名称",
               dataIndex: "title",
+              width: 340,
               render: (v, p) => (
                 <Space orientation="vertical" size={2}>
                   <Button
@@ -636,11 +651,22 @@ function Projects() {
             },
             {
               title: "操作",
-              width: 110,
+              width: 190,
+              fixed: "right",
               render: (_, p) => (
-                <Button type="link" onClick={() => navigate("overview", p.id)}>
-                  进入项目
-                </Button>
+                <Space>
+                  <Button
+                    type="link"
+                    onClick={() => navigate("overview", p.id)}
+                  >
+                    进入项目
+                  </Button>
+                  {user.role !== "viewer" && p.project_role !== "viewer" && (
+                    <Button type="link" onClick={() => setProfileID(p.id)}>
+                      编辑信息
+                    </Button>
+                  )}
+                </Space>
               ),
             },
           ]}
@@ -650,7 +676,7 @@ function Projects() {
   );
 }
 function Overview() {
-  const { ws, review, setEditor, openIssue } = useWorkbench();
+  const { ws, review, setEditor, setProfileID, openIssue } = useWorkbench();
   const done = review.stages.filter((s) => s.complete).length;
   const counts = Array.from(
     { length: 5 },
@@ -662,12 +688,22 @@ function Overview() {
         title="项目总览"
         description={ws.title}
         extra={
-          <Button
-            icon={<ExportOutlined />}
-            onClick={() => navigate("verification", ws.id)}
-          >
-            检查与导出报告
-          </Button>
+          <Space>
+            {ws.access_role !== "viewer" && (
+              <Button
+                icon={<EditOutlined />}
+                onClick={() => setProfileID(ws.id)}
+              >
+                项目基本信息
+              </Button>
+            )}
+            <Button
+              icon={<ExportOutlined />}
+              onClick={() => navigate("verification", ws.id)}
+            >
+              检查与导出报告
+            </Button>
+          </Space>
         }
       />
       <Card size="small" className="project-context">
@@ -917,19 +953,20 @@ function Architecture() {
         }
         extra={
           <>
-            <Button
-              disabled={!catalog.categories.length}
-              onClick={() =>
-                setPicker({
-                  category: "systems",
-                  multiple: false,
-                  onSelect: (rows) =>
-                    setEditor({ kind: "asset", source: rows[0] }),
-                })
-              }
-            >
-              从参考资料识别资产
-            </Button>
+            {catalog.categories.length > 0 && (
+              <Button
+                onClick={() =>
+                  setPicker({
+                    category: "systems",
+                    multiple: false,
+                    onSelect: (rows) =>
+                      setEditor({ kind: "asset", source: rows[0] }),
+                  })
+                }
+              >
+                从参考资料识别资产
+              </Button>
+            )}
             <Button
               type="primary"
               icon={<PlusOutlined />}
@@ -965,7 +1002,7 @@ function Architecture() {
         type="info"
         showIcon
         title="实体与通信建模"
-        description="保存架构会自动识别实体功能、内部软件、存储数据与传输数据。再次保存会同步未手工修改的内容；手工补充和已有风险分析会保留。安全属性为可编辑建议，数据流已选属性会直接带入。"
+        description="保存架构可同步功能、软件、存储与传输资产。人工维护的字段和已有风险关联予以保留，安全属性可在资产清单中调整。"
       />
     </>
   );
@@ -1047,7 +1084,7 @@ function AssetTable() {
         type="info"
         showIcon
         title="资产随架构保存自动生成"
-        description="实体功能、软件、存储数据和传输数据均可识别。安全属性可按实际业务调整；再次保存架构不会覆盖你手工修改的名称、说明和安全属性。"
+        description="资产按架构来源同步，名称、说明和安全属性支持人工维护。"
         className="section-card"
       />
       <div className="table-toolbar">
@@ -1211,11 +1248,19 @@ function Assessment() {
         extra={
           <>
             <Button
-              onClick={() => setAutomation({})}
-              disabled={!ws.assets.length || !catalog.categories.length}
+              icon={<ThunderboltOutlined />}
+              onClick={() => navigate("automation", ws.id)}
             >
-              批量选用资料
+              自动分析
             </Button>
+            {catalog.categories.length > 0 && (
+              <Button
+                onClick={() => setAutomation({})}
+                disabled={!ws.assets.length}
+              >
+                批量选用资料
+              </Button>
+            )}
             <Button
               type="primary"
               icon={<PlusOutlined />}
@@ -1271,12 +1316,18 @@ function Assessment() {
               <Empty
                 description={
                   ws.assets.length
-                    ? "暂无风险场景，可从参考资料批量选用或手动创建。"
+                    ? "暂无风险场景，可新建场景或运行自动分析。"
                     : "先建立实体并识别资产，再开始风险分析。"
                 }
               >
-                <Button onClick={() => navigate("architecture", ws.id)}>
-                  前往架构与资产
+                <Button
+                  onClick={() =>
+                    ws.assets.length
+                      ? setEditor({ kind: "scenario" })
+                      : navigate("architecture", ws.id)
+                  }
+                >
+                  {ws.assets.length ? "新增风险场景" : "前往架构与资产"}
                 </Button>
               </Empty>
             ),
@@ -2055,7 +2106,7 @@ function Verification() {
   );
 }
 function Library() {
-  const { catalog, setReference, message } = useWorkbench();
+  const { ws, catalog, setReference, message } = useWorkbench();
   const [category, setCategory] = useState("systems"),
     [q, setQ] = useState(""),
     [search, setSearch] = useState(""),
@@ -2081,15 +2132,22 @@ function Library() {
   if (!catalog.categories.length)
     return (
       <>
-        <PageTitle
-          title="参考资料"
-          description="仅收录可用于当前产品的自有或已授权资料。"
-        />
+        <PageTitle title="参考资料" description="查看参考条目及来源信息。" />
         <Card>
           <Empty description="尚未配置参考资料">
-            <Text type="secondary">
-              历史参考资料已撤下。已有项目的引用可追溯到撤下标记；新增分析可手工录入，法规条款仍可在法规数据库中勾选。
-            </Text>
+            <Space orientation="vertical" align="center">
+              <Text type="secondary">
+                企业资料在知识中心维护，法规条款在法规数据库中选择。
+              </Text>
+              <Space>
+                <Button onClick={() => navigate("knowledge", ws?.id)}>
+                  企业知识
+                </Button>
+                <Button onClick={() => navigate("regulations", ws?.id)}>
+                  法规数据库
+                </Button>
+              </Space>
+            </Space>
           </Empty>
         </Card>
       </>

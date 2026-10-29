@@ -82,7 +82,7 @@ export default function QualityCenter() {
     <>
       <PageTitle
         title="交付检查与恢复"
-        description="集中处理流程缺项、资产覆盖和资料确认；在关键操作前保存可恢复版本。"
+        description="检查工作产品完整性、资产覆盖和待确认事项，管理项目还原点。"
         extra={
           <Space>
             <Button
@@ -136,12 +136,8 @@ export default function QualityCenter() {
                   <Alert
                     type={q?.ready ? "success" : "info"}
                     showIcon
-                    title={
-                      q?.ready
-                        ? "基础完整性检查通过，请继续核对覆盖提醒与工程结论"
-                        : "按问题逐项完善，再建立评审基线"
-                    }
-                    description="AI 可协助发现和补齐缺项；真实验证、风险接受和评审责任仍由工作人员完成。"
+                    title={q?.ready ? "基础完整性检查通过" : "工作产品有待完善"}
+                    description="完成下方事项并核对验证、风险接受和评审记录后，可建立评审基线。"
                   />
                   <Table
                     rowKey={(_, i) => i}
@@ -214,8 +210,8 @@ export default function QualityCenter() {
                 <Space orientation="vertical" style={{ width: "100%" }}>
                   <Alert
                     type="info"
-                    title="还原不会覆盖历史操作记录和冻结基线；执行前还会保存当前状态，便于撤回本次还原。"
-                    description="还原点与项目保存在同一数据库中，不能替代独立离线备份。备份方式见企业部署文档。"
+                    title="还原会生成新修订，并自动保存还原前的状态；历史操作记录和冻结基线保留。"
+                    description="还原点保存在项目数据库中。数据库故障恢复需使用独立备份，操作见企业部署文档。"
                   />
                   {(ws.access_role || user.role) !== "viewer" && (
                     <Button
@@ -309,7 +305,7 @@ export default function QualityCenter() {
         <Alert
           type="warning"
           title={`将还原到：${restoring?.name || ""}`}
-          description="当前内容会先建立自动还原点。本次操作产生新的修订，方法确认状态将重置为待确认，历史审计与冻结基线保留。"
+          description="操作前自动保存当前状态。还原后生成新修订，评估方法重置为待确认；历史操作记录与冻结基线保留。"
         />
         {error && <Alert type="error" title={error} />}
         <Form layout="vertical">

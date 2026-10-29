@@ -32,6 +32,100 @@ import { useAuth } from "./AuthGate.jsx";
 import { request, date, navigate } from "./api.js";
 import { mutateResource, pickFields, useResource } from "./platform-ui.js";
 const { Text, Paragraph } = Typography;
+const reviewFieldLabels = {
+  id: "条目标识",
+  cve_id: "CVE",
+  reason: "复核原因",
+  previous_hash: "上一版本摘要",
+  catalogVersion: "来源版本",
+  action: "来源说明",
+};
+const reviewReasonLabels = {
+  missing_from_snapshot: "来源目录中未找到该条目",
+};
+function reviewLabel(labels, key) {
+  return Object.hasOwn(labels, key) ? labels[key] : String(key);
+}
+function ReviewNoticeValue({ value, field, depth = 0 }) {
+  if (value == null) return "—";
+  if (depth >= 8 && typeof value === "object")
+    return (
+      <Text style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+        {JSON.stringify(value)}
+      </Text>
+    );
+  if (Array.isArray(value))
+    return (
+      <Space orientation="vertical">
+        {value.map((item, i) => (
+          <ReviewNoticeValue key={i} value={item} depth={depth + 1} />
+        ))}
+      </Space>
+    );
+  if (typeof value === "object")
+    return (
+      <Descriptions
+        size="small"
+        column={1}
+        items={Object.entries(value).map(([key, item]) => ({
+          key,
+          label: reviewLabel(reviewFieldLabels, key),
+          children: (
+            <ReviewNoticeValue value={item} field={key} depth={depth + 1} />
+          ),
+        }))}
+      />
+    );
+  const text =
+    field === "reason" ? reviewLabel(reviewReasonLabels, value) : String(value);
+  return (
+    <Text style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+      {text}
+    </Text>
+  );
+}
+function SourceReviewNotices({ notices }) {
+  const rows = notices.map((notice, i) => ({ key: i, notice }));
+  return (
+    <Table
+      rowKey="key"
+      size="small"
+      dataSource={rows}
+      pagination={rows.length > 5 ? { pageSize: 5 } : false}
+      columns={[
+        {
+          title: "资料 / CVE",
+          render: (_, { notice, key }) => (
+            <ReviewNoticeValue
+              value={notice?.cve_id || notice?.id || `通知 ${key + 1}`}
+            />
+          ),
+        },
+        {
+          title: "复核原因",
+          render: (_, { notice }) => (
+            <ReviewNoticeValue
+              field="reason"
+              value={
+                notice?.reason ||
+                (typeof notice === "string" ? notice : "来源信息待复核")
+              }
+            />
+          ),
+        },
+        {
+          title: "来源版本",
+          render: (_, { notice }) => (
+            <ReviewNoticeValue value={notice?.catalogVersion} />
+          ),
+        },
+      ]}
+      expandable={{
+        expandedRowRender: ({ notice }) => <ReviewNoticeValue value={notice} />,
+      }}
+    />
+  );
+}
 export default function KnowledgeCenter() {
   const { ws, projects } = useWorkbench(),
     { user } = useAuth(),
@@ -77,7 +171,7 @@ export default function KnowledgeCenter() {
       }
       setEditing(full);
       form.resetFields();
-      form.setFieldsValue({...full, reviewed: false});
+      form.setFieldsValue({ ...full, reviewed: false });
     } catch (e) {
       setError(e.message);
     }
@@ -127,16 +221,26 @@ export default function KnowledgeCenter() {
       if (file.size > 2000000) throw Error("知识包不能超过 2 MB");
       const value = JSON.parse(await file.text());
       setPack(validateKnowledgePackPreview(value));
-    } catch (e) { setError(e.message); }
+    } catch (e) {
+      setError(e.message);
+    }
     return false;
   };
   const importPack = async () => {
     setBusy(true);
     try {
       const result = await mutateResource("/knowledge-imports", pack);
-      setPack(null); setImportNotices(result.review_required || []); r.refresh();
-      message.success(`新增 ${result.created_count} 条待复核资料，已存在 ${result.existing_count} 条；另有 ${result.review_required?.length || 0} 项来源复核通知`);
-    } catch(e) { setError(e.message); } finally { setBusy(false); }
+      setPack(null);
+      setImportNotices(result.review_required || []);
+      r.refresh();
+      message.success(
+        `新增 ${result.created_count} 条待复核资料，已存在 ${result.existing_count} 条；另有 ${result.review_required?.length || 0} 项来源复核通知`,
+      );
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
   };
   const upload = async (file) => {
     try {
@@ -207,11 +311,37 @@ export default function KnowledgeCenter() {
         }
         extra={
           <Space wrap>
-            {user.role === "admin" && <>
-              <Button onClick={async () => { try { setPack(validateKnowledgePackPreview(await request("/knowledge-packs/public-cases"))); } catch(e) { setError(e.message); } }}>公开案例种子</Button>
-              <Upload accept=".json" beforeUpload={previewPack} showUploadList={false}><Button icon={<UploadOutlined />}>导入知识包</Button></Upload>
-            </>}
-            {canEdit && <Button type="primary" icon={<PlusOutlined />} onClick={create}>添加资料</Button>}
+            {user.role === "admin" && (
+              <>
+                <Button
+                  onClick={async () => {
+                    try {
+                      setPack(
+                        validateKnowledgePackPreview(
+                          await request("/knowledge-packs/public-cases"),
+                        ),
+                      );
+                    } catch (e) {
+                      setError(e.message);
+                    }
+                  }}
+                >
+                  公开案例包
+                </Button>
+                <Upload
+                  accept=".json"
+                  beforeUpload={previewPack}
+                  showUploadList={false}
+                >
+                  <Button icon={<UploadOutlined />}>导入知识包</Button>
+                </Upload>
+              </>
+            )}
+            {canEdit && (
+              <Button type="primary" icon={<PlusOutlined />} onClick={create}>
+                添加资料
+              </Button>
+            )}
           </Space>
         }
       />
@@ -224,11 +354,18 @@ export default function KnowledgeCenter() {
           onClose={() => setError("")}
         />
       )}
-      {!!importNotices.length && <Card title="本次来源复核通知" className="section-card"><Paragraph>请核对官方来源后处理受影响资料。通知已保存至管理记录，本次未自动停用资料。</Paragraph><pre style={{whiteSpace:"pre-wrap",maxHeight:320,overflow:"auto"}}>{JSON.stringify(importNotices,null,2)}</pre></Card>}
+      {!!importNotices.length && (
+        <Card title="来源复核通知" className="section-card">
+          <Paragraph>
+            请核对来源变更及受影响资料。通知已记入管理记录，资料启用状态保持不变。
+          </Paragraph>
+          <SourceReviewNotices notices={importNotices} />
+        </Card>
+      )}
       <Card className="section-card">
         <Alert
           type="info"
-          title="知识包导入后先复核事实、适用范围与验证方法，再启用检索。公开漏洞案例不等于当前产品存在漏洞。项目法规引用来自已勾选条款。"
+          title="导入资料需复核事实、适用范围和验证方法后启用。漏洞案例的适用性需结合项目组件与配置评估。"
         />
         <Table
           rowKey="id"
@@ -242,7 +379,18 @@ export default function KnowledgeCenter() {
               width: 210,
               dataIndex: "name",
               render: (v, d) => (
-                <Button type="link" style={{whiteSpace:"normal",height:"auto",textAlign:"left",padding:0,display:"block",width:"100%"}} onClick={() => open(d, true)}>
+                <Button
+                  type="link"
+                  style={{
+                    whiteSpace: "normal",
+                    height: "auto",
+                    textAlign: "left",
+                    padding: 0,
+                    display: "block",
+                    width: "100%",
+                  }}
+                  onClick={() => open(d, true)}
+                >
                   {v}
                 </Button>
               ),
@@ -252,7 +400,12 @@ export default function KnowledgeCenter() {
               width: 180,
               render: (_, d) => (
                 <>
-                  <Text ellipsis={{tooltip:d.source}} style={{maxWidth:"100%"}}>{d.source}</Text>
+                  <Text
+                    ellipsis={{ tooltip: d.source }}
+                    style={{ maxWidth: "100%" }}
+                  >
+                    {d.source}
+                  </Text>
                   <br />
                   <Text type="secondary">{d.edition}</Text>
                 </>
@@ -292,7 +445,8 @@ export default function KnowledgeCenter() {
                     }
                   </Tag>
                   <Text type="secondary">
-                    {d.index_model || (d.enabled ? "关键词检索可用" : "启用后可检索")}
+                    {d.index_model ||
+                      (d.enabled ? "关键词检索可用" : "启用后可检索")}
                   </Text>
                 </Space>
               ),
@@ -301,7 +455,25 @@ export default function KnowledgeCenter() {
               title: "状态",
               width: 85,
               dataIndex: "enabled",
-              render: (v, d) => <Tag color={v ? "success" : d.review_status === "pending" ? "warning" : "default"}>{v ? "已启用" : d.review_status === "pending" ? "待复核" : d.review_status === "superseded" ? "已有新版" : "停用"}</Tag>,
+              render: (v, d) => (
+                <Tag
+                  color={
+                    v
+                      ? "success"
+                      : d.review_status === "pending"
+                        ? "warning"
+                        : "default"
+                  }
+                >
+                  {v
+                    ? "已启用"
+                    : d.review_status === "pending"
+                      ? "待复核"
+                      : d.review_status === "superseded"
+                        ? "已有新版"
+                        : "停用"}
+                </Tag>
+              ),
             },
             {
               title: "操作",
@@ -355,7 +527,7 @@ export default function KnowledgeCenter() {
                 checked={allowExternal}
                 onChange={(e) => setAllowExternal(e.target.checked)}
               >
-                允许将本次查询发送到所选外部向量服务
+                允许将此查询发送到所选外部向量服务
               </Checkbox>
             )}
           </Space>
@@ -475,7 +647,13 @@ export default function KnowledgeCenter() {
           <Form.Item name="tags" label="标签">
             <Select mode="tags" />
           </Form.Item>
-          {editing?.source_record && <Form.Item name="reviewed" valuePropName="checked"><Checkbox>已复核事实、适用条件、不适用情形与证据来源；启用本版会停用同来源的旧版</Checkbox></Form.Item>}
+          {editing?.source_record && (
+            <Form.Item name="reviewed" valuePropName="checked">
+              <Checkbox>
+                已复核内容与证据来源；启用此版本将替换同来源的已启用版本
+              </Checkbox>
+            </Form.Item>
+          )}
           <Form.Item name="enabled" label="纳入检索" valuePropName="checked">
             <Switch />
           </Form.Item>
@@ -492,9 +670,31 @@ export default function KnowledgeCenter() {
           items={[
             { key: "source", label: "来源", children: viewing?.source },
             { key: "edition", label: "版本", children: viewing?.edition },
-            { key: "cves", label: "CVE", children: viewing?.source_record?.cve_ids?.join("、") || "—" },
-            { key: "review", label: "资料复核", children: viewing?.reviewed_at ? `${viewing.reviewed_by === "local" ? "本地管理员" : viewing.reviewed_by} · ${date(viewing.reviewed_at)}` : "尚无复核记录" },
-            { key: "evidence", label: "证据来源", children: <Space orientation="vertical">{viewing?.source_record?.evidence_urls?.map(url => <a key={url} href={url} target="_blank" rel="noreferrer">{url}</a>)}</Space> },
+            {
+              key: "cves",
+              label: "CVE",
+              children: viewing?.source_record?.cve_ids?.join("、") || "—",
+            },
+            {
+              key: "review",
+              label: "资料复核",
+              children: viewing?.reviewed_at
+                ? `${viewing.reviewed_by === "local" ? "本地管理员" : viewing.reviewed_by} · ${date(viewing.reviewed_at)}`
+                : "尚无复核记录",
+            },
+            {
+              key: "evidence",
+              label: "证据来源",
+              children: (
+                <Space orientation="vertical">
+                  {viewing?.source_record?.evidence_urls?.map((url) => (
+                    <a key={url} href={url} target="_blank" rel="noreferrer">
+                      {url}
+                    </a>
+                  ))}
+                </Space>
+              ),
+            },
             {
               key: "updated",
               label: "更新时间",
@@ -506,11 +706,51 @@ export default function KnowledgeCenter() {
           {viewing?.content}
         </Paragraph>
       </Drawer>
-      <Modal open={!!pack} title="知识包导入预览" width={900} onCancel={() => setPack(null)} onOk={importPack} confirmLoading={busy} okText="导入为待复核资料">
+      <Modal
+        open={!!pack}
+        title="知识包导入预览"
+        width={900}
+        onCancel={() => setPack(null)}
+        onOk={importPack}
+        confirmLoading={busy}
+        okText={pack?.entries?.length ? "导入为待复核资料" : "保存来源通知"}
+      >
         {error && <Alert type="error" title={error} />}
-        <Paragraph>来源包：{pack?.pack_id} · 版本：{pack?.version}。本次不会启用资料，也不会覆盖已整理的内容。</Paragraph>
-        {!!pack?.review_required?.length && <Alert type="warning" title={`来源清单另有 ${pack.review_required.length} 项需要复核。`} description={<pre style={{whiteSpace:"pre-wrap",maxHeight:220,overflow:"auto"}}>{JSON.stringify(pack.review_required,null,2)}</pre>} />}
-        <Table rowKey="id" size="small" dataSource={pack?.entries || []} pagination={{pageSize:5}} columns={[{title:"案例",dataIndex:"name"},{title:"版本",dataIndex:"edition"},{title:"CVE",render:(_,d)=>(d.cve_ids||[]).join("、")}]} expandable={{expandedRowRender:d=><Paragraph style={{whiteSpace:"pre-wrap"}}>{d.content}</Paragraph>}} />
+        <Paragraph>
+          来源包：{pack?.pack_id} · 版本：{pack?.version}。
+          {pack?.entries?.length
+            ? "导入为待复核资料，已有内容保留。"
+            : "保存来源变更通知，资料启用状态保持不变。"}
+        </Paragraph>
+        {!!pack?.review_required?.length && (
+          <Card
+            size="small"
+            title={`来源复核通知（${pack.review_required.length}）`}
+            style={{ marginBottom: 16 }}
+          >
+            <SourceReviewNotices notices={pack.review_required} />
+          </Card>
+        )}
+        {!!pack?.entries?.length && (
+          <Table
+            rowKey="id"
+            size="small"
+            dataSource={pack.entries}
+            pagination={{ pageSize: 5 }}
+            columns={[
+              { title: "案例", dataIndex: "name" },
+              { title: "版本", dataIndex: "edition" },
+              { title: "CVE", render: (_, d) => (d.cve_ids || []).join("、") },
+            ]}
+            expandable={{
+              expandedRowRender: (d) => (
+                <Paragraph style={{ whiteSpace: "pre-wrap" }}>
+                  {d.content}
+                </Paragraph>
+              ),
+            }}
+          />
+        )}
       </Modal>
       <Modal
         open={!!indexing}
@@ -521,7 +761,7 @@ export default function KnowledgeCenter() {
         okText="创建索引任务"
       >
         <Paragraph>
-          将此资料分段后交给所选向量服务计算语义向量。原文和索引保存在企业数据库，任务可取消。
+          资料正文将发送至所选向量服务建立语义索引。原文与索引保存在本地数据库，任务可取消。
         </Paragraph>
         {error && <Alert type="error" title={error} />}
         <Form form={indexForm} layout="vertical">

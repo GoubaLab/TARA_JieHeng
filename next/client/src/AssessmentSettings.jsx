@@ -160,7 +160,7 @@ function MethodSettings() {
         showIcon
         className="section-card"
         title="配置仅作用于当前项目"
-        description="方法修改会触发风险重算，并使受影响的已有处置决策需要复核。冻结的评审基线保持原方法。默认值为组织示例，不代表任何标准的强制算法。"
+        description="保存后重算风险并标记需复核的处置，冻结基线保持原方法。默认参数为配置示例，应按组织评估准则确认。"
       />
       {error && (
         <Alert type="error" showIcon title={error} className="section-card" />
@@ -617,16 +617,15 @@ function MethodSettings() {
                 预览随编辑变化；保存后才作用于项目。每条攻击路径独立计算，场景取最高风险。残余风险使用同一分级算法。
               </Paragraph>
             </Card>
-            <Card title="开发与扩展">
+            <Card title="算法扩展">
               <Paragraph>
-                需要增加维度、流程步骤或报告模板时，可通过开放源码与版本化 API
-                扩展。
+                新增评分维度或算法需进行部署扩展。接口与数据结构见开发文档。
               </Paragraph>
               <Space wrap>
                 <Button href="/api/v1/docs" target="_blank" rel="noreferrer">
                   接口文档
                 </Button>
-                <Text type="secondary">二次开发指南见交付文档</Text>
+                <Text type="secondary">扩展指南见开发文档</Text>
               </Space>
             </Card>
           </Col>

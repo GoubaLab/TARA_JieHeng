@@ -233,7 +233,7 @@ export default function AutomationCenter() {
       attempt.current = null;
       await reload({ quiet: true });
       await plan.refresh();
-      message.success("分析草案已加入项目，评分与验证继续保持待确认");
+      message.success("分析草案已加入项目，评分与验证待完成");
     } catch (e) {
       setError(e.message);
       if (e.status === 409 || e.status === 412) {
@@ -299,7 +299,7 @@ export default function AutomationCenter() {
           closable
           onClose={() => setSuccess(null)}
           title={`已加入 ${success.count} 个威胁分析草案${success.revision != null ? `，项目修订 ${success.revision}` : ""}`}
-          description="相关损害与安全需求已关联到现有资产。请继续确认影响、可行性和安全目标；采用前的项目已保存还原点。"
+          description="已关联资产、损害场景和安全需求，并保存采用前还原点。下一步：评估影响与可行性，完善安全目标。"
           action={
             <Button onClick={() => navigate("assessment", ws.id)}>
               继续风险评估
@@ -311,8 +311,8 @@ export default function AutomationCenter() {
         className="section-card"
         type="info"
         showIcon
-        title="规则命中是分析线索，适用前提与控制状态需要核实"
-        description="本页使用独立规则进行本地分析，无需模型服务。不会认定已有漏洞、填写风险评分或覆盖人工结果；重复分析会识别已采用的候选。"
+        title="基于架构与资产的规则分析"
+        description="根据模型事实匹配候选，核对适用前提后可加入项目。已有分析保留；新增内容的评分、处置和验证待完成。"
       />
       {stale && (
         <Alert
@@ -462,7 +462,7 @@ export default function AutomationCenter() {
                 description={
                   candidates.length
                     ? "没有符合筛选条件的候选"
-                    : "当前没有匹配项。可先完善实体、操作系统、通信属性和资产；这不表示项目没有风险。"
+                    : "暂无规则匹配项。可完善实体、操作系统、通信属性和资产，或手工建立风险场景。"
                 }
               />
             ),
@@ -515,11 +515,7 @@ export default function AutomationCenter() {
                 },
               ]}
             />
-            <Card
-              title="命中的已记录事实"
-              size="small"
-              style={{ width: "100%" }}
-            >
+            <Card title="匹配依据" size="small" style={{ width: "100%" }}>
               <List
                 dataSource={detail.matched_conditions || []}
                 renderItem={(condition) => (
@@ -534,14 +530,10 @@ export default function AutomationCenter() {
                 )}
               />
             </Card>
-            <Card
-              title="采用前需核对的前提"
-              size="small"
-              style={{ width: "100%" }}
-            >
+            <Card title="适用前提" size="small" style={{ width: "100%" }}>
               <BulletList items={detail.prerequisites} />
             </Card>
-            <Card title="需要核对的控制" size="small" style={{ width: "100%" }}>
+            <Card title="控制检查项" size="small" style={{ width: "100%" }}>
               <BulletList items={detail.controls_to_check} />
             </Card>
             {!!detail.asset_options?.length && (
@@ -558,7 +550,7 @@ export default function AutomationCenter() {
                         <Text>
                           {asset.name}
                           {detail.asset_ids?.includes(asset.id)
-                            ? "（本次关联）"
+                            ? "（已选资产）"
                             : ""}
                         </Text>
                         <Text type="secondary">
@@ -575,7 +567,7 @@ export default function AutomationCenter() {
             {!!detail.existing_scenario_ids?.length && (
               <Alert
                 type="success"
-                title={`已有 ${detail.existing_scenario_ids.length} 项相同来源或等价分析，本次不重复创建`}
+                title={`已有 ${detail.existing_scenario_ids.length} 项已覆盖分析，采用时跳过重复项`}
                 action={
                   <Button
                     size="small"
@@ -590,13 +582,13 @@ export default function AutomationCenter() {
               <Alert
                 type="info"
                 title={`另有 ${detail.related_scenario_ids.length} 项同类分析，请核对覆盖范围`}
-                description="同一安全属性或威胁类别不意味着已经覆盖当前场景。"
+                description="请按入口、攻击前提和影响对象核对场景覆盖范围。"
               />
             )}
             <Alert
               type="warning"
               showIcon
-              title="分析边界"
+              title="复核要点"
               description={<BulletList items={detail.warnings} />}
             />
             <Button
@@ -669,7 +661,7 @@ export default function AutomationCenter() {
               value={owner}
               maxLength={200}
               onChange={(event) => setOwner(event.target.value)}
-              placeholder="填写负责继续核实和评估的人员"
+              placeholder="填写分析责任人"
               disabled={busy}
             />
           </div>
@@ -678,7 +670,7 @@ export default function AutomationCenter() {
             onChange={(event) => setReviewed(event.target.checked)}
             disabled={busy}
           >
-            我已审阅命中事实、适用前提和待核对控制，同意作为待评估草案加入项目。
+            已核对匹配依据、适用前提和控制检查项，确认作为待评估草案加入项目。
           </Checkbox>
         </Space>
       </Modal>

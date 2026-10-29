@@ -50,13 +50,19 @@ function sourceLink(url, label = "官方来源") {
   );
 }
 function sourcePdfs(doc) {
-  return (doc?.artifacts || []).filter((a) => a.file?.toLowerCase().endsWith(".pdf"));
+  return (doc?.artifacts || []).filter((a) =>
+    a.file?.toLowerCase().endsWith(".pdf"),
+  );
 }
 function localSource(doc, row) {
   const pdfs = sourcePdfs(doc);
   if (!pdfs.length) return null;
   const found = row?.source_file
-    ? pdfs.findIndex((a) => a.file === row.source_file || a.file.split("/").pop() === row.source_file.split("/").pop())
+    ? pdfs.findIndex(
+        (a) =>
+          a.file === row.source_file ||
+          a.file.split("/").pop() === row.source_file.split("/").pop(),
+      )
     : 0;
   if (found < 0) return null;
   return `${apiRoot}/regulations/${encodeURIComponent(doc.id)}/sources/${found}${row?.page ? `#page=${row.page}` : ""}`;
@@ -180,15 +186,34 @@ function RegulationExplorer({
                     target="_blank"
                     rel="noreferrer noopener"
                   >
-                    {a.label || (index === 0 ? "查看原文" : `补充原件 ${index + 1}`)}
+                    {a.label ||
+                      (index === 0 ? "查看原文" : `补充原件 ${index + 1}`)}
                   </a>
                 ))}
-                {sourceLink(doc.metadata_source_url || doc.source_url, doc.metadata_source_url ? "官方目录" : "官方来源")}
-                {doc.metadata_source_url && sourceLink(doc.source_url, "取得来源")}
+                {sourceLink(
+                  doc.metadata_source_url || doc.source_url,
+                  doc.metadata_source_url ? "官方目录" : "官方来源",
+                )}
+                {doc.metadata_source_url &&
+                  sourceLink(doc.source_url, "取得来源")}
               </Space>
             </div>
-            {doc.source_note && <Paragraph type="secondary">{doc.source_note}</Paragraph>}
-            {doc.editorial_notes?.length > 0 && <Alert className="section-card" type="warning" showIcon title="原文核对说明" description={Array.isArray(doc.editorial_notes) ? doc.editorial_notes.join("；") : doc.editorial_notes} />}
+            {doc.source_note && (
+              <Paragraph type="secondary">{doc.source_note}</Paragraph>
+            )}
+            {doc.editorial_notes?.length > 0 && (
+              <Alert
+                className="section-card"
+                type="warning"
+                showIcon
+                title="原文核对说明"
+                description={
+                  Array.isArray(doc.editorial_notes)
+                    ? doc.editorial_notes.join("；")
+                    : doc.editorial_notes
+                }
+              />
+            )}
             <Alert
               className="section-card"
               type={
@@ -202,7 +227,7 @@ function RegulationExplorer({
               }
               description={
                 doc.coverage_note ||
-                "条文勾选仅表示纳入分析范围，不代表已经满足法规要求。"
+                "选择条款后可关联安全需求，符合性需通过验证记录确认。"
               }
             />
             {doc.later_amendments_note && (
@@ -314,9 +339,19 @@ function RegulationExplorer({
                           label: "版本",
                           children: doc.edition,
                         },
-                        { key: "number", label: "条号 / 位置", children: r.number },
+                        {
+                          key: "number",
+                          label: "条号 / 位置",
+                          children: r.number,
+                        },
                         ...(r.source_number && r.source_number !== r.number
-                          ? [{ key: "source-number", label: "原文编号", children: r.source_number }]
+                          ? [
+                              {
+                                key: "source-number",
+                                label: "原文编号",
+                                children: r.source_number,
+                              },
+                            ]
                           : []),
                         {
                           key: "parent",
@@ -329,30 +364,60 @@ function RegulationExplorer({
                           children:
                             r.normative === false
                               ? "说明 / 定义 / 附录参考"
-                              : r.normative === true ? "规范性条文" : "未单独判定规范性",
+                              : r.normative === true
+                                ? "规范性条文"
+                                : "未单独判定规范性",
                         },
                       ]}
                     />
                     <Paragraph className="pre-wrap">
                       {r.body || r.description}
                     </Paragraph>
-                    {r.source_note && <Alert type="warning" showIcon title="原文说明" description={r.source_note} />}
+                    {r.source_note && (
+                      <Alert
+                        type="warning"
+                        showIcon
+                        title="原文说明"
+                        description={r.source_note}
+                      />
+                    )}
                     <Space>
                       {sourceLink(r.source_url || doc.source_url, "来源页面")}
                       {r.page && (
                         <Text type="secondary">来源页码 {r.page}</Text>
                       )}
-                      {localSource(doc, r) && <a href={localSource(doc, r)} target="_blank" rel="noreferrer noopener">{r.page ? `定位原文第 ${r.page}${r.page_end && r.page_end !== r.page ? `–${r.page_end}` : ""} 页` : "核对原文"}</a>}
+                      {localSource(doc, r) && (
+                        <a
+                          href={localSource(doc, r)}
+                          target="_blank"
+                          rel="noreferrer noopener"
+                        >
+                          {r.page
+                            ? `定位原文第 ${r.page}${r.page_end && r.page_end !== r.page ? `–${r.page_end}` : ""} 页`
+                            : "核对原文"}
+                        </a>
+                      )}
                     </Space>
                   </div>
                 ),
               }}
               columns={[
-                { title: "条号 / 位置", dataIndex: "number", width: 150,
+                {
+                  title: "条号 / 位置",
+                  dataIndex: "number",
+                  width: 150,
                   render: (value, r) => (
-                    <Space orientation="vertical" size={3} style={{ overflowWrap: "anywhere" }}>
+                    <Space
+                      orientation="vertical"
+                      size={3}
+                      style={{ overflowWrap: "anywhere" }}
+                    >
                       <Text>{r.source_number || value}</Text>
-                      {r.source_number && r.source_number !== value && <Text type="secondary" style={{fontSize: 12}}>{value}</Text>}
+                      {r.source_number && r.source_number !== value && (
+                        <Text type="secondary" style={{ fontSize: 12 }}>
+                          {value}
+                        </Text>
+                      )}
                     </Space>
                   ),
                 },

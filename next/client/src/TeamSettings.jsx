@@ -71,7 +71,7 @@ export default function TeamSettings() {
         <Alert
           type="info"
           title="当前运行在本机模式"
-          description="启用企业模式需要初始化管理员，并配置企业 HTTPS 反向代理入口。不会因为打开此页面而改变当前访问方式。具体步骤见 ENTERPRISE_DEPLOYMENT.md。"
+          description="账户与项目权限管理适用于企业模式。请联系部署管理员配置 HTTPS 入口及初始管理员账户。"
         />
       </>
     );

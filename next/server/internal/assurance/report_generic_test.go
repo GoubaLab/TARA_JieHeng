@@ -60,7 +60,7 @@ func TestReportsGenericMetadataAlgorithmsAndWithdrawnReferences(t *testing.T) {
 		t.Fatal(err)
 	}
 	text := string(encoded)
-	for _, want := range []string{"机器人", "Linux", "arm64", "通信介质：无线", "BLE", "近场", "状态同步", "完整性", "人员影响", "显著影响", "原创影响判定锚点", "向上取整", "阈值上限", "3、6、9、12", "来源已撤下", "不能据此确认符合性"} {
+	for _, want := range []string{"机器人", "Linux", "arm64", "通信介质：无线", "BLE", "近场", "状态同步", "完整性", "人员影响", "显著影响", "原创影响判定锚点", "向上取整", "阈值上限", "3、6、9、12", "引用已失效", "符合性依据需重新核对"} {
 		if !strings.Contains(text, want) {
 			t.Errorf("report missing %q", want)
 		}

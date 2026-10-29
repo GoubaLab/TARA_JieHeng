@@ -8,8 +8,8 @@ import (
 
 const attackPathTemplateCatalogVersion = "jieheng.attack-path-templates/1"
 
-// These are original modeling prompts, not exploit procedures or findings.
-// Template selection does not establish reachability, a missing control or a risk rating.
+// Templates define modeling entry points, prerequisites and control checks.
+// Reachability, control status and risk ratings are evaluated in the project.
 type attackPathTemplate struct {
 	id, name, category, summary, entry, actor, objective      string
 	prerequisites, steps, controls, properties, tags, signals []string

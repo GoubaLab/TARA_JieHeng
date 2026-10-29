@@ -149,7 +149,7 @@ func validateAIProposal(ws, proposal Object, kind, owner string, catalog *Catalo
 			}
 			if spec.collection == "treatments" {
 				if strings.TrimSpace(owner) == "" {
-					return nil, nil, dError("采用处置草案前须指定真实责任人")
+					return nil, nil, dError("采用处置草案前须指定处置责任人")
 				}
 				for _, key := range []string{"owner", "residual_status", "customer_confirmation", "confirmed_at", "declarant", "acceptance", "acceptance_rationale", "assessment_hash", "goal_hash"} {
 					if _, exists := body[key]; exists {

@@ -291,7 +291,7 @@ func TestAutomationRulesReuseExistingDamageAndDoNotClaimVulnerability(t *testing
 	if dList(s["damage_ids"])[0] != dObj(dList(next["damage_scenarios"])[0])["id"] {
 		t.Fatal("wrong damage reuse")
 	}
-	if !strings.Contains(dStr(s["threat"]), "不认定任何 CVE 适用") {
+	if !strings.Contains(dStr(s["threat"]), "CVE 适用性需核对组件、版本和配置") {
 		t.Fatal("OS rule omitted applicability qualification")
 	}
 	if _, _, err := validateAIProposal(next, second, "analysis", "", nil); err != nil {

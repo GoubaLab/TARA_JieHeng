@@ -68,7 +68,7 @@ func reportReference(value any, catalog *Catalog) string {
 		return key
 	}
 	if entry, err := catalog.Get(key); err == nil && libBool(entry["withdrawn"]) {
-		return key + "（来源已撤下）"
+		return key + "（引用已失效）"
 	}
 	return key
 }

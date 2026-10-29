@@ -19,7 +19,7 @@ func (s *HTTPServer) health(w http.ResponseWriter, r *http.Request) error {
 	if s.auth != nil {
 		mode = "enterprise"
 	}
-	return writeJSON(w, r, 200, Object{"application": "jieheng", "mode": mode, "version": "2.2.1", "backend": "go", "outbound_connections": true, "outbound_policy": "configured_models_explicit_requests", "excel_export": ExcelAvailable()})
+	return writeJSON(w, r, 200, Object{"application": "jieheng", "mode": mode, "version": "2.2.2", "backend": "go", "outbound_connections": true, "outbound_policy": "configured_models_explicit_requests", "excel_export": ExcelAvailable()})
 }
 func (s *HTTPServer) document(name, media string) endpoint {
 	return func(w http.ResponseWriter, r *http.Request) error {

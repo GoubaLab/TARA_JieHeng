@@ -9,9 +9,8 @@ import (
 
 const automationRuleVersion = "jieheng.automation/1"
 
-// These original review rules describe questions to investigate, not confirmed
-// vulnerabilities. No private catalog, external service or executable rule text
-// is consulted. A protection property is not evidence that a control is absent.
+// Review rules match recorded model facts and identify assessment topics.
+// Protection properties identify requirements; control status is assessed separately.
 type automationRule struct {
 	id, title, property, stride, threat, damage, steps, verification string
 	prerequisites, controls                                          []string
@@ -41,7 +40,7 @@ func automationRules() []automationRule {
 			[]string{"接口实际支持调试、维护或写入，不仅是普通串行数据", "攻击者能够接触物理或代理入口"},
 			[]string{"生产状态的调试权限与生命周期锁定", "维护身份、授权和会话限制", "敏感写入的审计与恢复"}},
 		{"OS-NETWORK-SURFACE", "联网操作系统攻击面复核", "integrity", "Elevation of Privilege",
-			"若联网实体的网络服务、解析组件或权限隔离存在缺陷，可达服务可能成为修改系统状态的入口；本规则不认定任何 CVE 适用。",
+			"若联网实体的网络服务、解析组件或权限隔离存在缺陷，可达服务可能成为修改系统状态的入口；CVE 适用性需核对组件、版本和配置。",
 			"若服务被利用或权限隔离失效，可能导致系统配置或执行状态被未授权修改；实际后果需确认。",
 			"建立操作系统和网络服务清单；核实实际版本、配置与可达性；按最小权限及输入处理要求验证服务边界。",
 			"核对软件物料及维护版本、服务监听范围和权限，引用实测或公告适用性核验记录，不以 OS 名称直接判定漏洞。",
@@ -101,15 +100,15 @@ func AutomationPlan(ws Object) Object {
 		options, selected := automationAssets(ws, subject, rule.property)
 		title := assetText(dStr(subject["name"])+" · "+rule.title, 300)
 		existing, related := automationCoverage(ws, id, title, rule, selected)
-		warnings := []any{"此项为待核实的分析候选，不代表存在漏洞或控制缺失；安全属性表示保护需求。"}
+		warnings := []any{"待核对攻击前提与控制实施情况。"}
 		if len(options) == 0 {
-			warnings = append(warnings, "没有准确关联且包含所需安全属性的现有资产，请先保存架构或完善资产。")
+			warnings = append(warnings, "缺少具有对应安全属性的关联资产，请保存架构或完善资产。")
 		}
 		if len(options) > 0 && len(selected) == 0 {
-			warnings = append(warnings, "存在多个可能的手工资产，无法自动确定关联；请先明确资产的架构来源。")
+			warnings = append(warnings, "匹配到多个手工资产，请明确资产的架构来源。")
 		}
 		if len(existing) > 0 {
-			warnings = append(warnings, "已有相同来源标记或等价标题的场景，本次不重复创建。")
+			warnings = append(warnings, "已有关联分析，跳过重复创建。")
 		}
 		candidates = append(candidates, Object{
 			"id": id, "rule_id": rule.id, "rule_version": automationRuleVersion,
@@ -134,19 +133,19 @@ func AutomationPlan(ws Object) Object {
 		baseFacts := []any{automationFact(prefix+".source", "exists", f["source"], "已记录的发送端"), automationFact(prefix+".target", "exists", f["target"], "已记录的接收端")}
 		zoneS, zoneT := automationZone(source), automationZone(target)
 		if (zoneS != "" && zoneT != "" && !strings.EqualFold(zoneS, zoneT)) || automationExternal(source) != automationExternal(target) {
-			facts := append(append([]any{}, baseFacts...), automationFact("endpoints.trust_context", "different", Object{"source_zone": zoneS, "target_zone": zoneT, "source_external": automationExternal(source), "target_external": automationExternal(target)}, "两端的显式信任域或外部实体身份不同；不读取边界图形位置"))
+			facts := append(append([]any{}, baseFacts...), automationFact("endpoints.trust_context", "different", Object{"source_zone": zoneS, "target_zone": zoneT, "source_external": automationExternal(source), "target_external": automationExternal(target)}, "连接两端的信任域或外部实体身份不同"))
 			add("DF-TRUST-INPUT", subject, facts)
 		}
 		wireless := comm["medium"] == "wireless" || automationIn(tech, "wifi", "bluetooth", "ble", "nfc", "uwb", "zigbee", "lora", "cellular", "4g", "5g")
 		if wireless {
-			add("DF-WIRELESS-INTEGRITY", subject, append(append([]any{}, baseFacts...), automationFact(prefix+".communication", "wireless", Object{"medium": comm["medium"], "technology": tech}, "介质或已知协议标识为无线；未推断控制状态")))
+			add("DF-WIRELESS-INTEGRITY", subject, append(append([]any{}, baseFacts...), automationFact(prefix+".communication", "wireless", Object{"medium": comm["medium"], "technology": tech}, "通信介质或协议为无线")))
 		}
 		if automationIn(tech, "jtag", "dap", "swd", "uart") {
-			add("IF-DEBUG-ACCESS", subject, append(append([]any{}, baseFacts...), automationFact(prefix+".protocol", "debug_or_serial", tech, "接口类型具有调试或维护使用可能；UART 是否用于调试仍需确认")))
+			add("IF-DEBUG-ACCESS", subject, append(append([]any{}, baseFacts...), automationFact(prefix+".protocol", "debug_or_serial", tech, "接口类型为调试或串行接口，实际用途待确认")))
 		}
 		for property, ruleID := range map[string]string{"freshness": "DF-FRESHNESS", "availability": "DF-AVAILABILITY"} {
 			if dHas(dList(comm["security_properties"]), property) {
-				add(ruleID, subject, append(append([]any{}, baseFacts...), automationFact(prefix+".communication.security_properties", "contains", property, "用户明确声明了该保护需求，并非控制实施证据")))
+				add(ruleID, subject, append(append([]any{}, baseFacts...), automationFact(prefix+".communication.security_properties", "contains", property, "数据流已设置该安全属性")))
 			}
 		}
 		if automationUpdatePurpose(dStr(comm["purpose"])) {
@@ -166,7 +165,7 @@ func AutomationPlan(ws Object) Object {
 		os := dObj(node["operating_system"])
 		if automationIn(dStr(os["family"]), "linux", "rtos", "qnx", "windows", "android", "ios", "macos") && len(incident[dStr(node["id"])]) > 0 {
 			links := automationSortedValues(incident[dStr(node["id"])])
-			add("OS-NETWORK-SURFACE", subject, []any{automationFact("architecture.nodes["+dStr(node["id"])+"].operating_system", "known_family", Clone(os), "已登记操作系统类型，不推断版本漏洞"), automationFact("architecture.flows", "connected_network", links, "实体存在已记录的网络或无线数据流")})
+			add("OS-NETWORK-SURFACE", subject, []any{automationFact("architecture.nodes["+dStr(node["id"])+"].operating_system", "known_family", Clone(os), "已登记操作系统类型"), automationFact("architecture.flows", "connected_network", links, "实体存在已记录的网络或无线数据流")})
 		}
 		if kind == "data_store" || kind == "store" {
 			add("DS-CONFIDENTIALITY", subject, []any{automationFact("architecture.nodes["+dStr(node["id"])+"].kind", "equals", kind, "图元明确为数据存储；数据分类待核实")})
@@ -232,9 +231,9 @@ func AutomationProposal(ws Object, candidateIDs []string) (Object, error) {
 		}
 	}
 	sort.Strings(ids)
-	proposal := Object{"summary": fmt.Sprintf("基于已记录架构事实生成 %d 项独立规则分析草案；尚未确认漏洞、评分或控制实施。", len(ids)),
-		"assumptions": []any{"候选依赖项目已记录的实体、接口、OS 和保护需求，记录完整性须人工复核。", "安全属性不代表控制已实施或缺失，所有攻击前提与业务后果仍需核实。"},
-		"questions":   []any{"请确认损害影响与攻击可行性，当前评分均未填写。", "请确认 CAL 后补充或关联安全目标，再由责任人决定处置；本草案没有自动签署、验证通过或风险接受。"},
+	proposal := Object{"summary": fmt.Sprintf("生成 %d 项分析草案，等待评估与复核。", len(ids)),
+		"assumptions": []any{"分析依据为已保存的实体、接口、操作系统和安全属性。", "攻击前提、控制实施情况和业务后果待核实。"},
+		"questions":   []any{"评估损害影响与攻击可行性，并填写评分依据。", "确认 CAL、关联安全目标，再由负责人完成风险处置和验证。"},
 		"citations":   []any{}, "assets": []any{}, "damage_scenarios": []any{}, "scenarios": []any{}, "security_goals": []any{}, "requirements": []any{}, "treatments": []any{}}
 	for _, id := range ids {
 		c := byID[id]
@@ -244,14 +243,14 @@ func AutomationProposal(ws Object, candidateIDs []string) (Object, error) {
 		damageID := automationExistingDamage(ws, code, rule.damage, assetIDs, rule.property)
 		if damageID == "" {
 			damageID = "auto_damage_" + id
-			proposal["damage_scenarios"] = append(dList(proposal["damage_scenarios"]), Object{"id": damageID, "source_code": code, "description": rule.damage, "consequence": "待人工确认业务后果、影响对象和运行条件。", "asset_ids": dClone(assetIDs), "properties": []any{rule.property}, "impact": automationUnknownImpact()})
+			proposal["damage_scenarios"] = append(dList(proposal["damage_scenarios"]), Object{"id": damageID, "source_code": code, "description": rule.damage, "consequence": "业务后果、影响对象和运行条件待确认。", "asset_ids": dClone(assetIDs), "properties": []any{rule.property}, "impact": automationUnknownImpact()})
 		}
 		scenarioID := "auto_scenario_" + id
 		proposal["scenarios"] = append(dList(proposal["scenarios"]), Object{
 			"id": scenarioID, "source_code": code, "title": c["title"], "asset_id": assetIDs[0], "asset_ids": dClone(assetIDs),
 			"property": rule.property, "properties": []any{rule.property}, "damage": rule.damage, "damage_ids": []any{damageID}, "threat": rule.threat,
-			"stride": rule.stride, "cause": "原创规则 " + rule.id + "（" + automationRuleVersion + "）；触发依据为已记录架构事实，适用前提与控制状态待确认。",
-			"impact": automationUnknownImpact(), "paths": []any{Object{"name": "待验证路径：" + rule.title, "steps": rule.steps, "feasibility": nil, "rationale": "仅给出验证方向，未确认可达性、所需资源和可行性等级。", "actor": "待确认具备相关入口访问条件的主体", "vector": dStr(dObj(c["subject"])["kind"]) + ":" + dStr(dObj(c["subject"])["id"])}}})
+			"stride": rule.stride, "cause": "规则 " + rule.id + "（" + automationRuleVersion + "）；适用前提与控制状态待确认。",
+			"impact": automationUnknownImpact(), "paths": []any{Object{"name": "待验证路径：" + rule.title, "steps": rule.steps, "feasibility": nil, "rationale": "入口可达性、所需资源和可行性等级待评估。", "actor": "具备入口访问条件的主体（待确认）", "vector": assetText(dStr(dObj(c["subject"])["name"]), 200)}}})
 		proposal["requirements"] = append(dList(proposal["requirements"]), Object{
 			"id": "auto_requirement_" + id, "source_code": code, "scenario_id": scenarioID, "scenario_ids": []any{scenarioID},
 			"statement": "待确认适用范围后落实：" + strings.Join(rule.controls, "；") + "。", "allocation": assetText(dStr(dObj(c["subject"])["name"])+"（分配责任边界待确认）", 500), "verification": rule.verification, "standard_refs": []any{}})
@@ -430,7 +429,7 @@ func automationExistingDamage(ws Object, code, description string, assetIDs []an
 	return dStr(automationSortedValues(ids)[0])
 }
 func automationUnknownImpact() Object {
-	return Object{"safety": nil, "financial": nil, "operational": nil, "privacy": nil, "rationale": "待人工确认损害后果和影响等级；自动规则不推定风险评分。"}
+	return Object{"safety": nil, "financial": nil, "operational": nil, "privacy": nil, "rationale": "损害后果和影响等级待评估。"}
 }
 func automationSemanticSnapshot(ws Object) Object {
 	graph := dObj(ws["architecture"])

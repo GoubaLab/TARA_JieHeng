@@ -43,6 +43,19 @@ import {
   useResource,
 } from "./platform-ui.js";
 const { Text, Paragraph } = Typography;
+const auditActionLabels = {
+  "save-provider": "保存模型服务",
+  "save-prompt": "保存提示词模板",
+  "save-knowledge": "保存知识资料",
+  "create-ai-task": "创建分析任务",
+  "supersede-knowledge": "替换知识版本",
+  login: "账号登录",
+  "save-user": "更新账号",
+  "set-project-member": "调整项目成员",
+  "import-provider-configs": "导入模型配置",
+  "import-knowledge-pack": "导入知识包",
+  "create-checkpoint": "创建还原点",
+};
 const providerFields = [
   "name",
   "protocol",
@@ -278,7 +291,7 @@ function ProviderEditor({ record, onClose, onSaved }) {
         )}
         <Alert
           type="info"
-          title="凭据加密保存在服务端，配置导出和浏览器读取不会返回密钥。外部服务只有在具体任务明确允许时才能接收项目内容。"
+          title="凭据在服务端加密保存，不包含在配置导出中。向外部服务发送项目内容需要任务授权。"
         />
         <Space style={{ marginTop: 16 }}>
           <Text strong>按用途分配模型</Text>
@@ -363,7 +376,7 @@ function ProviderEditor({ record, onClose, onSaved }) {
                     <InputNumber min={256} max={32768} />
                   </Form.Item>
                   <Paragraph type="secondary">
-                    限流、服务不可用和网络故障可有限重试；凭据错误直接停止。连续失败会进入短暂熔断。备用服务由每次任务明确选择，不会自动转发到未选服务。
+                    网络故障、限流及服务不可用时按配置重试；凭据错误时停止。连续失败触发熔断。故障切换仅使用任务指定的备用服务。
                   </Paragraph>
                 </>
               ),
@@ -401,7 +414,7 @@ function ProviderEditor({ record, onClose, onSaved }) {
                   </Col>
                   <Col span={24}>
                     <Text type="secondary">
-                      单价由管理员维护；页面按当前单价估算，不代表供应商账单。
+                      费用按配置单价估算，实际费用以服务商账单为准。
                     </Text>
                   </Col>
                 </Row>
@@ -519,7 +532,7 @@ function Models() {
         <Alert type="error" title={resource.error || error} showIcon />
       )}
       {!resource.loading && !resource.data?.items.length && (
-        <Empty description="配置企业模型服务后，即可使用图片建模、分析草案和语义检索。平台不会自动连接任何模型服务。" />
+        <Empty description="暂无模型服务。添加并启用服务后，可使用图片建模、分析草案和语义检索。" />
       )}
       <Row gutter={[16, 16]}>
         {resource.data?.items.map((p) => (
@@ -740,7 +753,7 @@ function Prompts() {
     <>
       <Alert
         type="info"
-        title="组织提示词可补充领域经验、分析重点和输出要求。平台的引用校验、人工审阅、禁止伪造验证等规则始终生效。"
+        title="配置领域背景、分析重点和输出要求。模板按版本保存，生成结果统一经过引用校验与人工审阅。"
         style={{ marginBottom: 16 }}
       />
       {resource.error && <Alert type="error" title={resource.error} />}
@@ -846,7 +859,7 @@ function Audit() {
     <>
       <Alert
         type="info"
-        title="记录配置变更、任务发起、账号与项目成员调整，不记录密钥或完整项目正文。"
+        title="查看模型配置、分析任务、账号和项目成员的操作记录。"
       />
       {r.error && <Alert type="error" title={r.error} />}
       <Table
@@ -855,9 +868,28 @@ function Audit() {
         loading={r.loading}
         columns={[
           { title: "时间", dataIndex: "at", render: date },
-          { title: "操作", dataIndex: "action" },
-          { title: "操作者", dataIndex: "actor" },
-          { title: "对象", dataIndex: "resource_id" },
+          {
+            title: "操作",
+            dataIndex: "action",
+            render: (value) =>
+              Object.hasOwn(auditActionLabels, value)
+                ? auditActionLabels[value]
+                : value,
+          },
+          {
+            title: "操作者",
+            dataIndex: "actor",
+            render: (value) => (value === "local" ? "本地管理员" : value),
+          },
+          {
+            title: "对象",
+            dataIndex: "resource_id",
+            render: (value, row) => (
+              <Text title={value} style={{ overflowWrap: "anywhere" }}>
+                {row.detail?.name || value}
+              </Text>
+            ),
+          },
         ]}
         pagination={{ pageSize: 15 }}
       />
@@ -869,7 +901,7 @@ export default function ModelSettings() {
   return (
     <>
       <PageTitle
-        title="模型服务与分析规则"
+        title="模型服务"
         description="统一管理模型连接、用途分配、健康状态和组织提示词。"
       />
       <Card>

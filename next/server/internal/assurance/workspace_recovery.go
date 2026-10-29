@@ -148,11 +148,11 @@ func (a *AIService) adoptJob(ctx context.Context, workspaceID, id, key, owner, a
 		source := dObj(raw)
 		if key := dStr(source["regulation_key"]); key != "" {
 			if a.catalog == nil || a.catalog.Regulations == nil {
-				return nil, false, dError("引用法规已撤下或不存在，请重新分析")
+				return nil, false, dError("引用法规不可用，请核对后重新分析")
 			}
 			clause, e := a.catalog.Get(key)
 			if e != nil || dBool(clause["withdrawn"]) {
-				return nil, false, dError("引用法规已撤下或不存在，请重新分析")
+				return nil, false, dError("引用法规不可用，请核对后重新分析")
 			}
 			// Keep the source mapping identical to searchKnowledge so edition and source changes count too.
 			doc := Object{"id": key, "name": clause["title"], "source": dObj(clause["facts"])["正文来源"], "edition": dObj(clause["facts"])["版本"], "content": clause["description"], "workspace_id": workspaceID}

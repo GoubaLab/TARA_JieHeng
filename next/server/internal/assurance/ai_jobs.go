@@ -99,7 +99,7 @@ func (a *AIService) recoverJobs() error {
 			rows.Close()
 			return e
 		}
-		o["status"], o["error"], o["finished_at"] = "interrupted", "服务重启，任务已中断。可手动重试；不会自动重复计费。", Stamp()
+		o["status"], o["error"], o["finished_at"] = "interrupted", "服务重启，任务已中断。需要继续时请重新发起任务。", Stamp()
 		updates = append(updates, o)
 	}
 	e = rows.Err()
