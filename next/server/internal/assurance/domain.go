@@ -191,12 +191,12 @@ func Review(ws Object) Object {
 				}
 			}
 			if !found {
-				issue("assessment", "资产“"+dStr(asset["name"])+"”的 "+dStr(property)+" 尚无风险场景", asset["id"])
+				issue("threats", "资产“"+dStr(asset["name"])+"”的 "+dStr(property)+" 尚无风险场景", asset["id"])
 			}
 		}
 	}
 	if len(scenarios) == 0 {
-		issue("assessment", "尚未建立损害场景、威胁及攻击路径", nil)
+		issue("threats", "尚未建立威胁场景，请先完成资产与损害场景识别", nil)
 	}
 	requirementReviews := []any{}
 	for _, v := range dList(ws["requirements"]) {
@@ -247,7 +247,19 @@ func Review(ws Object) Object {
 		var residual any
 		var residualScore any
 		if result["level"] == nil {
-			issue("assessment", "评估缺少影响等级、路径或判定依据", s["id"])
+			if !dBool(dObj(s["impact"])["rationale"]) || !impactComplete(dObj(s["impact"]), dObj(ws["method"])) {
+				issue("impacts", "影响评级或判定依据未完成，请检查关联损害场景", s["id"])
+			}
+			if len(dList(s["paths"])) == 0 {
+				issue("paths", "威胁尚未建立攻击路径", s["id"])
+			}
+			for _, p := range libRows(s["paths"]) {
+				if !dBool(p["steps"]) || (len(dObj(p["architecture_route"])) > 0 && !attackRouteCurrent(ws, dObj(p["architecture_route"]))) {
+					issues = append(issues, Object{"stage": "paths", "message": "攻击步骤或架构路径前提尚未确认", "reference": s["id"], "path_id": p["id"]})
+				} else if _, _, ok := pathFeasibility(p, EffectiveMethod(dObj(ws["method"]))); !ok || !dBool(p["rationale"]) {
+					issues = append(issues, Object{"stage": "feasibility", "message": "攻击路径缺少可行性评级或判定依据", "reference": s["id"], "path_id": p["id"]})
+				}
+			}
 		}
 		if decision == nil {
 			issue("treatment", "尚未记录风险处置决策", s["id"])
@@ -296,17 +308,56 @@ func Review(ws Object) Object {
 		}
 		evaluations = append(evaluations, evaluation)
 	}
+	workflowStages := []any{}
+	counts := map[string]int{"definition": len(functionIDs(ws)), "architecture": len(dList(architecture["nodes"])), "assets": len(assets), "damages": len(dList(ws["damage_scenarios"])), "impacts": len(dList(ws["damage_scenarios"])), "threats": len(scenarios), "assessment": len(scenarios), "treatment": len(dList(ws["decisions"])), "verification": len(dList(ws["evidence"]))}
+	for _, s := range libRows(ws["scenarios"]) {
+		counts["paths"] += len(dList(s["paths"]))
+		counts["feasibility"] += len(dList(s["paths"]))
+		if len(dList(s["damage_ids"])) == 0 {
+			counts["damages"]++
+			counts["impacts"]++
+		}
+	}
+	for _, raw := range dList(ws["damage_scenarios"]) {
+		d := dObj(raw)
+		if !impactComplete(dObj(d["impact"]), dObj(ws["method"])) || !dBool(dObj(d["impact"])["rationale"]) {
+			issue("impacts", "损害场景尚未完成影响评级与依据", d["id"])
+		}
+	}
+	for _, key := range []string{"definition", "architecture", "assets", "damages", "impacts", "threats", "paths", "feasibility", "assessment", "treatment", "verification"} {
+		pending := 0
+		for _, raw := range issues {
+			if dObj(raw)["stage"] == key {
+				pending++
+			}
+		}
+		complete := pending == 0 && counts[key] > 0
+		if key == "definition" {
+			complete = pending == 0 && dBool(item["purpose"])
+		}
+		if key == "verification" {
+			complete = len(issues) == 0
+		}
+		workflowStages = append(workflowStages, Object{"key": key, "complete": complete, "count": counts[key], "pending": pending})
+	}
 	stages := []any{}
 	blocked := false
 	for _, key := range []string{"definition", "architecture", "assessment", "treatment", "verification"} {
 		for _, v := range issues {
-			if dObj(v)["stage"] == key {
+			stage := dStr(dObj(v)["stage"])
+			if stage == "assets" {
+				stage = "architecture"
+			}
+			if stage == "damages" || stage == "impacts" || stage == "threats" || stage == "paths" || stage == "feasibility" {
+				stage = "assessment"
+			}
+			if stage == key {
 				blocked = true
 			}
 		}
 		stages = append(stages, Object{"key": key, "complete": !blocked})
 	}
-	return Object{"ready": len(issues) == 0, "issues": issues, "evaluations": evaluations, "requirements": requirementReviews, "stages": stages}
+	return Object{"ready": len(issues) == 0, "issues": issues, "evaluations": evaluations, "requirements": requirementReviews, "stages": stages, "workflow_stages": workflowStages}
 }
 func dUpsert(ws Object, collection string, value Object, prefix string) (string, error) {
 	values := dList(ws[collection])
@@ -467,6 +518,20 @@ func Apply(original Object, action string, payload Object) (Object, string, erro
 			}
 			entityID, err = dUpsert(ws, "assets", value, "asset")
 		case "record-scenario":
+			oldScenario, _ := dFind(dList(original["scenarios"]), value["id"])
+			for _, path := range libRows(value["paths"]) {
+				if route := dObj(path["architecture_route"]); len(route) > 0 {
+					oldPath, _ := dFind(dList(oldScenario["paths"]), path["id"])
+					if Digest(route) != Digest(oldPath["architecture_route"]) {
+						if e := validateAttackRoute(ws, route); e != nil {
+							return nil, "", e
+						}
+						if !attackRouteTargetsScenario(ws, value, route) {
+							return nil, "", dError("候选路径终点必须属于该威胁关联资产，请重新查找")
+						}
+					}
+				}
+			}
 			clearChangedPathRatings(original, value)
 			asset, e := dFind(dList(ws["assets"]), value["asset_id"])
 			if e != nil {
@@ -525,6 +590,12 @@ func Apply(original Object, action string, payload Object) (Object, string, erro
 			}
 			entityID = dStr(value["scenario_id"])
 		case "specify-requirement":
+			if value["scenario_ids"] == nil {
+				value["scenario_ids"] = []any{value["scenario_id"]}
+			}
+			if value["goal_ids"] == nil {
+				value["goal_ids"] = []any{}
+			}
 			if _, e := dFind(dList(ws["scenarios"]), value["scenario_id"]); e != nil {
 				return nil, "", e
 			}
@@ -565,6 +636,7 @@ func Apply(original Object, action string, payload Object) (Object, string, erro
 			return nil, "", err
 		}
 	}
+	invalidateAttackRoutes(ws)
 	if hasTaraLinks(ws) {
 		if err := refreshTaraLinks(ws); err != nil {
 			return nil, "", err

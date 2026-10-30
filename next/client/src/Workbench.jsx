@@ -1,4 +1,9 @@
-import TaraWorkflow, {WorkflowSteps, ScenarioStageEditor, DamageEditor, workflowStages} from "./TaraWorkflow.jsx";
+import TaraWorkflow, {
+  WorkflowSteps,
+  ScenarioStageEditor,
+  DamageEditor,
+  workflowStages,
+} from "./TaraWorkflow.jsx";
 import FunctionCatalogPanel from "./FunctionCatalog.jsx";
 import WorkspaceProfileEditor from "./WorkspaceProfileEditor.jsx";
 import ModelSettings from "./ModelSettings.jsx";
@@ -8,8 +13,13 @@ import AIWorkspace from "./AIWorkspace.jsx";
 import QualityCenter from "./QualityCenter.jsx";
 import TeamSettings from "./TeamSettings.jsx";
 import { useAuth } from "./AuthGate.jsx";
-import TaraProducts from "./TaraProducts.jsx";
-import { recordCode, pathNumberKey, buildCodeIndex } from "./numbering.js";
+import TaraProducts, { SecurityGoalsPanel } from "./TaraProducts.jsx";
+import {
+  recordCode,
+  pathNumberKey,
+  buildCodeIndex,
+  displayWorkProductText,
+} from "./numbering.js";
 import React, {
   createContext,
   useContext,
@@ -105,12 +115,21 @@ const { Text, Title, Paragraph } = Typography;
 const Ctx = createContext();
 export const useWorkbench = () => useContext(Ctx);
 const navItems = [
- ["overview", <AppstoreOutlined />],
- ...workflowStages.map(([key])=>[key,<FileTextOutlined />]),
- ["tara",<DatabaseOutlined />], ["settings",<SettingOutlined />],
- ["automation",<ThunderboltOutlined />],["assistant",<QuestionCircleOutlined />],["quality",<CheckCircleOutlined />],
+  ["overview", <AppstoreOutlined />],
+  ...workflowStages.map(([key]) => [key, <FileTextOutlined />]),
+  ["tara", <DatabaseOutlined />],
+  ["settings", <SettingOutlined />],
+  ["automation", <ThunderboltOutlined />],
+  ["assistant", <QuestionCircleOutlined />],
+  ["quality", <CheckCircleOutlined />],
 ];
 const stageNames = {
+  assets: "资产识别",
+  damages: "损害场景",
+  impacts: "影响评级",
+  threats: "威胁场景",
+  paths: "攻击路径",
+  feasibility: "攻击可行性",
   definition: "相关项与功能",
   architecture: "系统架构",
   assessment: "风险分析",
@@ -260,6 +279,41 @@ export default function Workbench() {
   };
   const openIssue = (issue) => {
     if (ws?.access_role === "viewer") return navigate(issue.stage, ws.id);
+    if (
+      ["damages", "impacts", "threats", "paths", "feasibility"].includes(
+        issue.stage,
+      )
+    ) {
+      navigate(issue.stage, ws.id);
+      const damage = ws.damage_scenarios?.find((d) => d.id === issue.reference);
+      if (damage)
+        return setEditor({
+          kind: issue.stage === "impacts" ? "impact" : "damage",
+          id: damage.id,
+        });
+      const scenario = ws.scenarios.find((s) => s.id === issue.reference);
+      if (scenario) {
+        if (issue.stage === "impacts" && scenario.damage_ids?.length) return;
+        return setEditor({
+          kind: "scenario",
+          id: scenario.id,
+          pathId: issue.path_id,
+          step: {
+            threats: "threat",
+            paths: "path",
+            feasibility: "feasibility",
+            impacts: "impact",
+          }[issue.stage],
+        });
+      }
+      if (ws.assets.some((a) => a.id === issue.reference))
+        return setEditor({
+          kind: "scenario",
+          assetId: issue.reference,
+          step: "threat",
+        });
+      return;
+    }
     if (issue.reference) {
       if (ws.assets.some((a) => a.id === issue.reference))
         return setEditor(
@@ -332,7 +386,9 @@ export default function Workbench() {
             children: navItems.map(([key, icon]) => ({
               key,
               icon,
-              label: workflowStages.some(([k])=>k===key) ? `${workflowStages.findIndex(([k])=>k===key)+1}. ${pages[key]}` : pages[key],
+              label: workflowStages.some(([k]) => k === key)
+                ? `${workflowStages.findIndex(([k]) => k === key) + 1}. ${pages[key]}`
+                : pages[key],
             })),
           },
         ]
@@ -393,8 +449,28 @@ export default function Workbench() {
         overview: <Overview />,
         definition: <Definition />,
         architecture: <Architecture />,
-        assets: <><PageTitle title="资产识别" description="明确受保护资产、安全属性与功能关联。" extra={<Button type="primary" onClick={()=>ctx.setEditor({kind:"asset"})}>新增资产</Button>}/><AssetTable/></>,
-        ...Object.fromEntries(["damages","impacts","threats","paths","feasibility"].map(stage=>[stage,<TaraWorkflow key={stage} stage={stage}/>])),
+        assets: (
+          <>
+            <PageTitle
+              title="资产识别"
+              description="明确受保护资产、安全属性与功能关联。"
+              extra={
+                <Button
+                  type="primary"
+                  onClick={() => ctx.setEditor({ kind: "asset" })}
+                >
+                  新增资产
+                </Button>
+              }
+            />
+            <AssetTable />
+          </>
+        ),
+        ...Object.fromEntries(
+          ["damages", "impacts", "threats", "paths", "feasibility"].map(
+            (stage) => [stage, <TaraWorkflow key={stage} stage={stage} />],
+          ),
+        ),
         tara: <TaraProducts />,
         assessment: <Assessment />,
         treatment: <Treatment />,
@@ -508,7 +584,10 @@ export default function Workbench() {
                 </Tooltip>
               </Space>
             </div>
-            <Content className="workspace-content">{!loading&&!error&&ws&&<WorkflowSteps/>}{content}</Content>
+            <Content className="workspace-content">
+              {!loading && !error && ws && <WorkflowSteps />}
+              {content}
+            </Content>
           </Layout>
         </Layout>
       </Layout>
@@ -518,7 +597,21 @@ export default function Workbench() {
         onClose={() => setProfileID(null)}
         onSaved={() => reload({ quiet: true })}
       />
-      {editor?.kind === "scenario" ? <ScenarioStageEditor key={`${ws.id}/${editor.id}/${editor.step}/${editor.pathId}`} editor={editor} onClose={()=>setEditor(null)}/> : ["damage","impact"].includes(editor?.kind) ? <DamageEditor key={`${ws.id}/${editor.kind}/${editor.id}`} editor={editor} onClose={()=>setEditor(null)}/> : <EntityEditor editor={editor} onClose={() => setEditor(null)} />}
+      {editor?.kind === "scenario" ? (
+        <ScenarioStageEditor
+          key={`${ws.id}/${editor.id}/${editor.step}/${editor.pathId}`}
+          editor={editor}
+          onClose={() => setEditor(null)}
+        />
+      ) : ["damage", "impact"].includes(editor?.kind) ? (
+        <DamageEditor
+          key={`${ws.id}/${editor.kind}/${editor.id}`}
+          editor={editor}
+          onClose={() => setEditor(null)}
+        />
+      ) : (
+        <EntityEditor editor={editor} onClose={() => setEditor(null)} />
+      )}
       <ReferencePicker config={picker} onClose={() => setPicker(null)} />
       <ReferenceDetail
         referenceKey={reference}
@@ -933,7 +1026,7 @@ function Definition() {
           </Card>
         </Col>
       </Row>
-      <FunctionCatalogPanel/>
+      <FunctionCatalogPanel />
     </>
   );
 }
@@ -1081,8 +1174,16 @@ function AssetTable() {
       <Alert
         type="info"
         showIcon
-        title={ws.architecture.asset_generation === "catalog" ? "资产目录模式" : "资产随架构保存自动生成"}
-        description={ws.architecture.asset_generation === "catalog" ? "保留导入或手工维护的资产目录，可关联架构对象并继续识别损害场景。" : "资产按架构来源同步，名称、说明和安全属性支持人工维护。"}
+        title={
+          ws.architecture.asset_generation === "catalog"
+            ? "资产目录模式"
+            : "资产随架构保存自动生成"
+        }
+        description={
+          ws.architecture.asset_generation === "catalog"
+            ? "保留导入或手工维护的资产目录，可关联架构对象并继续识别损害场景。"
+            : "资产按架构来源同步，名称、说明和安全属性支持人工维护。"
+        }
         className="section-card"
       />
       <div className="table-toolbar">
@@ -1337,7 +1438,11 @@ function Assessment() {
                   size="small"
                   column={1}
                   items={[
-                    { key: "damage", label: "损害场景", children: s.damage },
+                    {
+                      key: "damage",
+                      label: "损害场景",
+                      children: displayWorkProductText(ws, s.damage),
+                    },
                     { key: "threat", label: "威胁场景", children: s.threat },
                     ...(ws.method.impact_aggregation === "coefficient_bands"
                       ? [
@@ -1365,7 +1470,9 @@ function Assessment() {
                     {
                       key: "impact",
                       label: "影响依据",
-                      children: s.impact.rationale || "待补充",
+                      children:
+                        displayWorkProductText(ws, s.impact.rationale) ||
+                        "待补充",
                     },
                   ]}
                 />
@@ -1503,7 +1610,9 @@ function Assessment() {
                 ) : s.evaluation.level == null ? (
                   <Tag>待评估</Tag>
                 ) : (
-                  <Tag color="processing">已评估</Tag>
+                  <Tag color={ws.method_confirmed ? "processing" : "warning"}>
+                    {ws.method_confirmed ? "已评估" : "方法待确认"}
+                  </Tag>
                 ),
             },
             {
@@ -1515,7 +1624,7 @@ function Assessment() {
                   type="link"
                   onClick={() => setEditor({ kind: "scenario", id: s.id })}
                 >
-                  编辑评估
+                  编辑威胁
                 </Button>
               ),
             },
@@ -1671,6 +1780,11 @@ function Treatment() {
                 />
               </Card>
             ),
+          },
+          {
+            key: "goals",
+            label: `安全目标（${ws.security_goals?.length || 0}）`,
+            children: <SecurityGoalsPanel />,
           },
           {
             key: "requirements",

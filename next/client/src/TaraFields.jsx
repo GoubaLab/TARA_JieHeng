@@ -1,11 +1,12 @@
+import { recordCode as businessCode } from "./numbering.js";
 import React from "react";
 import { FunctionReferences } from "./FunctionCatalog.jsx";
 import { Alert, Col, Form, Input, InputNumber, Row, Select } from "antd";
 import { propOptions } from "./api.js";
-const options = (records, text) =>
+const options = (ws, kind, records, text) =>
   (records || []).map((r) => ({
     value: r.id,
-    label: `${r.source_code || r.id} · ${r[text] || ""}`,
+    label: `${r.source_code || businessCode(ws, kind, r.id)} · ${r[text] || ""}`,
   }));
 export function TaraFields({ kind, ws }) {
   const common = ["asset", "scenario", "requirement"].includes(kind);
@@ -45,7 +46,7 @@ export function TaraFields({ kind, ws }) {
             <Select
               mode="multiple"
               optionFilterProp="label"
-              options={options(ws.assets, "name")}
+              options={options(ws, "asset", ws.assets, "name")}
             />
           </Form.Item>
           <Form.Item name="properties" label="全部受损安全属性">
@@ -59,7 +60,12 @@ export function TaraFields({ kind, ws }) {
             <Select
               mode="multiple"
               optionFilterProp="label"
-              options={options(ws.damage_scenarios, "description")}
+              options={options(
+                ws,
+                "damage",
+                ws.damage_scenarios,
+                "description",
+              )}
             />
           </Form.Item>
           <Form.Item name="stride" label="STRIDE 分类">
@@ -75,17 +81,28 @@ export function TaraFields({ kind, ws }) {
           <Select
             mode="multiple"
             optionFilterProp="label"
-            options={options(ws.security_goals, "statement")}
+            options={options(ws, "goal", ws.security_goals, "statement")}
           />
         </Form.Item>
       )}
       {kind === "requirement" && (
         <>
-          <Form.Item name="scenario_ids" label="全部关联威胁场景">
+          <Form.Item
+            name="scenario_ids"
+            label="关联威胁场景"
+            rules={[
+              {
+                required: true,
+                type: "array",
+                min: 1,
+                message: "请选择至少一个威胁场景",
+              },
+            ]}
+          >
             <Select
               mode="multiple"
               optionFilterProp="label"
-              options={options(ws.scenarios, "title")}
+              options={options(ws, "scenario", ws.scenarios, "title")}
             />
           </Form.Item>
           <Form.Item name="customer_refs" label="客户需求编号">

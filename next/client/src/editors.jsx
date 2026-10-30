@@ -199,6 +199,7 @@ export function EntityEditor({ editor, onClose }) {
   const pathProperty = Form.useWatch("property", form);
   const assetId = Form.useWatch("asset_id", form);
   const treatment = Form.useWatch("treatment", form);
+  const selectedGoalIDs = Form.useWatch("goal_ids", form) || [];
   const scenarioId = Form.useWatch("scenario_id", form);
   const [labels, setLabels] = useState({});
   useEffect(() => {
@@ -254,6 +255,7 @@ export function EntityEditor({ editor, onClose }) {
             rationale: "",
             goal: "",
             claim: "",
+            residual_status: "target",
             residual_impact: null,
             residual_feasibility: null,
             residual_rationale: "",
@@ -305,6 +307,8 @@ export function EntityEditor({ editor, onClose }) {
         reviewer: ws.item.owner,
         note: "",
       };
+    if (kind === "requirement" && !value.scenario_ids?.length)
+      value.scenario_ids = [value.scenario_id].filter(Boolean);
     form.setFieldsValue(value);
     initialValues.current = JSON.stringify(form.getFieldsValue(true));
     setPathOpen([]);
@@ -459,10 +463,11 @@ export function EntityEditor({ editor, onClose }) {
           ]),
           ...(editor.id ? { id: editor.id } : {}),
         };
-      if (kind === "requirement" && payload.scenario_ids)
-        payload.scenario_ids = [
-          ...new Set([...payload.scenario_ids, payload.scenario_id]),
-        ];
+      if (kind === "requirement") {
+        payload.scenario_ids = [...new Set(payload.scenario_ids || [])];
+        if (!payload.scenario_ids.includes(payload.scenario_id))
+          payload.scenario_id = payload.scenario_ids[0];
+      }
       await save(commands[kind], payload);
       message.success(
         kind === "baseline"
@@ -830,7 +835,16 @@ export function EntityEditor({ editor, onClose }) {
                   <Input maxLength={200} />
                 </Form.Item>
                 {treatment === "reduce" ? (
-                  <Form.Item name="goal" label="网络安全目标" rules={required}>
+                  <Form.Item
+                    name="goal"
+                    label="网络安全目标"
+                    rules={selectedGoalIDs.length ? [] : required}
+                    extra={
+                      selectedGoalIDs.length
+                        ? "已关联上方安全目标，保存时自动带入目标内容，无需重复填写。"
+                        : "可先记录目标说明，再在安全目标页建立独立工作产品。"
+                    }
+                  >
                     <TextArea rows={3} maxLength={8000} />
                   </Form.Item>
                 ) : (
@@ -901,11 +915,7 @@ export function EntityEditor({ editor, onClose }) {
             )}
             {kind === "requirement" && (
               <>
-                <Form.Item
-                  name="scenario_id"
-                  label="关联风险场景"
-                  rules={chosen}
-                >
+                <Form.Item name="scenario_id" hidden>
                   <Select
                     showSearch
                     optionFilterProp="label"
@@ -1066,7 +1076,6 @@ export function EntityEditor({ editor, onClose }) {
               </>
             )}
           </Form>
-
         </>
       )}
     </Drawer>

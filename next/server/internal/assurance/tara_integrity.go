@@ -60,7 +60,11 @@ func linkedGoalText(ws Object, ids []any) string {
 	for _, id := range ids {
 		g, e := dFind(dList(ws["security_goals"]), id)
 		if e == nil {
-			parts = append(parts, taraRecordCode(g)+" "+dStr(g["statement"]))
+			code := dStr(g["source_code"])
+			if code == "" {
+				code = RecordCodes(ws)("goal", g["id"])
+			}
+			parts = append(parts, code+" "+dStr(g["statement"]))
 		}
 	}
 	return strings.Join(parts, "\n")

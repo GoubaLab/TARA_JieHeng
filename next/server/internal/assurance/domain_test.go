@@ -95,6 +95,43 @@ func legacyAssetProjection(ws Object) Object {
 		}
 	}
 	result["assets"] = assets
+	for _, r := range libRows(result["requirements"]) {
+		if len(dList(r["goal_ids"])) == 0 && len(dList(r["scenario_ids"])) == 1 && dList(r["scenario_ids"])[0] == r["scenario_id"] {
+			delete(r, "goal_ids")
+			delete(r, "scenario_ids")
+		}
+	}
+	return result
+}
+
+// Workflow diagnostics are a Go UI extension. Preserve historical storage/risk parity
+// separately from the dedicated stage and evidence-context tests.
+func legacyReviewProjection(ws Object) Object {
+	result := Clone(Review(ws))
+	delete(result, "workflow_stages")
+	issues := []any{}
+	seen := map[string]bool{}
+	for _, raw := range dList(result["issues"]) {
+		i := dObj(raw)
+		stage := dStr(i["stage"])
+		if stage == "threats" {
+			i["stage"] = "assessment"
+			if i["reference"] == nil {
+				i["message"] = "尚未建立损害场景、威胁及攻击路径"
+			}
+		}
+		if stage == "impacts" || stage == "paths" || stage == "feasibility" {
+			i["stage"] = "assessment"
+			i["message"] = "评估缺少影响等级、路径或判定依据"
+			delete(i, "path_id")
+			if seen[dStr(i["reference"])] {
+				continue
+			}
+			seen[dStr(i["reference"])] = true
+		}
+		issues = append(issues, i)
+	}
+	result["issues"] = issues
 	return result
 }
 func TestDomainPythonFullFlowGolden(t *testing.T) {
@@ -102,7 +139,7 @@ func TestDomainPythonFullFlowGolden(t *testing.T) {
 	g := dFixture(t)
 	ws := NewWorkspace("Golden 项目", "测试历史兼容")
 	dEqual(t, ws, g["initial"])
-	dEqual(t, Review(ws), g["initial_review"])
+	dEqual(t, legacyReviewProjection(ws), g["initial_review"])
 	for i, raw := range dList(g["steps"]) {
 		step := dObj(raw)
 		action := dStr(step["action"])
@@ -122,7 +159,7 @@ func TestDomainPythonFullFlowGolden(t *testing.T) {
 		}
 		updated = legacyAssetProjection(updated)
 		dEqual(t, updated, step["expected"])
-		dEqual(t, Review(updated), step["review"])
+		dEqual(t, legacyReviewProjection(updated), step["review"])
 		if Digest(updated) != step["digest"] {
 			t.Fatal("workspace digest mismatch")
 		}
@@ -146,7 +183,7 @@ func TestDomainLegacyMigrationGoldenAndRollback(t *testing.T) {
 		t.Fatal(err)
 	}
 	dEqual(t, legacyAssetProjection(updated), g["migrated"])
-	dEqual(t, Review(legacyAssetProjection(updated)), g["migration_review"])
+	dEqual(t, legacyReviewProjection(legacyAssetProjection(updated)), g["migration_review"])
 	if Digest(legacy) != before {
 		t.Fatal("legacy input mutated")
 	}

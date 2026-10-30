@@ -1,3 +1,9 @@
+import {
+  AttackStepsEditor,
+  AttackRoutePicker,
+  RouteConfirmation,
+} from "./AttackStepsEditor.jsx";
+import { parseAttackSteps } from "./attack-steps.js";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
@@ -49,7 +55,7 @@ export const workflowStages = [
   ["verification", "验证与报告"],
 ];
 export function WorkflowSteps() {
-  const { ws, page } = useWorkbench(),
+  const { ws, page, review } = useWorkbench(),
     i = workflowStages.findIndex(([key]) => key === page);
   if (!ws || i < 0) return null;
   const start = Math.max(0, Math.min(i - 1, workflowStages.length - 3)),
@@ -63,7 +69,13 @@ export function WorkflowSteps() {
         items={visible.map(([, title], n) => ({
           title,
           icon: <span>{start + n + 1}</span>,
-          status: start + n === i ? "process" : "wait",
+          status:
+            start + n === i
+              ? "process"
+              : review?.workflow_stages?.find((s) => s.key === visible[n][0])
+                    ?.complete
+                ? "finish"
+                : "wait",
         }))}
       />
       <Space wrap style={{ marginTop: 12 }}>
@@ -79,7 +91,7 @@ export function WorkflowSteps() {
           style={{ width: 240 }}
           options={workflowStages.map(([value, title], n) => ({
             value,
-            label: `${n + 1} / ${workflowStages.length} · ${title}`,
+            label: `${n + 1} / ${workflowStages.length} · ${title}${review?.workflow_stages?.find((s) => s.key === value)?.complete ? " · 已完成" : ""}`,
           }))}
           onChange={(key) => navigate(key, ws.id)}
         />
@@ -137,7 +149,9 @@ export function DamageEditor({ editor, onClose }) {
               "integrity",
             ]
           : ["integrity"],
-        function_refs: [],
+        function_refs: editor.assetId
+          ? ws.assets.find((a) => a.id === editor.assetId)?.function_refs || []
+          : [],
         impact: {},
         description: "",
         consequence: "",
@@ -465,7 +479,7 @@ export function ScenarioStageEditor({ editor, onClose }) {
                 placeholder="说明攻击者怎样破坏资产安全属性，并导致关联的损害。"
               />
             </Form.Item>
-            <Form.Item name="cause" label="攻击原因与前提">
+            <Form.Item name="cause" label="攻击原因与前提" rules={required}>
               <Input.TextArea rows={3} maxLength={10000} />
             </Form.Item>
             <Form.Item name="stride" label="STRIDE 分类">
@@ -491,6 +505,7 @@ export function ScenarioStageEditor({ editor, onClose }) {
         )}
         {stage === "path" && (
           <>
+            <AttackRoutePicker workspace={ws} scenario={s} form={form} />
             <Form.Item name="source_code" label="业务编号">
               <Input maxLength={100} />
             </Form.Item>
@@ -503,8 +518,26 @@ export function ScenarioStageEditor({ editor, onClose }) {
             <Form.Item name="vector" label="入口或攻击向量">
               <Input maxLength={200} />
             </Form.Item>
-            <Form.Item name="steps" label="攻击步骤与必要前提" rules={required}>
-              <Input.TextArea rows={9} maxLength={10000} />
+            <Form.Item
+              required
+              name="steps"
+              label="攻击步骤与必要前提"
+              rules={[
+                {
+                  validator: (_, v) =>
+                    v?.length <= 10000 &&
+                    parseAttackSteps(v).every((x) => x.trim())
+                      ? Promise.resolve()
+                      : Promise.reject(
+                          Error("请填写每一步内容，全文不超过 10000 字"),
+                        ),
+                },
+              ]}
+            >
+              <AttackStepsEditor />
+            </Form.Item>
+            <Form.Item name="architecture_route">
+              <RouteConfirmation />
             </Form.Item>
             <Alert
               type="info"
@@ -803,11 +836,15 @@ export default function TaraWorkflow({ stage }) {
           showIcon
           title={
             stage === "threats"
-              ? "请先完成资产与损害场景识别"
+              ? damages.length
+                ? "选择关联资产与损害场景，新增威胁场景"
+                : "请先完成资产与损害场景识别"
               : stage === "impacts"
                 ? "请先建立损害场景"
                 : stage === "paths"
-                  ? "请先建立威胁场景，再添加攻击路径"
+                  ? ws.scenarios.length
+                    ? "选择上方威胁场景，新增路径或选用模板"
+                    : "请先建立威胁场景，再添加攻击路径"
                   : stage === "feasibility"
                     ? "请先建立攻击路径"
                     : "请先识别资产，再描述损害场景"
@@ -827,7 +864,22 @@ export default function TaraWorkflow({ stage }) {
           rowKey={(r) => (r.scenario_id ? `${r.scenario_id}/${r.id}` : r.id)}
           size="small"
           dataSource={rows.filter((r) =>
-            JSON.stringify(r).toLowerCase().includes(q.toLowerCase()),
+            (
+              JSON.stringify(r) +
+              " " +
+              label(
+                ws,
+                stage === "damages" || stage === "impacts"
+                  ? "damage"
+                  : stage === "threats"
+                    ? "scenario"
+                    : "path",
+                r,
+                r.scenario_id,
+              )
+            )
+              .toLowerCase()
+              .includes(q.toLowerCase()),
           )}
           columns={columns}
           pagination={{

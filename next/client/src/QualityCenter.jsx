@@ -22,6 +22,12 @@ import { date, navigate, properties } from "./api.js";
 import { mutateResource, useResource } from "./platform-ui.js";
 import { ProjectMembers } from "./TeamSettings.jsx";
 const stageNames = {
+  assets: "资产识别",
+  damages: "损害场景",
+  impacts: "影响评级",
+  threats: "威胁场景",
+  paths: "攻击路径",
+  feasibility: "攻击可行性",
   definition: "相关项定义",
   architecture: "架构与资产",
   assessment: "风险分析",

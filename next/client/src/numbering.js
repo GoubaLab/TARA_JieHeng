@@ -103,3 +103,22 @@ export function numberedGraph(graph, code) {
     flows: graph.flows.map((flow) => label("flow", flow)),
   };
 }
+
+export function displayWorkProductText(ws, text = "") {
+  let result = String(text || "");
+  for (const [collection, kind] of [
+    ["assets", "asset"],
+    ["damage_scenarios", "damage"],
+    ["scenarios", "scenario"],
+    ["security_goals", "goal"],
+    ["requirements", "requirement"],
+  ])
+    for (const r of ws[collection] || []) {
+      if (r.id?.length >= 16 && r.id.includes("_"))
+        result = result.replaceAll(
+          r.id,
+          r.source_code || recordCode(ws, kind, r.id),
+        );
+    }
+  return result;
+}

@@ -194,6 +194,10 @@ func TestTaraSeparatedStagesCompleteBeforeRiskAndReport(t *testing.T) {
 	if !strings.Contains(reportText, "接收控制命令前验证来源和完整性") || !strings.Contains(reportText, "主要攻击向量") || !strings.Contains(reportText, "各维度按照损害后果和场景判定") {
 		t.Fatal("report lost workflow evidence")
 	}
+	workProducts := fmt.Sprint(taraReportTables(ws))
+	if !strings.Contains(workProducts, "DM-001") || !strings.Contains(workProducts, "AP-001") || strings.Contains(workProducts, damageID) || strings.Contains(workProducts, scenarioID) {
+		t.Fatal("report must display stable business references")
+	}
 	body = Clone(scenario())
 	dObj(dList(body["paths"])[0])["steps"] = "需要物理接触后才能发送命令"
 	apply("record-scenario", body)

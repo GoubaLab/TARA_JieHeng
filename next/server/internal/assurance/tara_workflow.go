@@ -139,6 +139,9 @@ func applyAttackFeasibility(original, payload Object) (Object, string, error) {
 	if strings.TrimSpace(dStr(p["steps"])) == "" {
 		return nil, "", dError("请先完成攻击路径的步骤与前提")
 	}
+	if route := dObj(p["architecture_route"]); len(route) > 0 && (!attackRouteCurrent(ws, route) || !attackRouteTargetsScenario(ws, s, route)) {
+		return nil, "", dError("请先核实架构候选路径的攻击步骤与前提，再评定可行性")
+	}
 	switch v["method"] {
 	case "attack_potential":
 		if err = validatePotential(dObj(v["potential"])); err != nil {
@@ -184,7 +187,7 @@ func clearChangedPathRatings(original, scenario Object) {
 		if len(old) == 0 {
 			continue
 		}
-		changed := false
+		changed := Digest(old["architecture_route"]) != Digest(path["architecture_route"])
 		for _, key := range []string{"name", "steps", "actor", "vector"} {
 			if dStr(old[key]) != dStr(path[key]) {
 				changed = true
@@ -198,4 +201,9 @@ func clearChangedPathRatings(original, scenario Object) {
 			delete(path, "attack_vector")
 		}
 	}
+}
+
+func impactComplete(impact, method Object) bool {
+	_, ok := damageImpactOrder(impact, EffectiveMethod(method))
+	return ok
 }

@@ -4978,6 +4978,60 @@
     }
   },
   &quot;description&quot;: &quot;每条路径选择一种方法并记录依据。攻击潜力法完整选择五因子档位；攻击向量法选择主要向量。等级由服务器计算，不接受客户端 feasibility。保留项目 AP 阈值；缺省为附录 G 表 G.7 的 14/20/25。写入使用项目修订、幂等键与项目编辑权限。&quot;
+}</pre></details></section><section><h2><code>GET /api/v1/workspaces/{id}/attack-route-candidates</code></h2><h3>按有向数据流查找攻击路径候选</h3><p>按跳数广度优先搜索。仅数据流，排除循环；每个入口/目标/协议序列保留首个最短候选。最多 12 段、10000 个搜索状态、20 个候选，截断显式返回。需人工补充攻击动作、核实跨协议权限，不自动评级。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;按有向数据流查找攻击路径候选&quot;,
+  &quot;operationId&quot;: &quot;listAttackRouteCandidates&quot;,
+  &quot;tags&quot;: [
+    &quot;自动分析&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;name&quot;: &quot;scenario_id&quot;,
+      &quot;in&quot;: &quot;query&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;description&quot;: &quot;威胁场景 ID&quot;
+    },
+    {
+      &quot;name&quot;: &quot;entry_id&quot;,
+      &quot;in&quot;: &quot;query&quot;,
+      &quot;required&quot;: false,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;description&quot;: &quot;指定入口实体；省略时从全部外部实体开始&quot;
+    },
+    {
+      &quot;name&quot;: &quot;target_id&quot;,
+      &quot;in&quot;: &quot;query&quot;,
+      &quot;required&quot;: false,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;description&quot;: &quot;指定威胁关联资产所在实体；省略时使用全部关联实体&quot;
+    }
+  ],
+  &quot;description&quot;: &quot;按跳数广度优先搜索。仅数据流，排除循环；每个入口/目标/协议序列保留首个最短候选。最多 12 段、10000 个搜索状态、20 个候选，截断显式返回。需人工补充攻击动作、核实跨协议权限，不自动评级。&quot;,
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/AttackRouteCandidateCollection&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
 }</pre></details></section><section id="schema-Item"><details><summary>Item</summary><pre>{
   &quot;additionalProperties&quot;: false,
   &quot;properties&quot;: {
@@ -5653,6 +5707,16 @@
         &quot;adjacent&quot;,
         &quot;local&quot;,
         &quot;physical&quot;
+      ]
+    },
+    &quot;architecture_route&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/components/schemas/AttackRoute&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
       ]
     }
   },
@@ -7816,6 +7880,9 @@
               &quot;string&quot;,
               &quot;null&quot;
             ]
+          },
+          &quot;path_id&quot;: {
+            &quot;type&quot;: &quot;string&quot;
           }
         },
         &quot;required&quot;: [
@@ -7857,6 +7924,35 @@
           &quot;complete&quot;
         ],
         &quot;additionalProperties&quot;: false
+      }
+    },
+    &quot;workflow_stages&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;object&quot;,
+        &quot;additionalProperties&quot;: false,
+        &quot;required&quot;: [
+          &quot;key&quot;,
+          &quot;complete&quot;,
+          &quot;count&quot;,
+          &quot;pending&quot;
+        ],
+        &quot;properties&quot;: {
+          &quot;key&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;complete&quot;: {
+            &quot;type&quot;: &quot;boolean&quot;
+          },
+          &quot;count&quot;: {
+            &quot;type&quot;: &quot;integer&quot;,
+            &quot;minimum&quot;: 0
+          },
+          &quot;pending&quot;: {
+            &quot;type&quot;: &quot;integer&quot;,
+            &quot;minimum&quot;: 0
+          }
+        }
       }
     }
   },
@@ -9598,8 +9694,7 @@
   },
   &quot;required&quot;: [
     &quot;statement&quot;,
-    &quot;scenario_ids&quot;,
-    &quot;cal&quot;
+    &quot;scenario_ids&quot;
   ]
 }</pre></details></section><section id="schema-SecurityGoalRecord"><details><summary>SecurityGoalRecord</summary><pre>{
   &quot;type&quot;: &quot;object&quot;,
@@ -9640,7 +9735,6 @@
   &quot;required&quot;: [
     &quot;statement&quot;,
     &quot;scenario_ids&quot;,
-    &quot;cal&quot;,
     &quot;id&quot;
   ]
 }</pre></details></section><section id="schema-SecurityGoalUpdate"><details><summary>SecurityGoalUpdate</summary><pre>{
@@ -9681,8 +9775,7 @@
   },
   &quot;required&quot;: [
     &quot;statement&quot;,
-    &quot;scenario_ids&quot;,
-    &quot;cal&quot;
+    &quot;scenario_ids&quot;
   ]
 }</pre></details></section><section id="schema-TaraImportInput"><details><summary>TaraImportInput</summary><pre>{
   &quot;type&quot;: &quot;object&quot;,
@@ -11175,4 +11268,177 @@
       }
     }
   ]
+}</pre></details></section><section id="schema-AttackRoute"><details><summary>AttackRoute</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;required&quot;: [
+    &quot;node_ids&quot;,
+    &quot;flow_ids&quot;,
+    &quot;fingerprint&quot;
+  ],
+  &quot;properties&quot;: {
+    &quot;node_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 2,
+      &quot;maxItems&quot;: 13,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 80
+      }
+    },
+    &quot;flow_ids&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;minItems&quot;: 1,
+      &quot;maxItems&quot;: 12,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1,
+        &quot;maxLength&quot;: 80
+      }
+    },
+    &quot;fingerprint&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;reviewed&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;default&quot;: false
+    }
+  },
+  &quot;description&quot;: &quot;架构有向数据流候选的来源。核实步骤与前提后才可评级；节点和数据流语义变化使其失效，几何变化不影响。&quot;
+}</pre></details></section><section id="schema-AttackRouteCandidateCollection"><details><summary>AttackRouteCandidateCollection</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;required&quot;: [
+    &quot;base_revision&quot;,
+    &quot;items&quot;,
+    &quot;entries&quot;,
+    &quot;nodes&quot;,
+    &quot;targets&quot;,
+    &quot;truncated&quot;,
+    &quot;max_hops&quot;,
+    &quot;max_candidates&quot;,
+    &quot;selection&quot;,
+    &quot;notice&quot;
+  ],
+  &quot;properties&quot;: {
+    &quot;base_revision&quot;: {
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;items&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;object&quot;,
+        &quot;required&quot;: [
+          &quot;id&quot;,
+          &quot;architecture_route&quot;,
+          &quot;name&quot;,
+          &quot;steps&quot;,
+          &quot;hops&quot;,
+          &quot;protocols&quot;,
+          &quot;protocol_changes&quot;,
+          &quot;shortest&quot;
+        ],
+        &quot;properties&quot;: {
+          &quot;id&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;architecture_route&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/AttackRoute&quot;
+          },
+          &quot;name&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;steps&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;hops&quot;: {
+            &quot;type&quot;: &quot;integer&quot;
+          },
+          &quot;protocols&quot;: {
+            &quot;type&quot;: &quot;array&quot;,
+            &quot;items&quot;: {
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;protocol_changes&quot;: {
+            &quot;type&quot;: &quot;integer&quot;
+          },
+          &quot;shortest&quot;: {
+            &quot;type&quot;: &quot;boolean&quot;
+          }
+        }
+      }
+    },
+    &quot;truncated&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;max_hops&quot;: {
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;max_candidates&quot;: {
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;selection&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;notice&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;entries&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;object&quot;,
+        &quot;required&quot;: [
+          &quot;id&quot;,
+          &quot;name&quot;
+        ],
+        &quot;properties&quot;: {
+          &quot;id&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;name&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      }
+    },
+    &quot;nodes&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;object&quot;,
+        &quot;required&quot;: [
+          &quot;id&quot;,
+          &quot;name&quot;
+        ],
+        &quot;properties&quot;: {
+          &quot;id&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;name&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      }
+    },
+    &quot;targets&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;object&quot;,
+        &quot;required&quot;: [
+          &quot;id&quot;,
+          &quot;name&quot;
+        ],
+        &quot;properties&quot;: {
+          &quot;id&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;name&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      }
+    }
+  }
 }</pre></details></section></html>

@@ -27,7 +27,11 @@ func taraSchema(model string, schema map[string]dField) map[string]dField {
 		schema["asset_ids"], schema["damage_ids"] = refs(), refs()
 		schema["properties"] = dop(dl(de(dProperties...), 1, 8, true))
 		schema["stride"], schema["cause"], schema["cal"] = dop(ds(0, 500)), dop(ds(0, 10000)), dop(dn("int", 1, 4, true))
+	case "AttackRoute":
+		schema["node_ids"], schema["flow_ids"] = dl(ds(1, 80), 2, 13, true), dl(ds(1, 80), 1, 12, true)
+		schema["fingerprint"], schema["reviewed"] = ds(1, 100), db(true, false)
 	case "AttackPath":
+		schema["architecture_route"] = dop(dm("AttackRoute", true))
 		schema["feasibility_method"] = dop(de("attack_potential", "attack_vector"))
 		schema["attack_vector"] = dop(de("network", "adjacent", "local", "physical"))
 		schema["actor"], schema["vector"], schema["potential"] = dop(ds(0, 500)), dop(ds(0, 200)), dop(dm("AttackPotential", true))
@@ -48,7 +52,7 @@ func taraSchema(model string, schema map[string]dField) map[string]dField {
 		schema["id"], schema["description"], schema["consequence"] = dsn(), ds(1, 10000), dsd("", 10000)
 		schema["asset_ids"], schema["function_refs"], schema["properties"], schema["impact"] = dl(ds(1, 200), 1, 500, true), refs(), dl(de(dProperties...), 1, 8, true), dm("Impact", true)
 	case "SecurityGoal":
-		schema["id"], schema["statement"], schema["scenario_ids"], schema["cal"], schema["theme"] = dsn(), ds(1, 10000), dl(ds(1, 200), 1, 500, true), dn("int", 1, 4, true), dsd("", 1000)
+		schema["id"], schema["statement"], schema["scenario_ids"], schema["cal"], schema["theme"] = dsn(), ds(1, 10000), dl(ds(1, 200), 1, 500, true), dop(dn("int", 1, 4, true)), dsd("", 1000)
 	case "Method":
 		schema["impact_aggregation"] = dop(de("maximum", "weighted_mean", "coefficient_sum", "coefficient_bands"))
 		schema["impact_scale"] = dop(dl(dn("number", 0, 1000000, true), 4, 4, true))
@@ -236,7 +240,7 @@ func refreshTaraLinks(ws Object) error {
 				}
 				impact := dObj(d["impact"])
 				rank, rated := damageImpactOrder(impact, method)
-				if !rated {
+				if !rated || strings.TrimSpace(dStr(impact["rationale"])) == "" {
 					complete = false
 				}
 				if rated && (highest == nil || rank.Cmp(highest) > 0) {

@@ -1,3 +1,4 @@
+import { recordCode as businessCode, pathNumberKey } from "./numbering.js";
 import { functionCatalog, recordLabel } from "./tara-guidance.js";
 import React, { useEffect, useState, useRef } from "react";
 import {
@@ -42,7 +43,27 @@ const pagination = {
   showSizeChanger: true,
   showTotal: (n) => `共 ${n} 条`,
 };
-const code = (r) => r.source_code || r.id;
+const code = (ws, r) => {
+  if (r.source_code && !r.source_code.startsWith("TPL:")) return r.source_code;
+  if (
+    r.scenario_id &&
+    r.id &&
+    (ws.scenarios.find((s) => s.id === r.scenario_id)?.paths || []).some(
+      (p) => p.id === r.id,
+    )
+  )
+    return businessCode(ws, "path", pathNumberKey(r.scenario_id, r.id));
+  for (const [collection, kind] of [
+    ["assets", "asset"],
+    ["damage_scenarios", "damage"],
+    ["security_goals", "goal"],
+    ["scenarios", "scenario"],
+    ["requirements", "requirement"],
+  ])
+    if (ws[collection]?.some((x) => x.id === r.id))
+      return businessCode(ws, kind, r.id);
+  return r.id;
+};
 const joined = (values) => (values || []).join("、") || "—";
 const propsText = (values) =>
   joined((values || []).map((v) => properties[v] || v));
@@ -100,7 +121,7 @@ function ProductEditor({ record, onClose }) {
   const required = [{ required: true, message: "请填写此项" }];
   useEffect(() => {
     form.resetFields();
-    form.setFieldsValue(record || { scenario_ids: [], cal: 1 });
+    form.setFieldsValue(record || { scenario_ids: [] });
   }, [record]);
   const submit = async () => {
     try {
@@ -154,11 +175,11 @@ function ProductEditor({ record, onClose }) {
             optionFilterProp="label"
             options={ws.scenarios.map((s) => ({
               value: s.id,
-              label: `${code(s)} · ${s.title}`,
+              label: `${s.source_code || businessCode(ws, "scenario", s.id)} · ${s.title}`,
             }))}
           />
         </Form.Item>
-        <Form.Item name="cal" label="CAL" rules={required}>
+        <Form.Item name="cal" label="CAL（按项目适用性确定）">
           <InputNumber min={1} max={4} precision={0} />
         </Form.Item>
         <Form.Item name="theme" label="控制主题">
@@ -325,7 +346,7 @@ export default function TaraProducts() {
     (s.paths || []).map((p) => ({ ...p, scenario_id: s.id })),
   );
   const method = effectiveMethod(ws.method);
-  const baseCode = col("编号", "id", 110, (_, r) => code(r));
+  const baseCode = col("编号", "id", 110, (_, r) => code(ws, r));
   const metrics = [
     ["资产", ws.assets.length],
     ["损害场景", ws.damage_scenarios?.length || 0],
@@ -720,5 +741,63 @@ export default function TaraProducts() {
         <ProductEditor {...editing} onClose={() => setEditing(null)} />
       )}
     </>
+  );
+}
+
+export function SecurityGoalsPanel() {
+  const { ws } = useWorkbench();
+  const [editing, setEditing] = useState(null);
+  return (
+    <Card
+      title="网络安全目标"
+      extra={
+        <Button
+          disabled={!ws.scenarios.length || ws.access_role === "viewer"}
+          onClick={() => setEditing({})}
+        >
+          新增安全目标
+        </Button>
+      }
+    >
+      <Alert
+        type="info"
+        className="section-card"
+        title="降低风险应定义安全目标，再分解并分配安全需求"
+        description="目标关联威胁场景；需求关联目标和分配对象。CAL 按项目适用性确定，不预填等级。"
+      />
+      <Records
+        rows={ws.security_goals || []}
+        columns={[
+          {
+            title: "编号",
+            width: 130,
+            render: (_, r) => r.source_code || businessCode(ws, "goal", r.id),
+          },
+          col("目标", "statement", 400),
+          {
+            title: "关联威胁",
+            width: 350,
+            render: (_, r) =>
+              (r.scenario_ids || [])
+                .map((id) => {
+                  const s = ws.scenarios.find((s) => s.id === id);
+                  return s
+                    ? `${s.source_code || businessCode(ws, "scenario", s.id)} · ${s.title}`
+                    : id;
+                })
+                .join("；"),
+          },
+          col("CAL", "cal", 100),
+          col("控制主题", "theme", 180),
+        ]}
+        onEdit={ws.access_role !== "viewer" ? setEditing : undefined}
+      />
+      {editing && (
+        <ProductEditor
+          record={editing.id ? editing : null}
+          onClose={() => setEditing(null)}
+        />
+      )}
+    </Card>
   );
 }

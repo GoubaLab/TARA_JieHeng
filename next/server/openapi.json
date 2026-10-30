@@ -2,7 +2,7 @@
   "openapi": "3.1.1",
   "info": {
     "title": "界衡威胁建模工作产品 API",
-    "version": "2.3.0",
+    "version": "2.4.0",
     "description": "通用威胁建模工作产品，汽车领域以 ISO/SAE 21434 为参考流程。Go 本地服务；版本前缀 /api/v1。写入使用 If-Match 与 Idempotency-Key；错误采用 RFC 9457。字段以 snake_case 为主，已有架构 entityType/sourceSide/targetSide/labelOffset 为兼容而保留。应用领域不自动决定法规适用性或评分算法。 企业模式提供会话与项目角色；模型任务为持久异步资源，草案采用需当前修订、幂等键和人工确认。安全方案的空项仅表示本机模式，不表示企业模式可匿名读取。"
   },
   "servers": [
@@ -5261,6 +5261,63 @@
         },
         "description": "每条路径选择一种方法并记录依据。攻击潜力法完整选择五因子档位；攻击向量法选择主要向量。等级由服务器计算，不接受客户端 feasibility。保留项目 AP 阈值；缺省为附录 G 表 G.7 的 14/20/25。写入使用项目修订、幂等键与项目编辑权限。"
       }
+    },
+    "/workspaces/{id}/attack-route-candidates": {
+      "get": {
+        "summary": "按有向数据流查找攻击路径候选",
+        "operationId": "listAttackRouteCandidates",
+        "tags": [
+          "自动分析"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "name": "scenario_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "威胁场景 ID"
+          },
+          {
+            "name": "entry_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "指定入口实体；省略时从全部外部实体开始"
+          },
+          {
+            "name": "target_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "指定威胁关联资产所在实体；省略时使用全部关联实体"
+          }
+        ],
+        "description": "按跳数广度优先搜索。仅数据流，排除循环；每个入口/目标/协议序列保留首个最短候选。最多 12 段、10000 个搜索状态、20 个候选，截断显式返回。需人工补充攻击动作、核实跨协议权限，不自动评级。",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttackRouteCandidateCollection"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -5948,6 +6005,16 @@
               "adjacent",
               "local",
               "physical"
+            ]
+          },
+          "architecture_route": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AttackRoute"
+              },
+              {
+                "type": "null"
+              }
             ]
           }
         },
@@ -8138,6 +8205,9 @@
                     "string",
                     "null"
                   ]
+                },
+                "path_id": {
+                  "type": "string"
                 }
               },
               "required": [
@@ -8179,6 +8249,35 @@
                 "complete"
               ],
               "additionalProperties": false
+            }
+          },
+          "workflow_stages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "key",
+                "complete",
+                "count",
+                "pending"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "complete": {
+                  "type": "boolean"
+                },
+                "count": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "pending": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
             }
           }
         },
@@ -9958,8 +10057,7 @@
         },
         "required": [
           "statement",
-          "scenario_ids",
-          "cal"
+          "scenario_ids"
         ]
       },
       "SecurityGoalRecord": {
@@ -10001,7 +10099,6 @@
         "required": [
           "statement",
           "scenario_ids",
-          "cal",
           "id"
         ]
       },
@@ -10043,8 +10140,7 @@
         },
         "required": [
           "statement",
-          "scenario_ids",
-          "cal"
+          "scenario_ids"
         ]
       },
       "TaraImportInput": {
@@ -11565,6 +11661,181 @@
             }
           }
         ]
+      },
+      "AttackRoute": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "node_ids",
+          "flow_ids",
+          "fingerprint"
+        ],
+        "properties": {
+          "node_ids": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 13,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            }
+          },
+          "flow_ids": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 12,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            }
+          },
+          "fingerprint": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "reviewed": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "description": "架构有向数据流候选的来源。核实步骤与前提后才可评级；节点和数据流语义变化使其失效，几何变化不影响。"
+      },
+      "AttackRouteCandidateCollection": {
+        "type": "object",
+        "required": [
+          "base_revision",
+          "items",
+          "entries",
+          "nodes",
+          "targets",
+          "truncated",
+          "max_hops",
+          "max_candidates",
+          "selection",
+          "notice"
+        ],
+        "properties": {
+          "base_revision": {
+            "type": "integer"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "architecture_route",
+                "name",
+                "steps",
+                "hops",
+                "protocols",
+                "protocol_changes",
+                "shortest"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "architecture_route": {
+                  "$ref": "#/components/schemas/AttackRoute"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "steps": {
+                  "type": "string"
+                },
+                "hops": {
+                  "type": "integer"
+                },
+                "protocols": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "protocol_changes": {
+                  "type": "integer"
+                },
+                "shortest": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "max_hops": {
+            "type": "integer"
+          },
+          "max_candidates": {
+            "type": "integer"
+          },
+          "selection": {
+            "type": "string"
+          },
+          "notice": {
+            "type": "string"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "name"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "nodes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "name"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "targets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "name"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "parameters": {

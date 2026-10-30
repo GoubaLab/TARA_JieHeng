@@ -44,6 +44,7 @@ func reportIndex(rows any, key string) map[string]Object {
 // Tables projects the aggregate into independent, static report work products.
 func Tables(ws Object, journal []Object, catalog *Catalog) []Object {
 	code := RecordCodes(ws)
+	displayText := reportTextFormatter(ws)
 	review := Review(ws)
 	architecture := libObj(ws["architecture"])
 	item := libObj(ws["item"])
@@ -202,7 +203,7 @@ func Tables(ws Object, journal []Object, catalog *Catalog) []Object {
 	rows = [][]any{}
 	for _, s := range libRows(ws["scenarios"]) {
 		imp := libObj(s["impact"])
-		rows = append(rows, []any{code("scenario", s["id"]), s["damage"], impactLabel(imp["safety"]), impactLabel(imp["financial"]), impactLabel(imp["operational"]), impactLabel(imp["privacy"]), imp["rationale"]})
+		rows = append(rows, []any{code("scenario", s["id"]), displayText(dStr(s["damage"])), impactLabel(imp["safety"]), impactLabel(imp["financial"]), impactLabel(imp["operational"]), impactLabel(imp["privacy"]), displayText(dStr(imp["rationale"]))})
 	}
 	add("影响性判定", []string{"场景标识", "损害场景", libStr(dimensions["safety"]), libStr(dimensions["financial"]), libStr(dimensions["operational"]), libStr(dimensions["privacy"]), "判定依据"}, rows, []int{38, 70, 18, 18, 18, 18, 75}, "")
 	rows = [][]any{}
@@ -310,7 +311,7 @@ func Tables(ws Object, journal []Object, catalog *Catalog) []Object {
 	rows = [][]any{}
 	for _, d := range libRows(ws["decisions"]) {
 		if libBool(d["goal"]) {
-			rows = append(rows, []any{code("scenario", d["scenario_id"]), d["goal"], d["owner"]})
+			rows = append(rows, []any{code("scenario", d["scenario_id"]), displayText(dStr(d["goal"])), d["owner"]})
 		}
 	}
 	add("网络安全目标", []string{"场景标识", "目标", "责任人"}, rows, []int{38, 110, 24}, "")

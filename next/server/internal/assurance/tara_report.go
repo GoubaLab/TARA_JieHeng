@@ -12,6 +12,36 @@ func taraReportTables(ws Object) []Object {
 		return nil
 	}
 	out := []Object{}
+	codes := RecordCodes(ws)
+	code := func(kind string, r Object) string {
+		if c := dStr(r["source_code"]); c != "" && !strings.HasPrefix(c, "TPL:") {
+			return c
+		}
+		return codes(kind, r["id"])
+	}
+	refs := func(kind, collection string, ids []any) string {
+		parts := []string{}
+		for _, id := range ids {
+			row, e := dFind(dList(ws[collection]), id)
+			if e != nil {
+				parts = append(parts, dStr(id)+"（引用缺失）")
+				continue
+			}
+			title := dStr(row["name"])
+			if title == "" {
+				title = dStr(row["title"])
+			}
+			if title == "" {
+				title = dStr(row["description"])
+			}
+			if title == "" {
+				title = dStr(row["statement"])
+			}
+			parts = append(parts, code(kind, row)+" · "+title)
+		}
+		return strings.Join(parts, "\n")
+	}
+
 	add := func(name string, columns []string, rows [][]any, note string) {
 		widths := make([]int, len(columns))
 		for i := range widths {
@@ -25,7 +55,7 @@ func taraReportTables(ws Object) []Object {
 	for _, raw := range dList(ws["damage_scenarios"]) {
 		d := dObj(raw)
 		impact := dObj(d["impact"])
-		row := []any{taraRecordCode(d), libJoin(d["asset_ids"], "、"), libJoin(d["function_refs"], "、"), d["description"], d["consequence"], taraPropertyNames(d["properties"])}
+		row := []any{code("damage", d), refs("asset", "assets", dList(d["asset_ids"])), libJoin(d["function_refs"], "、"), d["description"], d["consequence"], taraPropertyNames(d["properties"])}
 		for _, key := range impactKeys {
 			v := impact[key]
 			if method["impact_aggregation"] == "coefficient_bands" && len(scale) == 4 && v != nil {
@@ -52,7 +82,7 @@ func taraReportTables(ws Object) []Object {
 	rows = [][]any{}
 	for _, raw := range dList(ws["scenarios"]) {
 		s := dObj(raw)
-		rows = append(rows, []any{taraRecordCode(s), s["title"], libJoin(scenarioAssets(s), "、"), taraPropertyNames(scenarioProperties(s)), libJoin(s["damage_ids"], "、"), s["stride"], s["cause"], s["cal"]})
+		rows = append(rows, []any{code("scenario", s), s["title"], refs("asset", "assets", scenarioAssets(s)), taraPropertyNames(scenarioProperties(s)), refs("damage", "damage_scenarios", dList(s["damage_ids"])), s["stride"], s["cause"], s["cal"]})
 	}
 	add("威胁完整追溯", []string{"编号", "威胁场景", "全部关联资产", "全部受损属性", "关联损害", "STRIDE", "攻击原因", "CAL"}, rows, "")
 	templateOrigins, assessmentMethods := false, false
@@ -78,11 +108,11 @@ func taraReportTables(ws Object) []Object {
 			if len(potential) > 0 {
 				potentialTotal = total
 			}
-			pathCode := taraRecordCode(p)
-			if strings.HasPrefix(dStr(p["source_code"]), "TPL:") {
+			pathCode := code("path", p)
+			if dStr(p["source_code"]) == "" || strings.HasPrefix(dStr(p["source_code"]), "TPL:") {
 				pathCode = recordCode("path", pathNumberKey(dStr(s["id"]), dStr(p["id"])))
 			}
-			row := []any{pathCode, taraRecordCode(s), p["actor"], p["vector"], p["steps"], potential["elapsed_time"], potential["expertise"], potential["knowledge"], potential["opportunity"], potential["equipment"], potentialTotal, reportLevel(method, "feasibility_levels", f, 1)}
+			row := []any{pathCode, code("scenario", s), p["actor"], p["vector"], p["steps"], potential["elapsed_time"], potential["expertise"], potential["knowledge"], potential["opportunity"], potential["equipment"], potentialTotal, reportLevel(method, "feasibility_levels", f, 1)}
 			if templateOrigins {
 				row = append(row, p["source_code"])
 			}
@@ -103,13 +133,13 @@ func taraReportTables(ws Object) []Object {
 	rows = [][]any{}
 	for _, raw := range dList(ws["security_goals"]) {
 		g := dObj(raw)
-		rows = append(rows, []any{taraRecordCode(g), g["statement"], libJoin(g["scenario_ids"], "、"), g["cal"], g["theme"]})
+		rows = append(rows, []any{code("goal", g), g["statement"], refs("scenario", "scenarios", dList(g["scenario_ids"])), g["cal"], g["theme"]})
 	}
 	add("独立安全目标", []string{"编号", "目标", "关联威胁", "CAL", "控制主题"}, rows, "")
 	rows = [][]any{}
 	for _, raw := range dList(ws["requirements"]) {
 		r := dObj(raw)
-		rows = append(rows, []any{taraRecordCode(r), libJoin(r["goal_ids"], "、"), libJoin(requirementScenarios(r), "、"), r["statement"], r["verification"], r["allocation"], r["cal"], libJoin(r["customer_refs"], "、")})
+		rows = append(rows, []any{code("requirement", r), refs("goal", "security_goals", dList(r["goal_ids"])), refs("scenario", "scenarios", requirementScenarios(r)), r["statement"], r["verification"], r["allocation"], r["cal"], libJoin(r["customer_refs"], "、")})
 	}
 	add("需求完整追溯", []string{"编号", "目标", "全部关联威胁", "需求", "验证方法", "分配", "CAL", "客户需求"}, rows, "")
 	rows = [][]any{}
@@ -120,7 +150,7 @@ func taraReportTables(ws Object) []Object {
 		if dBool(evaluations[dStr(d["scenario_id"])]["decision_stale"]) {
 			state = "依据变化，待复核"
 		}
-		rows = append(rows, []any{d["scenario_id"], d["controls"], libJoin(d["goal_ids"], "、"), d["cal"], state, d["acceptance"], d["acceptance_rationale"], d["customer_confirmation"], d["confirmed_at"], d["declarant"]})
+		rows = append(rows, []any{refs("scenario", "scenarios", []any{d["scenario_id"]}), d["controls"], refs("goal", "security_goals", dList(d["goal_ids"])), d["cal"], state, d["acceptance"], d["acceptance_rationale"], d["customer_confirmation"], d["confirmed_at"], d["declarant"]})
 	}
 	add("接受条件与确认", []string{"威胁", "控制措施", "安全目标", "CAL", "残余评估状态", "原接受结论", "残余依据", "客户确认", "确认日期", "声明人"}, rows, "target 为设计目标，不能作为验证通过或签署接受的证据。")
 	source := dObj(ws["tara_import"])
@@ -161,4 +191,25 @@ func taraPropertyNames(v any) string {
 		out = append(out, reportProperties[dStr(p)])
 	}
 	return strings.Join(out, "、")
+}
+
+// Only native opaque identifiers are replaced in presentation text; stored records
+// and imported source tables retain their original bytes and revision fingerprints.
+func reportTextFormatter(ws Object) func(string) string {
+	pairs := []string{}
+	codes := RecordCodes(ws)
+	for _, pair := range [][2]string{{"assets", "asset"}, {"damage_scenarios", "damage"}, {"scenarios", "scenario"}, {"security_goals", "goal"}, {"requirements", "requirement"}} {
+		for _, r := range libRows(ws[pair[0]]) {
+			id := dStr(r["id"])
+			if len(id) < 16 || !strings.Contains(id, "_") {
+				continue
+			}
+			code := dStr(r["source_code"])
+			if code == "" {
+				code = codes(pair[1], id)
+			}
+			pairs = append(pairs, id, code)
+		}
+	}
+	return strings.NewReplacer(pairs...).Replace
 }

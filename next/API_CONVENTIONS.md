@@ -158,3 +158,10 @@ Idempotency-Key: b320291b-39d1-44df-800b-c26b8a445731
 未评级的攻击路径允许保存为草稿，但任何路径缺少评级、步骤或依据时，场景风险保持 `null`，不得确认处置。修改路径步骤、攻击者、入口或名称会清除原评级，包括导入路径的旧评级。既有导入工作簿及自定义 `AttackPotential` 数据保留，不自动转换评级结果。
 
 损害场景及安全目标新增 `damage` / `goal` 编号类型，默认前缀 `DM` / `CG`。旧编号配置省略这两项时使用默认值，已有序号保持稳定。
+
+
+## 流程检查与拓扑候选
+
+`Review.workflow_stages` 提供 11 个细分工作产品阶段的 `key/complete/count/pending`；原 `stages` 保留兼容。`issues.stage` 可以是 `impacts`、`threats`、`paths` 或 `feasibility`，`path_id` 可用于直接定位待评估路径。客户端应按细分阶段导航，不把所有评估缺口归到同一个场景表单。
+
+只读路径搜索接口及 `AttackPath.architecture_route` 见 [拓扑候选契约](ATTACK_PATH_TEMPLATES.md#从架构查找路径)。新建及编辑需求时补全 `scenario_ids/goal_ids`，后续验证摘要绑定相关评估与目标；旧格式未编辑记录保持兼容。`SecurityGoal.cal` 可省略，填写时须为 1～4。
