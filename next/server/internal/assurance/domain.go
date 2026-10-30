@@ -327,6 +327,9 @@ func dUpsert(ws Object, collection string, value Object, prefix string) (string,
 	return dStr(value["id"]), nil
 }
 func Apply(original Object, action string, payload Object) (Object, string, error) {
+	if action == "rate-attack-path" {
+		return applyAttackFeasibility(original, payload)
+	}
 	if action == "update-workspace-profile" {
 		return applyWorkspaceProfile(original, payload)
 	}
@@ -417,11 +420,20 @@ func Apply(original Object, action string, payload Object) (Object, string, erro
 		switch action {
 		case "define-item":
 			ws["item"] = value
+			if e := validateFunctionLinks(original, ws, action, value); e != nil {
+				return nil, "", e
+			}
 		case "record-damage":
+			if e := validateFunctionLinks(original, ws, action, value); e != nil {
+				return nil, "", e
+			}
 			entityID, err = dUpsert(ws, "damage_scenarios", value, "damage")
 		case "record-goal":
 			entityID, err = dUpsert(ws, "security_goals", value, "goal")
 		case "record-asset":
+			if e := validateFunctionLinks(original, ws, action, value); e != nil {
+				return nil, "", e
+			}
 			ids := map[string]bool{}
 			for _, v := range dList(dObj(ws["architecture"])["nodes"]) {
 				node := dObj(v)
@@ -455,6 +467,7 @@ func Apply(original Object, action string, payload Object) (Object, string, erro
 			}
 			entityID, err = dUpsert(ws, "assets", value, "asset")
 		case "record-scenario":
+			clearChangedPathRatings(original, value)
 			asset, e := dFind(dList(ws["assets"]), value["asset_id"])
 			if e != nil {
 				return nil, "", e

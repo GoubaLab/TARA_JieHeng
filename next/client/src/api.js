@@ -25,9 +25,10 @@ export const pages = {
   quality: "交付检查",
   team: "账户与权限",
   tara: "TARA 工作产品",
-  definition: "相关项定义",
-  architecture: "架构与资产",
-  assessment: "风险分析",
+  definition: "相关项与功能",
+  architecture: "系统架构",
+  assessment: "风险确定",
+  assets:"资产识别", damages:"损害场景", impacts:"影响评级", threats:"威胁场景", paths:"攻击路径", feasibility:"攻击可行性",
   treatment: "风险处置与需求",
   verification: "验证与报告",
   library: "参考资料",
@@ -43,7 +44,8 @@ export const actions = {
   "define-item": "更新相关项",
   "replace-architecture": "保存架构",
   "record-asset": "更新资产",
-  "record-scenario": "更新风险场景",
+  "record-scenario": "更新威胁场景",
+  "rate-attack-path": "评定攻击可行性",
   "decide-treatment": "记录处置决策",
   "specify-requirement": "更新安全需求",
   "record-evidence": "新增验证记录",
@@ -107,6 +109,7 @@ export function command(ws, action, payload, requestId = crypto.randomUUID()) {
       payload.id ? "PUT" : "POST",
       `/scenarios${payload.id ? "/" + key(payload.id) : ""}`,
     ],
+    "rate-attack-path": ["PUT", `/scenarios/${key(payload.scenario_id)}/attack-feasibility`],
     "decide-treatment": [
       "PUT",
       `/scenarios/${key(payload.scenario_id)}/treatment`,
@@ -136,7 +139,7 @@ export function command(ws, action, payload, requestId = crypto.randomUUID()) {
     ].includes(action)
   )
     delete body.id;
-  if (action === "decide-treatment") delete body.scenario_id;
+  if (["decide-treatment","rate-attack-path"].includes(action)) delete body.scenario_id;
   return request(`/workspaces/${key(ws.id)}${route[1]}`, {
     method: route[0],
     headers: { "If-Match": `"${ws.revision}"`, "Idempotency-Key": requestId },

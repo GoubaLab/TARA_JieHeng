@@ -11,7 +11,7 @@ var reportProperties = map[string]string{"confidentiality": "机密性", "integr
 var reportImpacts = []string{"可忽略", "中等", "重大", "严重"}
 var reportFeasibility = []string{"很低", "低", "中", "高"}
 var reportTreatments = map[string]string{"reduce": "降低", "avoid": "规避", "share": "分担", "retain": "保留"}
-var reportActions = map[string]string{"update-workspace-profile": "更新项目基本信息", "open-workspace": "建立工作区", "define-item": "更新相关项定义", "replace-architecture": "保存系统架构", "record-asset": "记录资产", "record-scenario": "更新风险场景", "decide-treatment": "确认风险处置", "specify-requirement": "更新安全需求", "record-evidence": "记录验证证据", "configure-numbering": "更新编号规则", "adopt-method": "确认评估方法", "seal-baseline": "建立评审基线", "select-regulations": "选择项目法规条款", "apply-reference-selection": "批量选用参考知识", "import-tara": "导入完整 TARA", "record-damage": "更新损害场景", "record-goal": "更新安全目标"}
+var reportActions = map[string]string{"rate-attack-path": "评定攻击可行性", "update-workspace-profile": "更新项目基本信息", "open-workspace": "建立工作区", "define-item": "更新相关项定义", "replace-architecture": "保存系统架构", "record-asset": "记录资产", "record-scenario": "更新风险场景", "decide-treatment": "确认风险处置", "specify-requirement": "更新安全需求", "record-evidence": "记录验证证据", "configure-numbering": "更新编号规则", "adopt-method": "确认评估方法", "seal-baseline": "建立评审基线", "select-regulations": "选择项目法规条款", "apply-reference-selection": "批量选用参考知识", "import-tara": "导入完整 TARA", "record-damage": "更新损害场景", "record-goal": "更新安全目标"}
 
 func reportImpact(v any) string {
 	if v == nil {
@@ -125,6 +125,9 @@ func Tables(ws Object, journal []Object, catalog *Catalog) []Object {
 	rows = append(rows, []any{"评估方法依据", method["rationale"]})
 	domain := libStr(libFirst(item["domain"], "automotive"))
 	rows = append(rows, []any{"应用领域", map[string]string{"general": "通用系统", "automotive": "汽车", "robotics": "机器人", "iot": "物联网", "charging": "充电基础设施", "internet": "互联网"}[domain]})
+	for _, f := range libRows(item["functions"]) {
+		rows = append(rows, []any{libStr(f["id"]) + " · " + libStr(f["name"]), f["description"]})
+	}
 	add("相关项定义", []string{"内容项", "说明"}, rows, []int{26, 110}, "")
 	rows = [][]any{}
 	for _, node := range libRows(architecture["nodes"]) {
@@ -207,9 +210,12 @@ func Tables(ws Object, journal []Object, catalog *Catalog) []Object {
 		rows = append(rows, []any{code("scenario", s["id"]), s["title"], assets[libStr(s["asset_id"])]["name"], reportProperties[libStr(s["property"])], s["threat"], reportReferences(s["references"], catalog)})
 	}
 	add("威胁判定", []string{"场景标识", "风险场景", "资产", "安全属性", "威胁场景", "知识引用"}, rows, []int{38, 35, 28, 18, 80, 35}, "")
-	pathTemplateDetails := false
+	pathTemplateDetails, pathMethodDetails := false, false
 	for _, scenario := range libRows(ws["scenarios"]) {
 		for _, path := range libRows(scenario["paths"]) {
+			if dBool(path["feasibility_method"]) {
+				pathMethodDetails = true
+			}
 			if strings.HasPrefix(libStr(path["source_code"]), "TPL:") {
 				pathTemplateDetails = true
 			}
@@ -236,6 +242,10 @@ func Tables(ws Object, journal []Object, catalog *Catalog) []Object {
 			if pathTemplateDetails {
 				row = append(row, p["source_code"], p["actor"], p["vector"])
 			}
+			if pathMethodDetails {
+				potential := libObj(p["potential"])
+				row = append(row, map[string]string{"attack_potential": "攻击潜力 · 五因子", "attack_vector": "主要攻击向量"}[dStr(p["feasibility_method"])], p["attack_vector"], potential["elapsed_time"], potential["expertise"], potential["knowledge"], potential["opportunity"], potential["equipment"])
+			}
 			rows = append(rows, row)
 		}
 	}
@@ -248,6 +258,10 @@ func Tables(ws Object, journal []Object, catalog *Catalog) []Object {
 	if pathTemplateDetails {
 		riskColumns = append(riskColumns, "路径来源编号 / 版本", "攻击者", "攻击向量")
 		riskWidths = append(riskWidths, 40, 45, 45)
+	}
+	if pathMethodDetails {
+		riskColumns = append(riskColumns, "评级方法", "主要攻击向量", "ET", "Ex", "KoI", "WoO", "Eq")
+		riskWidths = append(riskWidths, 28, 24, 12, 12, 12, 12, 12)
 	}
 	add("风险评估", riskColumns, rows, riskWidths, "")
 	add("附件1 资产分类", []string{"安全属性", "识别提示"}, [][]any{{"机密性", "信息不被未授权主体获取"}, {"完整性", "信息或功能不被未授权修改"}, {"可用性", "授权主体能够在需要时使用"}, {"真实性", "数据或实体来源可确认"}, {"授权", "操作满足权限规则"}, {"不可抵赖性", "行为可关联到对应主体"}}, []int{24, 95}, "")

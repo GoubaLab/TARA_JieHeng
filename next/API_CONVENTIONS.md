@@ -9,6 +9,7 @@
 - `/workspaces`：项目创建与分页查询。
 - `/workspaces/{id}/item`、`/architecture`、`/assessment-method`：相关项、架构和评估方法。
 - `/workspaces/{id}/assets`、`/scenarios`、`/requirements`：工作产品集合；更新使用对应 `/{record_id}`。
+- `/workspaces/{id}/scenarios/{scenario_id}/attack-feasibility`：单条攻击路径的独立可行性评级。
 - `/workspaces/{id}/scenarios/{scenario_id}/treatment`：风险处置决策。
 - `/workspaces/{id}/evidence`、`/baselines`：追加验证记录、冻结基线；已存在的记录不可覆盖。
 - `/workspaces/{id}/reference-imports`：自有资料导入扩展入口；当前无可用参考资料，POST 返回 422。
@@ -147,3 +148,13 @@ Idempotency-Key: b320291b-39d1-44df-800b-c26b8a445731
 ## 项目基本信息
 
 `PUT /api/v1/workspaces/{id}/profile` 更新项目名称与说明，请求体为 `{title, description}`。名称必填，最长 200 字符；说明可为空，最长 4,000 字符。接口要求项目写权限、`If-Match` 和 `Idempotency-Key`，变更写入修订与审计。该操作不修改工作产品、评分依据或冻结基线。
+
+## 分步评级与功能引用
+
+`item.functions` 保存功能编号、名称与具体内容，编号不可重复。旧客户端省略时保留现有目录；已被资产或损害场景引用的功能不能移除。`function_refs` 中的新增编号必须在相关项功能目录或已解析的来源范围定义中存在。
+
+`PUT /workspaces/{id}/scenarios/{scenario_id}/attack-feasibility` 接收 `path_id`、`method` 和非空 `rationale`。`attack_potential` 方法要求全部五项 `potential` 档位；`attack_vector` 方法要求 `attack_vector`，两类参数不可混用。服务器计算可行性，不接受手填结果。附录 G 示例档位在 `StandardAttackPotential` 契约中列明，AP 分档保留项目配置。
+
+未评级的攻击路径允许保存为草稿，但任何路径缺少评级、步骤或依据时，场景风险保持 `null`，不得确认处置。修改路径步骤、攻击者、入口或名称会清除原评级，包括导入路径的旧评级。既有导入工作簿及自定义 `AttackPotential` 数据保留，不自动转换评级结果。
+
+损害场景及安全目标新增 `damage` / `goal` 编号类型，默认前缀 `DM` / `CG`。旧编号配置省略这两项时使用默认值，已有序号保持稳定。

@@ -1,3 +1,5 @@
+import TaraWorkflow, {WorkflowSteps, ScenarioStageEditor, DamageEditor, workflowStages} from "./TaraWorkflow.jsx";
+import FunctionCatalogPanel from "./FunctionCatalog.jsx";
 import WorkspaceProfileEditor from "./WorkspaceProfileEditor.jsx";
 import ModelSettings from "./ModelSettings.jsx";
 import KnowledgeCenter from "./KnowledgeCenter.jsx";
@@ -103,21 +105,14 @@ const { Text, Title, Paragraph } = Typography;
 const Ctx = createContext();
 export const useWorkbench = () => useContext(Ctx);
 const navItems = [
-  ["overview", <AppstoreOutlined />],
-  ["definition", <FileTextOutlined />],
-  ["architecture", <ApartmentOutlined />],
-  ["tara", <DatabaseOutlined />],
-  ["assessment", <AlertOutlined />],
-  ["treatment", <SafetyCertificateOutlined />],
-  ["verification", <AuditOutlined />],
-  ["settings", <SettingOutlined />],
-  ["automation", <ThunderboltOutlined />],
-  ["assistant", <QuestionCircleOutlined />],
-  ["quality", <CheckCircleOutlined />],
+ ["overview", <AppstoreOutlined />],
+ ...workflowStages.map(([key])=>[key,<FileTextOutlined />]),
+ ["tara",<DatabaseOutlined />], ["settings",<SettingOutlined />],
+ ["automation",<ThunderboltOutlined />],["assistant",<QuestionCircleOutlined />],["quality",<CheckCircleOutlined />],
 ];
 const stageNames = {
-  definition: "相关项定义",
-  architecture: "架构与资产",
+  definition: "相关项与功能",
+  architecture: "系统架构",
   assessment: "风险分析",
   treatment: "风险处置",
   verification: "需求验证",
@@ -337,7 +332,7 @@ export default function Workbench() {
             children: navItems.map(([key, icon]) => ({
               key,
               icon,
-              label: pages[key],
+              label: workflowStages.some(([k])=>k===key) ? `${workflowStages.findIndex(([k])=>k===key)+1}. ${pages[key]}` : pages[key],
             })),
           },
         ]
@@ -398,6 +393,8 @@ export default function Workbench() {
         overview: <Overview />,
         definition: <Definition />,
         architecture: <Architecture />,
+        assets: <><PageTitle title="资产识别" description="明确受保护资产、安全属性与功能关联。" extra={<Button type="primary" onClick={()=>ctx.setEditor({kind:"asset"})}>新增资产</Button>}/><AssetTable/></>,
+        ...Object.fromEntries(["damages","impacts","threats","paths","feasibility"].map(stage=>[stage,<TaraWorkflow key={stage} stage={stage}/>])),
         tara: <TaraProducts />,
         assessment: <Assessment />,
         treatment: <Treatment />,
@@ -511,7 +508,7 @@ export default function Workbench() {
                 </Tooltip>
               </Space>
             </div>
-            <Content className="workspace-content">{content}</Content>
+            <Content className="workspace-content">{!loading&&!error&&ws&&<WorkflowSteps/>}{content}</Content>
           </Layout>
         </Layout>
       </Layout>
@@ -521,7 +518,7 @@ export default function Workbench() {
         onClose={() => setProfileID(null)}
         onSaved={() => reload({ quiet: true })}
       />
-      <EntityEditor editor={editor} onClose={() => setEditor(null)} />
+      {editor?.kind === "scenario" ? <ScenarioStageEditor key={`${ws.id}/${editor.id}/${editor.step}/${editor.pathId}`} editor={editor} onClose={()=>setEditor(null)}/> : ["damage","impact"].includes(editor?.kind) ? <DamageEditor key={`${ws.id}/${editor.kind}/${editor.id}`} editor={editor} onClose={()=>setEditor(null)}/> : <EntityEditor editor={editor} onClose={() => setEditor(null)} />}
       <ReferencePicker config={picker} onClose={() => setPicker(null)} />
       <ReferenceDetail
         referenceKey={reference}
@@ -877,7 +874,7 @@ function Definition() {
   return (
     <>
       <PageTitle
-        title="相关项定义"
+        title="相关项与功能"
         description="明确系统功能、边界和分析假设，为风险分析提供共同输入。"
         extra={
           <Button type="primary" onClick={() => setEditor({ kind: "item" })}>
@@ -936,6 +933,7 @@ function Definition() {
           </Card>
         </Col>
       </Row>
+      <FunctionCatalogPanel/>
     </>
   );
 }
@@ -945,7 +943,7 @@ function Architecture() {
   return (
     <>
       <PageTitle
-        title="架构与资产"
+        title="系统架构"
         description={
           ws.architecture.view_mode === "dfd"
             ? "展开外部实体、硬件接口、处理过程和数据存储，保存后同步资产。电能流单独标识。"
@@ -1083,8 +1081,8 @@ function AssetTable() {
       <Alert
         type="info"
         showIcon
-        title="资产随架构保存自动生成"
-        description="资产按架构来源同步，名称、说明和安全属性支持人工维护。"
+        title={ws.architecture.asset_generation === "catalog" ? "资产目录模式" : "资产随架构保存自动生成"}
+        description={ws.architecture.asset_generation === "catalog" ? "保留导入或手工维护的资产目录，可关联架构对象并继续识别损害场景。" : "资产按架构来源同步，名称、说明和安全属性支持人工维护。"}
         className="section-card"
       />
       <div className="table-toolbar">
@@ -1200,9 +1198,9 @@ function AssetTable() {
                 )}
                 <Button
                   type="link"
-                  onClick={() => setEditor({ kind: "scenario", assetId: a.id })}
+                  onClick={() => setEditor({ kind: "damage", assetId: a.id })}
                 >
-                  新增风险
+                  识别损害
                 </Button>
               </Space>
             ),
@@ -1243,8 +1241,8 @@ function Assessment() {
   return (
     <>
       <PageTitle
-        title="风险分析"
-        description="以场景为单位关联损害、威胁和攻击路径，依据证据完成影响与可行性评估。"
+        title="风险确定"
+        description="根据已完成的影响评级与攻击可行性计算风险，追溯评级来源，再进入风险处置。"
         extra={
           <>
             <Button
@@ -1267,7 +1265,7 @@ function Assessment() {
               onClick={() => setEditor({ kind: "scenario" })}
               disabled={!ws.assets.length}
             >
-              新增风险场景
+              威胁场景识别
             </Button>
           </>
         }
@@ -1327,7 +1325,7 @@ function Assessment() {
                       : navigate("architecture", ws.id)
                   }
                 >
-                  {ws.assets.length ? "新增风险场景" : "前往架构与资产"}
+                  {ws.assets.length ? "威胁场景识别" : "前往资产识别"}
                 </Button>
               </Empty>
             ),

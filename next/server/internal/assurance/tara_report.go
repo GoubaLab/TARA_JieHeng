@@ -45,18 +45,22 @@ func taraReportTables(ws Object) []Object {
 			row = append(row, "", reportLevel(method, "impact_levels", int(rank.Num().Int64()), 0))
 		}
 
+		row = append(row, impact["rationale"])
 		rows = append(rows, row)
 	}
-	add("损害场景工作产品", []string{"编号", "关联资产", "关联功能", "损害场景", "道路使用者后果", "安全属性", "S", "F", "O", "P", "影响值", "影响等级"}, rows, "")
+	add("损害场景工作产品", []string{"编号", "关联资产", "关联功能", "损害场景", "道路使用者后果", "安全属性", "S", "F", "O", "P", "影响值", "影响等级", "评级依据"}, rows, "")
 	rows = [][]any{}
 	for _, raw := range dList(ws["scenarios"]) {
 		s := dObj(raw)
 		rows = append(rows, []any{taraRecordCode(s), s["title"], libJoin(scenarioAssets(s), "、"), taraPropertyNames(scenarioProperties(s)), libJoin(s["damage_ids"], "、"), s["stride"], s["cause"], s["cal"]})
 	}
 	add("威胁完整追溯", []string{"编号", "威胁场景", "全部关联资产", "全部受损属性", "关联损害", "STRIDE", "攻击原因", "CAL"}, rows, "")
-	templateOrigins := false
+	templateOrigins, assessmentMethods := false, false
 	for _, scenario := range libRows(ws["scenarios"]) {
 		for _, path := range libRows(scenario["paths"]) {
+			if dBool(path["feasibility_method"]) {
+				assessmentMethods = true
+			}
 			if strings.HasPrefix(libStr(path["source_code"]), "TPL:") {
 				templateOrigins = true
 			}
@@ -82,12 +86,18 @@ func taraReportTables(ws Object) []Object {
 			if templateOrigins {
 				row = append(row, p["source_code"])
 			}
+			if assessmentMethods {
+				row = append(row, map[string]string{"attack_potential": "攻击潜力 · 五因子", "attack_vector": "主要攻击向量"}[dStr(p["feasibility_method"])], p["attack_vector"], p["rationale"])
+			}
 			rows = append(rows, row)
 		}
 	}
 	pathColumns := []string{"AP", "TS", "攻击者", "向量", "步骤", "ET", "Ex", "KoI", "WoO", "Eq", "AP值", "可行性"}
 	if templateOrigins {
 		pathColumns = append(pathColumns, "路径来源编号 / 版本")
+	}
+	if assessmentMethods {
+		pathColumns = append(pathColumns, "评级方法", "主要攻击向量", "评级依据")
 	}
 	add("攻击潜力工作产品", pathColumns, rows, "")
 	rows = [][]any{}

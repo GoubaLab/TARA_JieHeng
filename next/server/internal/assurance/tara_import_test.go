@@ -134,7 +134,7 @@ func TestTaraFullImportRoundTripAndRecalculation(t *testing.T) {
 	}
 }
 func TestTaraRejectsBrokenWorkbooksAtomically(t *testing.T) {
-	for _, tc := range []struct{ name, sheet, cell, value string }{{"header", "威胁场景", "A3", "wrong"}, {"reference", "威胁场景", "G4", "DS-999"}, {"score", "风险评估与处置", "D4", "1"}, {"method", "概述、方法与依据", "A1", "different method"}, {"path", "攻击路径", "B4", "TS-999"}} {
+	for _, tc := range []struct{ name, sheet, cell, value string }{{"header", "威胁场景", "A3", "wrong"}, {"reference", "威胁场景", "G4", "DS-999"}, {"score", "风险评估与处置", "D4", "1"}, {"method", "概述、方法与依据", "A1", "different method"}, {"path", "攻击路径", "B4", "TS-999"}, {"potential", "攻击路径", "G4", "999999"}} {
 		t.Run(tc.name, func(t *testing.T) {
 			f, e := excelize.OpenReader(bytes.NewReader(taraFixture(t)))
 			if e != nil {

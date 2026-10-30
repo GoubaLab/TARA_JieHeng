@@ -2,13 +2,19 @@ package assurance
 
 import "fmt"
 
-var numberPrefixes = Object{"entity": "EN", "boundary": "TB", "software": "SW", "store": "DS", "flow": "DF", "asset": "AS", "scenario": "RS", "path": "AP", "requirement": "SR", "evidence": "EV"}
+var numberPrefixes = Object{"entity": "EN", "boundary": "TB", "software": "SW", "store": "DS", "flow": "DF", "asset": "AS", "damage": "DM", "goal": "CG", "scenario": "RS", "path": "AP", "requirement": "SR", "evidence": "EV"}
 
 func EffectiveNumbering(value Object) Object {
 	result := Object{"prefixes": Clone(numberPrefixes), "separator": "-", "padding": 3}
 	for key := range result {
 		if v, ok := value[key]; ok {
-			result[key] = dClone(v)
+			if key == "prefixes" {
+				for kind, prefix := range dObj(v) {
+					dObj(result[key])[kind] = dClone(prefix)
+				}
+			} else {
+				result[key] = dClone(v)
+			}
 		}
 	}
 	return result
@@ -71,7 +77,7 @@ func ensureRecordNumbers(ws Object) {
 	for _, raw := range dList(graph["flows"]) {
 		add("flow", dStr(dObj(raw)["id"]))
 	}
-	for _, pair := range [][2]string{{"assets", "asset"}, {"scenarios", "scenario"}, {"requirements", "requirement"}, {"evidence", "evidence"}} {
+	for _, pair := range [][2]string{{"assets", "asset"}, {"damage_scenarios", "damage"}, {"security_goals", "goal"}, {"scenarios", "scenario"}, {"requirements", "requirement"}, {"evidence", "evidence"}} {
 		for _, raw := range dList(ws[pair[0]]) {
 			row := dObj(raw)
 			add(pair[1], dStr(row["id"]))

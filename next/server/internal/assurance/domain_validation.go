@@ -75,10 +75,17 @@ func dSchema(model string) map[string]dField {
 		fields := map[string]dField{}
 		for key := range numberPrefixes {
 			fields[key] = ds(1, 12)
+			if key == "damage" || key == "goal" {
+				fields[key] = dsd(dStr(numberPrefixes[key]), 12)
+			}
 		}
 		return fields
 	case "Numbering":
 		return map[string]dField{"prefixes": dm("NumberPrefixes", true), "separator": de("-", "_", ".", "/"), "padding": dn("int", 2, 6, true)}
+	case "ItemFunction":
+		return map[string]dField{"id": ds(1, 100), "name": ds(1, 300), "description": dsd("", 6000)}
+	case "AttackFeasibility":
+		return map[string]dField{"scenario_id": ds(1, 200), "path_id": ds(1, 200), "method": de("attack_potential", "attack_vector"), "potential": dop(dm("StandardAttackPotential", true)), "attack_vector": dop(de("network", "adjacent", "local", "physical")), "rationale": ds(1, 6000)}
 	case "Item":
 		return map[string]dField{"purpose": dsd("", 10000), "boundary": dsd("", 10000), "environment": dsd("", 10000), "assumptions": dsd("", 10000), "owner": dsd("", 200), "lifecycle": dsd("概念阶段", 100), "domain": dop(de("general", "automotive", "robotics", "iot", "charging", "internet"))}
 	case "OperatingSystem":
@@ -372,6 +379,9 @@ func dValidateModel(model string, payload Object) (Object, error) {
 			return nil, dError(key + ": " + err.Error())
 		}
 		result[key] = normalized
+	}
+	if err := workflowValidate(model, result); err != nil {
+		return nil, err
 	}
 	switch model {
 	case "NumberPrefixes":

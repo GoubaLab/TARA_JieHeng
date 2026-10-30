@@ -18,7 +18,7 @@ BUILDERS = {'build_gb44495.py', 'build_gb44496.py', 'build_gbt44464.py', 'build_
 TOOLS = {'build-go.sh', 'build-api-docs.py', 'public_release.py', 'test_public_release.py', 'collect_public_knowledge.py', 'test_public_knowledge.py'}
 BLOCKED_PARTS = {'.git', '.work', '.runtime', '.venv', 'node_modules', '__pycache__', 'var', 'bin', 'web', 'dist', 'private', 'backups', 'retired-tests', 'source-snapshot', 'testdata', 'fixtures'}
 BLOCKED_SUFFIXES = {'.pdf', '.docx', '.xlsx', '.zip', '.tar', '.gz', '.tgz', '.sqlite', '.sqlite3', '.db', '.pyc', '.log'}
-SCREENSHOTS = {'next/docs/screenshots/architecture.png', 'next/docs/screenshots/assets.png', 'next/docs/screenshots/numbering.png', 'next/docs/screenshots/quality-center.jpg', 'next/docs/screenshots/model-services.jpg', 'next/docs/screenshots/automation-center.jpg', 'next/docs/screenshots/attack-path-presets.jpg', 'next/docs/screenshots/project-management.jpg'}
+SCREENSHOTS = {'next/docs/screenshots/tara-workflow.jpg', 'next/docs/screenshots/architecture.png', 'next/docs/screenshots/assets.png', 'next/docs/screenshots/numbering.png', 'next/docs/screenshots/quality-center.jpg', 'next/docs/screenshots/model-services.jpg', 'next/docs/screenshots/automation-center.jpg', 'next/docs/screenshots/attack-path-presets.jpg', 'next/docs/screenshots/project-management.jpg'}
 SOURCE_SUFFIXES = {'.go', '.json', '.html', '.js', '.jsx', '.mjs', '.cjs', '.ts', '.tsx', '.css', '.svg', '.txt', '.md', '.mod', '.sum', '.sh', '.py'}
 IDENTIFIERS = re.compile(rb'\b(?:systems|losses|patterns|techniques|controls|relationships|checks|methods|criteria|collections|gb|r155):[A-Za-z0-9_-]+')
 # Assembled from parts so this audit pattern cannot match the staging tool's own source.
@@ -39,8 +39,8 @@ PUBLIC_README = '''# 界衡 · 威胁建模平台
 | 相关项与 DFD | 实体模式或展开 DFD；信任边界、内部软件/存储、操作系统、数据流与电能流；有线/无线协议标注 |
 | 布线与图形 | 拖动端点换边、调整线段和标签、网格整理；无线链路以虚线及协议标识呈现；流动效果仅用于画布，导出保持静态 |
 | 资产识别 | 保存架构时同步生成资产、保留人工修改和风险关联；导入项目支持维护已有资产目录 |
-| TARA 工作产品 | 独立损害场景、安全目标；多资产/多属性威胁关联、攻击路径、CAL、需求及接受条件 |
-| 风险方法 | SFOP 最大值、权重或系数法；直接用系数总分计算风险，或先分级再查矩阵；支持五因子攻击潜力 |
+| TARA 工作产品 | 分步维护功能、资产、损害、影响、威胁、攻击路径、可行性、风险及处置；编号与引用内容同时展示 |
+| 风险方法 | SFOP 四维分级准则、项目方法与标准参考；五因子档位或攻击向量评级，缺项时阻止风险结论 |
 | 处置与验证 | 区分残余风险目标和已验证结果；目标、需求或评估依据变化后，旧证据和处置需重新复核 |
 | 法规引用 | 本地条款目录、版本定位和勾选引用；公开仓库初始为空，由使用者接入资料 |
 | 工作簿与报告 | 约定格式 XLSX 预览与原子导入、原文件保留；当前工作产品、来源快照和审计记录导出 |
@@ -57,6 +57,10 @@ PUBLIC_README = '''# 界衡 · 威胁建模平台
 ## 界面预览
 
 以下界面使用演示项目。
+
+分析工作产品分步维护；影响评级展示各维度的判断准则，功能和工作产品引用同时显示编号与内容。攻击可行性采用受控档位并记录依据，缺项时保持待评估。
+
+![分步 TARA 与影响评级](next/docs/screenshots/tara-workflow.jpg)
 
 项目列表汇总资产、风险场景与评审基线，支持直接维护项目基本信息。
 

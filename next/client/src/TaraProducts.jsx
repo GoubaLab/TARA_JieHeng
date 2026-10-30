@@ -1,3 +1,4 @@
+import { functionCatalog, recordLabel } from "./tara-guidance.js";
 import React, { useEffect, useState, useRef } from "react";
 import {
   Alert,
@@ -91,51 +92,23 @@ function Records({ rows, columns, onEdit }) {
     />
   );
 }
-function ProductEditor({ kind, record, onClose }) {
-  const { ws, save, message } = useWorkbench();
-  const [form] = Form.useForm();
-  const [busy, setBusy] = useState(false),
+function ProductEditor({ record, onClose }) {
+  const { ws, save, message } = useWorkbench(),
+    [form] = Form.useForm(),
+    [busy, setBusy] = useState(false),
     [error, setError] = useState("");
-  const damage = kind === "damage";
-  const method = effectiveMethod(ws.method);
   const required = [{ required: true, message: "请填写此项" }];
   useEffect(() => {
     form.resetFields();
-    form.setFieldsValue(
-      record ||
-        (damage
-          ? {
-              properties: ["integrity"],
-              asset_ids: [],
-              function_refs: [],
-              impact: {},
-            }
-          : { scenario_ids: [], cal: 1 }),
-    );
-  }, [record, kind]);
+    form.setFieldsValue(record || { scenario_ids: [], cal: 1 });
+  }, [record]);
   const submit = async () => {
     try {
-      await form.validateFields();
+      const v = await form.validateFields();
       setBusy(true);
       setError("");
-      const values = form.getFieldsValue(true);
-      const keys = damage
-        ? [
-            "source_code",
-            "description",
-            "consequence",
-            "asset_ids",
-            "function_refs",
-            "properties",
-            "impact",
-          ]
-        : ["source_code", "statement", "scenario_ids", "cal", "theme"];
-      const payload = Object.fromEntries(
-        keys.filter((k) => values[k] !== undefined).map((k) => [k, values[k]]),
-      );
-      if (record?.id) payload.id = record.id;
-      await save(damage ? "record-damage" : "record-goal", payload);
-      message.success("工作产品已保存，关联风险已重新计算");
+      await save("record-goal", { ...(record ? { id: record.id } : {}), ...v });
+      message.success("安全目标已保存");
       onClose();
     } catch (e) {
       if (!e.errorFields) setError(e.message);
@@ -145,10 +118,10 @@ function ProductEditor({ kind, record, onClose }) {
   };
   return (
     <Drawer
-      title={damage ? "损害场景" : "网络安全目标"}
       open
-      onClose={() => !busy && onClose()}
+      title="安全目标"
       size={720}
+      onClose={() => !busy && onClose()}
       extra={
         <Button type="primary" loading={busy} onClick={submit}>
           保存
@@ -160,91 +133,42 @@ function ProductEditor({ kind, record, onClose }) {
         <Form.Item name="source_code" label="业务编号">
           <Input maxLength={100} />
         </Form.Item>
-        {damage ? (
-          <>
-            <Form.Item name="description" label="损害场景" rules={required}>
-              <Input.TextArea rows={4} />
-            </Form.Item>
-            <Form.Item name="consequence" label="道路使用者及其他相关方后果">
-              <Input.TextArea rows={3} />
-            </Form.Item>
-            <Form.Item name="asset_ids" label="关联资产" rules={required}>
-              <Select
-                mode="multiple"
-                options={ws.assets.map((a) => ({
-                  value: a.id,
-                  label: `${code(a)} · ${a.name}`,
-                }))}
-                optionFilterProp="label"
-              />
-            </Form.Item>
-            <Form.Item name="function_refs" label="关联功能编号">
-              <Select mode="tags" />
-            </Form.Item>
-            <Form.Item name="properties" label="受损安全属性" rules={required}>
-              <Select mode="multiple" options={propOptions} />
-            </Form.Item>
-            <Alert
-              type="info"
-              title="修改影响评级后，所有引用此损害场景的威胁将重新计算；已有处置和验证需重新评审。"
-            />
-            <Row gutter={16}>
-              {["safety", "financial", "operational", "privacy"].map((k, i) => (
-                <Col span={12} key={k}>
-                  <Form.Item
-                    name={["impact", k]}
-                    label={`${"SFOP"[i]} · ${method.impact_dimensions[k]}`}
-                    rules={required}
-                  >
-                    <Select
-                      options={method.impact_levels.map((v, value) => ({
-                        value,
-                        label: `${v.label}${method.impact_aggregation === "coefficient_bands" && method.impact_scale ? ` · ${method.impact_scale[value]}` : ""}`,
-                      }))}
-                    />
-                  </Form.Item>
-                </Col>
-              ))}
-            </Row>
-            <Form.Item
-              name={["impact", "rationale"]}
-              label="评级依据"
-              rules={required}
-            >
-              <Input.TextArea rows={3} />
-            </Form.Item>
-          </>
-        ) : (
-          <>
-            <Form.Item name="statement" label="安全目标" rules={required}>
-              <Input.TextArea rows={5} />
-            </Form.Item>
-            <Form.Item
-              name="scenario_ids"
-              label="关联威胁场景"
-              rules={required}
-            >
-              <Select
-                mode="multiple"
-                options={ws.scenarios.map((s) => ({
-                  value: s.id,
-                  label: `${code(s)} · ${s.title}`,
-                }))}
-                optionFilterProp="label"
-              />
-            </Form.Item>
-            <Form.Item name="cal" label="CAL" rules={required}>
-              <InputNumber min={1} max={4} precision={0} />
-            </Form.Item>
-            <Form.Item name="theme" label="控制主题">
-              <Input />
-            </Form.Item>
-          </>
-        )}
+        <Form.Item name="statement" label="安全目标" rules={required}>
+          <Input.TextArea rows={5} />
+        </Form.Item>
+        <Form.Item
+          name="scenario_ids"
+          label="关联威胁场景"
+          rules={[
+            {
+              required: true,
+              type: "array",
+              min: 1,
+              message: "请选择关联威胁场景",
+            },
+          ]}
+        >
+          <Select
+            mode="multiple"
+            showSearch
+            optionFilterProp="label"
+            options={ws.scenarios.map((s) => ({
+              value: s.id,
+              label: `${code(s)} · ${s.title}`,
+            }))}
+          />
+        </Form.Item>
+        <Form.Item name="cal" label="CAL" rules={required}>
+          <InputNumber min={1} max={4} precision={0} />
+        </Form.Item>
+        <Form.Item name="theme" label="控制主题">
+          <Input />
+        </Form.Item>
       </Form>
     </Drawer>
   );
 }
+
 function OriginalSheets({ source }) {
   const [selected, setSelected] = useState(source.sheets[0]?.name);
   const sheet =
@@ -324,6 +248,22 @@ export default function TaraProducts() {
     setEditing(null);
   }, [ws.id]);
   const source = ws.tara_import;
+  const linkText = (collection, values) =>
+    (values || [])
+      .map((id) => {
+        const r = (ws[collection] || []).find((r) => r.id === id);
+        return r ? recordLabel(r) : id + " · 引用内容缺失";
+      })
+      .join("；");
+  const functionText = (values) =>
+    (values || [])
+      .map((id) => {
+        const f = functionCatalog(ws).find((f) => f.id === id);
+        return f
+          ? `${id} · ${f.name}${f.group ? "（范围定义）" : ""}`
+          : `${id} · 功能内容待补充`;
+      })
+      .join("；");
   const canImport =
     !source &&
     ![
@@ -505,7 +445,7 @@ export default function TaraProducts() {
                     col("资产", "name"),
                     col("类型", "asset_type", 120),
                     col("分组", "group", 120),
-                    col("关联功能", "function_refs", 220, joined),
+                    col("关联功能", "function_refs", 300, functionText),
                     col("安全属性", "properties", 240, propsText),
                     col("DFD 关联", "node_ids", 240, joined),
                   ]}
@@ -519,19 +459,23 @@ export default function TaraProducts() {
                 <>
                   <Button
                     icon={<PlusOutlined />}
-                    onClick={() => setEditing({ kind: "damage" })}
+                    onClick={() => setEditor({ kind: "damage" })}
                   >
                     新增损害场景
                   </Button>
                   <Records
                     rows={ws.damage_scenarios}
-                    onEdit={(record) => setEditing({ kind: "damage", record })}
+                    onEdit={(record) =>
+                      setEditor({ kind: "damage", id: record.id })
+                    }
                     columns={[
                       baseCode,
                       col("损害场景", "description", 300),
                       col("后果", "consequence", 300),
-                      col("关联资产", "asset_ids", 220, joined),
-                      col("功能", "function_refs", 180, joined),
+                      col("关联资产", "asset_ids", 300, (v) =>
+                        linkText("assets", v),
+                      ),
+                      col("功能", "function_refs", 300, functionText),
                       col("受损属性", "properties", 200, propsText),
                       col("SFOP 原始取值", "impact", 180, (v) =>
                         ["safety", "financial", "operational", "privacy"]
@@ -565,9 +509,11 @@ export default function TaraProducts() {
                       propsText(v || [r.property]),
                     ),
                     col("资产", "asset_ids", 220, (v, r) =>
-                      joined(v || [r.asset_id]),
+                      linkText("assets", v || [r.asset_id]),
                     ),
-                    col("损害场景", "damage_ids", 200, joined),
+                    col("损害场景", "damage_ids", 300, (v) =>
+                      linkText("damage_scenarios", v),
+                    ),
                     col("攻击路径", "paths", 220, (v) => joined(v.map(code))),
                   ]}
                 />
@@ -580,11 +526,18 @@ export default function TaraProducts() {
                 <Records
                   rows={pathRows}
                   onEdit={(p) =>
-                    setEditor({ kind: "scenario", id: p.scenario_id })
+                    setEditor({
+                      kind: "scenario",
+                      id: p.scenario_id,
+                      step: "path",
+                      pathId: p.id,
+                    })
                   }
                   columns={[
                     baseCode,
-                    col("威胁", "scenario_id", 110),
+                    col("威胁", "scenario_id", 280, (v) =>
+                      linkText("scenarios", [v]),
+                    ),
                     col("攻击者", "actor", 180),
                     col("向量", "vector", 180),
                     col("攻击步骤", "steps", 420),
@@ -628,7 +581,9 @@ export default function TaraProducts() {
                   })}
                   onEdit={edit("decision")}
                   columns={[
-                    col("威胁", "scenario_id", 110),
+                    col("威胁", "scenario_id", 280, (v) =>
+                      linkText("scenarios", [v]),
+                    ),
                     col("处置", "treatment", 110, (v) => treatments[v]),
                     col("控制措施", "controls", 380),
                     col("目标", "goal_ids", 180, joined),
@@ -674,7 +629,9 @@ export default function TaraProducts() {
                     columns={[
                       baseCode,
                       col("目标内容", "statement", 480),
-                      col("关联威胁", "scenario_ids", 300, joined),
+                      col("关联威胁", "scenario_ids", 300, (v) =>
+                        linkText("scenarios", v),
+                      ),
                       col("CAL", "cal", 80),
                       col("控制主题", "theme", 240),
                     ]}

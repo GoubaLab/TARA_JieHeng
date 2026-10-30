@@ -99,6 +99,7 @@ func (s *HTTPServer) routes() {
 		{"PUT", "profile", "update-workspace-profile", "", false}, {"PUT", "numbering", "configure-numbering", "", false}, {"PUT", "item", "define-item", "", false}, {"PUT", "architecture", "replace-architecture", "", false},
 		{"POST", "assets", "record-asset", "", true}, {"PUT", "assets/{resource_id}", "record-asset", "id", false},
 		{"POST", "scenarios", "record-scenario", "", true}, {"PUT", "scenarios/{resource_id}", "record-scenario", "id", false},
+		{"PUT", "scenarios/{resource_id}/attack-feasibility", "rate-attack-path", "scenario_id", false},
 		{"PUT", "scenarios/{resource_id}/treatment", "decide-treatment", "scenario_id", false},
 		{"POST", "requirements", "specify-requirement", "", true}, {"PUT", "requirements/{resource_id}", "specify-requirement", "id", false},
 		{"POST", "evidence", "record-evidence", "", true}, {"PUT", "assessment-method", "adopt-method", "", false},

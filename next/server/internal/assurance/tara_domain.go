@@ -17,6 +17,8 @@ func taraSchema(model string, schema map[string]dField) map[string]dField {
 		schema["source_code"] = dop(ds(0, 100))
 	}
 	switch model {
+	case "Item":
+		schema["functions"] = dop(dl(dm("ItemFunction", true), 0, 500, true))
 	case "Architecture":
 		schema["asset_generation"] = dop(de("automatic", "catalog"))
 	case "Asset":
@@ -26,10 +28,12 @@ func taraSchema(model string, schema map[string]dField) map[string]dField {
 		schema["properties"] = dop(dl(de(dProperties...), 1, 8, true))
 		schema["stride"], schema["cause"], schema["cal"] = dop(ds(0, 500)), dop(ds(0, 10000)), dop(dn("int", 1, 4, true))
 	case "AttackPath":
+		schema["feasibility_method"] = dop(de("attack_potential", "attack_vector"))
+		schema["attack_vector"] = dop(de("network", "adjacent", "local", "physical"))
 		schema["actor"], schema["vector"], schema["potential"] = dop(ds(0, 500)), dop(ds(0, 200)), dop(dm("AttackPotential", true))
 	case "AssetLink":
 		schema["asset_id"], schema["node_ids"] = ds(1, 200), dl(ds(1, 200), 0, 200, true)
-	case "AttackPotential":
+	case "AttackPotential", "StandardAttackPotential":
 		for _, key := range []string{"elapsed_time", "expertise", "knowledge", "opportunity", "equipment"} {
 			schema[key] = dn("int", 0, 100, true)
 		}
@@ -91,8 +95,22 @@ func bandedImpact(impact, method Object) (int, any, bool) {
 func pathFeasibility(path, method Object) (int, int, bool) {
 	p := dObj(path["potential"])
 	ts := dList(method["attack_potential_thresholds"])
+	if path["feasibility_method"] == "attack_vector" {
+		f, ok := map[string]int{"network": 4, "adjacent": 3, "local": 2, "physical": 1}[dStr(path["attack_vector"])]
+		return f, 0, ok
+	}
 	if len(p) == 0 {
-		return dInt(path["feasibility"]), 0, path["feasibility"] != nil
+		if path["feasibility_method"] == "attack_potential" {
+			return 0, 0, false
+		}
+		f := dInt(path["feasibility"])
+		return f, 0, path["feasibility"] != nil && f >= 1 && f <= 4
+	}
+	if path["feasibility_method"] == "attack_potential" && validatePotential(p) != nil {
+		return 0, 0, false
+	}
+	if len(ts) == 0 {
+		ts = []any{14, 20, 25}
 	}
 	if len(ts) != 3 {
 		return 0, 0, false
@@ -134,6 +152,14 @@ func requirementScenarios(r Object) []any {
 func preserveTaraFields(ws Object, action string, payload Object) Object {
 	model, collection, key := "", "", "id"
 	switch action {
+	case "define-item":
+		out := Clone(payload)
+		if _, present := out["functions"]; !present {
+			if f, present := dObj(ws["item"])["functions"]; present {
+				out["functions"] = dClone(f)
+			}
+		}
+		return out
 	case "record-asset":
 		model, collection = "Asset", "assets"
 	case "record-scenario":
@@ -230,11 +256,11 @@ func refreshTaraLinks(ws Object) error {
 		}
 		for _, p := range dList(s["paths"]) {
 			path := dObj(p)
-			if len(dObj(path["potential"])) > 0 {
+			if len(dObj(path["potential"])) > 0 || dBool(path["feasibility_method"]) {
 				if f, _, ok := pathFeasibility(path, method); ok {
 					path["feasibility"] = f
 				} else {
-					return dError("使用攻击潜力五因子时，须先配置三个可行性分档阈值并填写全部因子")
+					return dError("请完成所选方法的攻击可行性评估参数")
 				}
 			}
 		}

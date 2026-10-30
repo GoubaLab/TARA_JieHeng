@@ -4903,6 +4903,81 @@
     }
   },
   &quot;description&quot;: &quot;替换项目名称和说明。需要项目分析权限、当前 If-Match 和独立 Idempotency-Key。成功后产生新修订与审计记录；工作产品、评分依据、验证记录和冻结基线保持不变。&quot;
+}</pre></details></section><section><h2><code>PUT /api/v1/workspaces/{id}/scenarios/{scenario_id}/attack-feasibility</code></h2><h3>评定单条攻击路径的可行性</h3><p>每条路径选择一种方法并记录依据。攻击潜力法完整选择五因子档位；攻击向量法选择主要向量。等级由服务器计算，不接受客户端 feasibility。保留项目 AP 阈值；缺省为附录 G 表 G.7 的 14/20/25。写入使用项目修订、幂等键与项目编辑权限。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;评定单条攻击路径的可行性&quot;,
+  &quot;operationId&quot;: &quot;rateAttackPath&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;name&quot;: &quot;scenario_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1
+      }
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/MutationResult&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/AttackFeasibilityInput&quot;
+        }
+      }
+    }
+  },
+  &quot;description&quot;: &quot;每条路径选择一种方法并记录依据。攻击潜力法完整选择五因子档位；攻击向量法选择主要向量。等级由服务器计算，不接受客户端 feasibility。保留项目 AP 阈值；缺省为附录 G 表 G.7 的 14/20/25。写入使用项目修订、幂等键与项目编辑权限。&quot;
 }</pre></details></section><section id="schema-Item"><details><summary>Item</summary><pre>{
   &quot;additionalProperties&quot;: false,
   &quot;properties&quot;: {
@@ -4953,6 +5028,14 @@
         &quot;internet&quot;
       ],
       &quot;description&quot;: &quot;省略的旧项目按 automotive 展示，不自动改写存储。&quot;
+    },
+    &quot;functions&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;maxItems&quot;: 500,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/ItemFunction&quot;
+      },
+      &quot;description&quot;: &quot;唯一功能编号、名称与具体内容。省略时保留已有目录；仍被引用的功能不能移除。&quot;
     }
   },
   &quot;title&quot;: &quot;Item&quot;,
@@ -5555,13 +5638,76 @@
     },
     &quot;potential&quot;: {
       &quot;$ref&quot;: &quot;#/components/schemas/AttackPotential&quot;
+    },
+    &quot;feasibility_method&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;attack_potential&quot;,
+        &quot;attack_vector&quot;
+      ]
+    },
+    &quot;attack_vector&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;network&quot;,
+        &quot;adjacent&quot;,
+        &quot;local&quot;,
+        &quot;physical&quot;
+      ]
     }
   },
   &quot;required&quot;: [
     &quot;name&quot;
   ],
   &quot;title&quot;: &quot;AttackPath&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;description&quot;: &quot;可保存未评级路径草稿；风险计算要求每条路径有完整评级、步骤与依据。修改已评级路径条件后清除原评级。AttackPotential 保留导入项目的自定义数值；新的显式攻击潜力评级使用 StandardAttackPotential。&quot;,
+  &quot;allOf&quot;: [
+    {
+      &quot;if&quot;: {
+        &quot;properties&quot;: {
+          &quot;feasibility_method&quot;: {
+            &quot;const&quot;: &quot;attack_potential&quot;
+          }
+        },
+        &quot;required&quot;: [
+          &quot;feasibility_method&quot;
+        ]
+      },
+      &quot;then&quot;: {
+        &quot;required&quot;: [
+          &quot;potential&quot;
+        ],
+        &quot;properties&quot;: {
+          &quot;potential&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/StandardAttackPotential&quot;
+          }
+        }
+      }
+    },
+    {
+      &quot;if&quot;: {
+        &quot;properties&quot;: {
+          &quot;feasibility_method&quot;: {
+            &quot;const&quot;: &quot;attack_vector&quot;
+          }
+        },
+        &quot;required&quot;: [
+          &quot;feasibility_method&quot;
+        ]
+      },
+      &quot;then&quot;: {
+        &quot;required&quot;: [
+          &quot;attack_vector&quot;
+        ],
+        &quot;not&quot;: {
+          &quot;required&quot;: [
+            &quot;potential&quot;
+          ]
+        }
+      }
+    }
+  ]
 }</pre></details></section><section id="schema-Impact"><details><summary>Impact</summary><pre>{
   &quot;additionalProperties&quot;: false,
   &quot;properties&quot;: {
@@ -8929,6 +9075,16 @@
       &quot;minLength&quot;: 1,
       &quot;maxLength&quot;: 12,
       &quot;pattern&quot;: &quot;^[\\p{L}\\p{N}][\\p{L}\\p{N}_-]{0,11}$&quot;
+    },
+    &quot;damage&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 12,
+      &quot;default&quot;: &quot;DM&quot;
+    },
+    &quot;goal&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 12,
+      &quot;default&quot;: &quot;CG&quot;
     }
   },
   &quot;description&quot;: &quot;不同类型的前缀必须唯一（Unicode case folding，不区分大小写）。&quot;
@@ -10865,4 +11021,158 @@
       &quot;description&quot;: &quot;项目说明；允许空字符串。&quot;
     }
   }
+}</pre></details></section><section id="schema-ItemFunction"><details><summary>ItemFunction</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;required&quot;: [
+    &quot;id&quot;,
+    &quot;name&quot;
+  ],
+  &quot;properties&quot;: {
+    &quot;id&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 100
+    },
+    &quot;name&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 300
+    },
+    &quot;description&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 6000,
+      &quot;default&quot;: &quot;&quot;
+    }
+  }
+}</pre></details></section><section id="schema-StandardAttackPotential"><details><summary>StandardAttackPotential</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;required&quot;: [
+    &quot;elapsed_time&quot;,
+    &quot;expertise&quot;,
+    &quot;knowledge&quot;,
+    &quot;opportunity&quot;,
+    &quot;equipment&quot;
+  ],
+  &quot;properties&quot;: {
+    &quot;elapsed_time&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;enum&quot;: [
+        0,
+        1,
+        4,
+        17,
+        19
+      ]
+    },
+    &quot;expertise&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;enum&quot;: [
+        0,
+        3,
+        6,
+        8
+      ]
+    },
+    &quot;knowledge&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;enum&quot;: [
+        0,
+        3,
+        7,
+        11
+      ]
+    },
+    &quot;opportunity&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;enum&quot;: [
+        0,
+        1,
+        4,
+        10
+      ]
+    },
+    &quot;equipment&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;enum&quot;: [
+        0,
+        4,
+        7,
+        9
+      ]
+    }
+  },
+  &quot;description&quot;: &quot;ISO/SAE 21434:2021 附录 G 表 G.6 的攻击潜力示例档位。&quot;
+}</pre></details></section><section id="schema-AttackFeasibilityInput"><details><summary>AttackFeasibilityInput</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;required&quot;: [
+    &quot;path_id&quot;,
+    &quot;method&quot;,
+    &quot;rationale&quot;
+  ],
+  &quot;properties&quot;: {
+    &quot;path_id&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;method&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;attack_potential&quot;,
+        &quot;attack_vector&quot;
+      ]
+    },
+    &quot;potential&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/StandardAttackPotential&quot;
+    },
+    &quot;attack_vector&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;network&quot;,
+        &quot;adjacent&quot;,
+        &quot;local&quot;,
+        &quot;physical&quot;
+      ]
+    },
+    &quot;rationale&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 6000
+    }
+  },
+  &quot;oneOf&quot;: [
+    {
+      &quot;properties&quot;: {
+        &quot;method&quot;: {
+          &quot;const&quot;: &quot;attack_potential&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;potential&quot;
+      ],
+      &quot;not&quot;: {
+        &quot;required&quot;: [
+          &quot;attack_vector&quot;
+        ]
+      }
+    },
+    {
+      &quot;properties&quot;: {
+        &quot;method&quot;: {
+          &quot;const&quot;: &quot;attack_vector&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;attack_vector&quot;
+      ],
+      &quot;not&quot;: {
+        &quot;required&quot;: [
+          &quot;potential&quot;
+        ]
+      }
+    }
+  ]
 }</pre></details></section></html>

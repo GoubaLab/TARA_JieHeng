@@ -5,6 +5,8 @@ export const numberingTypes = [
   ["store", "数据存储", "DS"],
   ["flow", "数据流", "DF"],
   ["asset", "资产", "AS"],
+  ["damage", "损害场景", "DM"],
+  ["goal", "安全目标", "CG"],
   ["scenario", "风险场景", "RS"],
   ["path", "攻击路径", "AP"],
   ["requirement", "安全需求", "SR"],
@@ -63,6 +65,8 @@ export function buildCodeIndex(ws, draftGraph) {
   }
   for (const [collection, kind] of [
     ["assets", "asset"],
+    ["damage_scenarios", "damage"],
+    ["security_goals", "goal"],
     ["scenarios", "scenario"],
     ["requirements", "requirement"],
     ["evidence", "evidence"],

@@ -2,7 +2,7 @@
   "openapi": "3.1.1",
   "info": {
     "title": "界衡威胁建模工作产品 API",
-    "version": "2.2.2",
+    "version": "2.3.0",
     "description": "通用威胁建模工作产品，汽车领域以 ISO/SAE 21434 为参考流程。Go 本地服务；版本前缀 /api/v1。写入使用 If-Match 与 Idempotency-Key；错误采用 RFC 9457。字段以 snake_case 为主，已有架构 entityType/sourceSide/targetSide/labelOffset 为兼容而保留。应用领域不自动决定法规适用性或评分算法。 企业模式提供会话与项目角色；模型任务为持久异步资源，草案采用需当前修订、幂等键和人工确认。安全方案的空项仅表示本机模式，不表示企业模式可匿名读取。"
   },
   "servers": [
@@ -5183,6 +5183,84 @@
         },
         "description": "替换项目名称和说明。需要项目分析权限、当前 If-Match 和独立 Idempotency-Key。成功后产生新修订与审计记录；工作产品、评分依据、验证记录和冻结基线保持不变。"
       }
+    },
+    "/workspaces/{id}/scenarios/{scenario_id}/attack-feasibility": {
+      "put": {
+        "summary": "评定单条攻击路径的可行性",
+        "operationId": "rateAttackPath",
+        "tags": [
+          "工作区"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "name": "scenario_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "创建的资源地址（仅创建响应）。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutationResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttackFeasibilityInput"
+              }
+            }
+          }
+        },
+        "description": "每条路径选择一种方法并记录依据。攻击潜力法完整选择五因子档位；攻击向量法选择主要向量。等级由服务器计算，不接受客户端 feasibility。保留项目 AP 阈值；缺省为附录 G 表 G.7 的 14/20/25。写入使用项目修订、幂等键与项目编辑权限。"
+      }
     }
   },
   "components": {
@@ -5237,6 +5315,14 @@
               "internet"
             ],
             "description": "省略的旧项目按 automotive 展示，不自动改写存储。"
+          },
+          "functions": {
+            "type": "array",
+            "maxItems": 500,
+            "items": {
+              "$ref": "#/components/schemas/ItemFunction"
+            },
+            "description": "唯一功能编号、名称与具体内容。省略时保留已有目录；仍被引用的功能不能移除。"
           }
         },
         "title": "Item",
@@ -5847,13 +5933,76 @@
           },
           "potential": {
             "$ref": "#/components/schemas/AttackPotential"
+          },
+          "feasibility_method": {
+            "type": "string",
+            "enum": [
+              "attack_potential",
+              "attack_vector"
+            ]
+          },
+          "attack_vector": {
+            "type": "string",
+            "enum": [
+              "network",
+              "adjacent",
+              "local",
+              "physical"
+            ]
           }
         },
         "required": [
           "name"
         ],
         "title": "AttackPath",
-        "type": "object"
+        "type": "object",
+        "description": "可保存未评级路径草稿；风险计算要求每条路径有完整评级、步骤与依据。修改已评级路径条件后清除原评级。AttackPotential 保留导入项目的自定义数值；新的显式攻击潜力评级使用 StandardAttackPotential。",
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "feasibility_method": {
+                  "const": "attack_potential"
+                }
+              },
+              "required": [
+                "feasibility_method"
+              ]
+            },
+            "then": {
+              "required": [
+                "potential"
+              ],
+              "properties": {
+                "potential": {
+                  "$ref": "#/components/schemas/StandardAttackPotential"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "feasibility_method": {
+                  "const": "attack_vector"
+                }
+              },
+              "required": [
+                "feasibility_method"
+              ]
+            },
+            "then": {
+              "required": [
+                "attack_vector"
+              ],
+              "not": {
+                "required": [
+                  "potential"
+                ]
+              }
+            }
+          }
+        ]
       },
       "Impact": {
         "additionalProperties": false,
@@ -9276,6 +9425,16 @@
             "minLength": 1,
             "maxLength": 12,
             "pattern": "^[\\p{L}\\p{N}][\\p{L}\\p{N}_-]{0,11}$"
+          },
+          "damage": {
+            "type": "string",
+            "maxLength": 12,
+            "default": "DM"
+          },
+          "goal": {
+            "type": "string",
+            "maxLength": 12,
+            "default": "CG"
           }
         },
         "description": "不同类型的前缀必须唯一（Unicode case folding，不区分大小写）。"
@@ -11249,6 +11408,163 @@
             "description": "项目说明；允许空字符串。"
           }
         }
+      },
+      "ItemFunction": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 6000,
+            "default": ""
+          }
+        }
+      },
+      "StandardAttackPotential": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "elapsed_time",
+          "expertise",
+          "knowledge",
+          "opportunity",
+          "equipment"
+        ],
+        "properties": {
+          "elapsed_time": {
+            "type": "integer",
+            "enum": [
+              0,
+              1,
+              4,
+              17,
+              19
+            ]
+          },
+          "expertise": {
+            "type": "integer",
+            "enum": [
+              0,
+              3,
+              6,
+              8
+            ]
+          },
+          "knowledge": {
+            "type": "integer",
+            "enum": [
+              0,
+              3,
+              7,
+              11
+            ]
+          },
+          "opportunity": {
+            "type": "integer",
+            "enum": [
+              0,
+              1,
+              4,
+              10
+            ]
+          },
+          "equipment": {
+            "type": "integer",
+            "enum": [
+              0,
+              4,
+              7,
+              9
+            ]
+          }
+        },
+        "description": "ISO/SAE 21434:2021 附录 G 表 G.6 的攻击潜力示例档位。"
+      },
+      "AttackFeasibilityInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path_id",
+          "method",
+          "rationale"
+        ],
+        "properties": {
+          "path_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "attack_potential",
+              "attack_vector"
+            ]
+          },
+          "potential": {
+            "$ref": "#/components/schemas/StandardAttackPotential"
+          },
+          "attack_vector": {
+            "type": "string",
+            "enum": [
+              "network",
+              "adjacent",
+              "local",
+              "physical"
+            ]
+          },
+          "rationale": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 6000
+          }
+        },
+        "oneOf": [
+          {
+            "properties": {
+              "method": {
+                "const": "attack_potential"
+              }
+            },
+            "required": [
+              "potential"
+            ],
+            "not": {
+              "required": [
+                "attack_vector"
+              ]
+            }
+          },
+          {
+            "properties": {
+              "method": {
+                "const": "attack_vector"
+              }
+            },
+            "required": [
+              "attack_vector"
+            ],
+            "not": {
+              "required": [
+                "potential"
+              ]
+            }
+          }
+        ]
       }
     },
     "parameters": {

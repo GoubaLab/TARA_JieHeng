@@ -246,7 +246,13 @@ func buildTaraImport(payload Object) (Object, error) {
 			potential[key] = n
 		}
 		path := Object{"id": r.cell(1), "source_code": r.cell(1), "name": r.cell(1) + " · " + r.cell(4), "actor": r.cell(3), "vector": r.cell(4), "steps": r.cell(5), "potential": potential, "rationale": fmt.Sprintf("来源攻击路径第 %d 行：ET=%v，Ex=%v，KoI=%v，WoO=%v，Eq=%v。", r.number, potential["elapsed_time"], potential["expertise"], potential["knowledge"], potential["opportunity"], potential["equipment"])}
-		f, total, _ := pathFeasibility(path, dObj(ws["method"]))
+		if _, err := dValidateModel("AttackPotential", potential); err != nil {
+			return nil, err
+		}
+		f, total, rated := pathFeasibility(path, dObj(ws["method"]))
+		if !rated || f < 1 || f > 4 {
+			return nil, dError(r.cell(1) + " 的攻击可行性参数不完整或无效")
+		}
 		path["feasibility"] = f
 		warn(r.cell(1), "AP值", r.cell(11), total)
 		warn(r.cell(1), "可行性", r.cell(12), []string{"极低", "低", "中", "高"}[f-1])

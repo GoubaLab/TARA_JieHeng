@@ -1,4 +1,5 @@
 import React from "react";
+import { FunctionReferences } from "./FunctionCatalog.jsx";
 import { Alert, Col, Form, Input, InputNumber, Row, Select } from "antd";
 import { propOptions } from "./api.js";
 const options = (records, text) =>
@@ -29,8 +30,8 @@ export function TaraFields({ kind, ws }) {
               </Form.Item>
             </Col>
           </Row>
-          <Form.Item name="function_refs" label="关联功能编号">
-            <Select mode="tags" />
+          <Form.Item name="function_refs" label="关联功能">
+            <FunctionReferences ws={ws} />
           </Form.Item>
         </>
       )}
@@ -135,86 +136,6 @@ export function TaraFields({ kind, ws }) {
             type="info"
             title="设计目标须完成关联需求验证后才能改为已验证；客户确认和签署仍需实际完成。"
           />
-        </>
-      )}
-    </>
-  );
-}
-export function AttackPotentialFields({ field, configured, form }) {
-  const potential = Form.useWatch(["paths", field.name, "potential"], form);
-  const enabled =
-    !!potential || !!form.getFieldValue(["paths", field.name, "potential"]);
-  return (
-    <>
-      <Row gutter={16}>
-        <Col span={12}>
-          <Form.Item name={[field.name, "actor"]} label="攻击者">
-            <Input />
-          </Form.Item>
-        </Col>
-        <Col span={12}>
-          <Form.Item name={[field.name, "vector"]} label="攻击向量">
-            <Input />
-          </Form.Item>
-        </Col>
-      </Row>
-      {configured && (
-        <>
-          <Form.Item label="可行性计算方式">
-            <Select
-              value={enabled ? "potential" : "manual"}
-              onChange={(v) =>
-                form.setFieldValue(
-                  ["paths", field.name, "potential"],
-                  v === "potential"
-                    ? {
-                        elapsed_time: null,
-                        expertise: null,
-                        knowledge: null,
-                        opportunity: null,
-                        equipment: null,
-                      }
-                    : undefined,
-                )
-              }
-              options={[
-                { value: "manual", label: "人工评级" },
-                { value: "potential", label: "五因子攻击潜力" },
-              ]}
-            />
-          </Form.Item>
-          {enabled && (
-            <>
-              <Row gutter={12}>
-                {[
-                  ["elapsed_time", "ET · 时间"],
-                  ["expertise", "Ex · 专业知识"],
-                  ["knowledge", "KoI · 相关项了解"],
-                  ["opportunity", "WoO · 机会窗口"],
-                  ["equipment", "Eq · 设备"],
-                ].map(([key, label]) => (
-                  <Col span={8} key={key}>
-                    <Form.Item
-                      name={[field.name, "potential", key]}
-                      label={label}
-                      rules={[{ required: true, message: "填写因子分值" }]}
-                    >
-                      <InputNumber
-                        min={0}
-                        max={100}
-                        precision={0}
-                        style={{ width: "100%" }}
-                      />
-                    </Form.Item>
-                  </Col>
-                ))}
-              </Row>
-              <Alert
-                type="info"
-                title="保存后按项目阈值自动计算可行性，覆盖下方人工评级。"
-              />
-            </>
-          )}
         </>
       )}
     </>
