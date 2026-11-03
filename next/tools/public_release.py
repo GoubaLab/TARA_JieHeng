@@ -18,7 +18,7 @@ BUILDERS = {'build_gb44495.py', 'build_gb44496.py', 'build_gbt44464.py', 'build_
 TOOLS = {'build-go.sh', 'build-api-docs.py', 'public_release.py', 'test_public_release.py', 'collect_public_knowledge.py', 'test_public_knowledge.py'}
 BLOCKED_PARTS = {'.git', '.work', '.runtime', '.venv', 'node_modules', '__pycache__', 'var', 'bin', 'web', 'dist', 'private', 'backups', 'retired-tests', 'source-snapshot', 'testdata', 'fixtures'}
 BLOCKED_SUFFIXES = {'.pdf', '.docx', '.xlsx', '.zip', '.tar', '.gz', '.tgz', '.sqlite', '.sqlite3', '.db', '.pyc', '.log'}
-SCREENSHOTS = {'next/docs/screenshots/tara-workflow.jpg', 'next/docs/screenshots/architecture.jpg', 'next/docs/screenshots/assets.jpg', 'next/docs/screenshots/numbering.jpg', 'next/docs/screenshots/quality-center.jpg', 'next/docs/screenshots/model-services.jpg', 'next/docs/screenshots/automation-center.jpg', 'next/docs/screenshots/attack-path-presets.jpg', 'next/docs/screenshots/project-management.jpg'}
+SCREENSHOTS = {'next/docs/screenshots/communication-settings.jpg', 'next/docs/screenshots/tara-workflow.jpg', 'next/docs/screenshots/architecture.jpg', 'next/docs/screenshots/assets.jpg', 'next/docs/screenshots/numbering.jpg', 'next/docs/screenshots/quality-center.jpg', 'next/docs/screenshots/model-services.jpg', 'next/docs/screenshots/automation-center.jpg', 'next/docs/screenshots/attack-path-presets.jpg', 'next/docs/screenshots/project-management.jpg'}
 SOURCE_SUFFIXES = {'.go', '.json', '.html', '.js', '.jsx', '.mjs', '.cjs', '.ts', '.tsx', '.css', '.svg', '.txt', '.md', '.mod', '.sum', '.sh', '.py'}
 IDENTIFIERS = re.compile(rb'\b(?:systems|losses|patterns|techniques|controls|relationships|checks|methods|criteria|collections|gb|r155):[A-Za-z0-9_-]+')
 # Assembled from parts so this audit pattern cannot match the staging tool's own source.
@@ -37,6 +37,7 @@ PUBLIC_README = '''# 界衡 · 威胁建模平台
 | --- | --- |
 | 项目管理 | 维护项目名称与范围说明，记录修订与审计；项目基本信息与分析工作产品独立管理 |
 | 相关项与 DFD | 实体模式或展开 DFD；信任边界、内部软件/存储、操作系统、数据流与电能流；有线/无线协议标注 |
+| 通信参数 | 4G/5G、无线电及自定义技术和频段；项目内复用通信预设，安全属性逐流确认 |
 | 布线与图形 | 拖动端点换边、调整线段和标签、网格整理；无线链路以虚线及协议标识呈现；流动效果仅用于画布，导出保持静态 |
 | 资产识别 | 保存架构时同步生成资产；属性不适用须说明理由，范围约束贯穿覆盖检查、自动分析与报告 |
 | TARA 工作产品 | 分步维护功能、资产、损害、影响、威胁、攻击路径、可行性、风险及处置；编号与引用内容同时展示 |
@@ -69,6 +70,10 @@ PUBLIC_README = '''# 界衡 · 威胁建模平台
 实体间统一布线，协议直接标在连线上；端点、线段和标签可手工调整。
 
 ![实体与数据流](next/docs/screenshots/architecture.jpg)
+
+“项目设置 → 通信预设”可维护常用技术、频段与上层协议，在数据流属性中应用并保存架构。频段支持名称、频率和范围；参数复制后独立维护。
+
+![项目通信预设](next/docs/screenshots/communication-settings.jpg)
 
 保存架构后自动生成资产；已有目录可保留原编号和人工维护内容。
 

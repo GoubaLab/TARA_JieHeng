@@ -91,7 +91,11 @@ func dSchema(model string) map[string]dField {
 	case "OperatingSystem":
 		return map[string]dField{"family": ded("unknown", "unknown", "bare_metal", "rtos", "linux", "qnx", "windows", "android", "ios", "macos", "other"), "name": dsd("", 200), "version": dsd("", 200), "architecture": dsd("", 100), "notes": dsd("", 4000)}
 	case "Communication":
-		return map[string]dField{"medium": ded("unspecified", "unspecified", "wired", "wireless", "logical"), "technology": dsd("", 200), "range": ded("unspecified", "unspecified", "near_field", "local", "wide_area"), "purpose": dsd("", 4000), "security_properties": dl(de(dProperties...), 0, 8, false)}
+		return map[string]dField{"medium": ded("unspecified", "unspecified", "wired", "wireless", "logical"), "technology": dsd("", 200), "frequency_band": dop(dsd("", 200)), "range": ded("unspecified", "unspecified", "near_field", "local", "wide_area"), "purpose": dsd("", 4000), "security_properties": dl(de(dProperties...), 0, 8, false)}
+	case "CommunicationPreset":
+		return map[string]dField{"id": ds(1, 80), "name": ds(1, 200), "communication": dm("Communication", true), "protocol": dsd("", 200)}
+	case "CommunicationSettings":
+		return map[string]dField{"presets": dl(dm("CommunicationPreset", true), 0, 100, true)}
 	case "EntityAttribute":
 		return map[string]dField{"name": ds(1, 200), "value": dsd("", 4000)}
 	case "EntityChild":
@@ -338,6 +342,9 @@ func dValidateModel(model string, payload Object) (Object, error) {
 		return nil, dError("未知领域模型")
 	}
 	input := Clone(payload)
+	if model == "Communication" && input["frequency_band"] == nil {
+		delete(input, "frequency_band")
+	}
 	if model == "Node" {
 		kind, exists := input["kind"]
 		if !exists {
@@ -467,6 +474,23 @@ func dValidateModel(model string, payload Object) (Object, error) {
 		result["references"] = dUnique(dList(result["references"]))
 	case "Communication":
 		result["security_properties"] = dUnique(dList(result["security_properties"]))
+		if dStr(result["frequency_band"]) == "" {
+			delete(result, "frequency_band")
+		} else if result["medium"] != "wireless" {
+			return nil, dError("频段仅适用于无线通信，请选择无线介质或清空频段")
+		}
+	case "CommunicationSettings":
+		seen := map[string]bool{}
+		for _, raw := range dList(result["presets"]) {
+			id := dStr(dObj(raw)["id"])
+			if len(dList(dObj(dObj(raw)["communication"])["security_properties"])) > 0 {
+				return nil, dError("通信预设不设置安全属性，请在数据流中独立确认")
+			}
+			if seen[id] {
+				return nil, dError("通信预设标识不能重复：" + id)
+			}
+			seen[id] = true
+		}
 	case "Method":
 		if result["impact_aggregation"] == "coefficient_bands" {
 			if result["risk_calculation"] != "matrix" || len(dList(result["impact_scale"])) != 4 || len(dList(result["impact_thresholds"])) != 3 {
@@ -564,6 +588,9 @@ func dCasefold(s string) string {
 	return b.String()
 }
 func ValidatePayload(action string, payload Object) (Object, error) {
+	if action == "configure-communication" {
+		return dValidateModel("CommunicationSettings", payload)
+	}
 	models := map[string]string{"update-workspace-profile": "WorkspaceProfile", "configure-numbering": "Numbering", "define-item": "Item", "replace-architecture": "Architecture", "record-asset": "Asset", "record-scenario": "Scenario", "decide-treatment": "Decision", "discard-treatment-draft": "TreatmentDraftDeletion", "specify-requirement": "Requirement", "select-regulations": "RegulationSelection", "record-evidence": "Evidence", "adopt-method": "Method", "seal-baseline": "Baseline", "apply-reference-selection": "ReferenceSelection"}
 	model, ok := models[action]
 	if action == "record-damage" {

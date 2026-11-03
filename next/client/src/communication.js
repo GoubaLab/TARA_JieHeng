@@ -31,7 +31,17 @@ export const securityProperties = {
   authorization: "授权",
   non_repudiation: "不可否认性",
 };
+export const frequencyBands = [
+  "433 MHz",
+  "868 MHz",
+  "915 MHz",
+  "2.4 GHz",
+  "5 GHz",
+  "6 GHz",
+  "n78",
+];
 export const purposes = ["指令", "请求", "响应", "遥测", "日志", "升级"];
+// Examples for describing deployments; availability depends on the deployment.
 export const technologies = {
   wired: [
     "FlexRay",
@@ -57,6 +67,11 @@ export const technologies = {
     "Zigbee",
     "Thread",
     "LoRa",
+    "4G/LTE",
+    "5G/NR",
+    "NB-IoT",
+    "LTE-M",
+    "无线电",
     "蜂窝",
   ],
   logical: [],
@@ -71,7 +86,12 @@ const legacyNames = [
   ["wireless", "Zigbee", /\bzigbee\b/i],
   ["wireless", "Thread", /^thread$/i],
   ["wireless", "LoRa", /\blora(?:wan)?\b/i],
-  ["wireless", "蜂窝", /\b(?:cellular|lte|[345]g)\b|蜂窝/i],
+  ["wireless", "NB-IoT", /\bnb[ -]?iot\b/i],
+  ["wireless", "LTE-M", /\b(?:lte[ -]?m|cat[ -]?m1)\b/i],
+  ["wireless", "5G/NR", /\b(?:5g|nr)\b/i],
+  ["wireless", "4G/LTE", /\b(?:4g|lte)\b/i],
+  ["wireless", "蜂窝", /\b(?:cellular|3g)\b|蜂窝/i],
+  ["wireless", "无线电", /\b(?:radio|rf)\b|无线电/i],
   ["wired", "CAN FD", /\bcan[ _-]?fd\b/i],
   ["wired", "CAN", /\bcan\b/i],
   ["wired", "DoIP", /\bdoip\b/i],
@@ -100,6 +120,7 @@ export function blankCommunication() {
     medium: "unspecified",
     technology: "",
     range: "unspecified",
+    frequency_band: "",
     purpose: "",
     security_properties: [],
   };
@@ -148,11 +169,14 @@ export function communicationForDisplay(flow) {
 export function communicationForSave(value, original) {
   const next = { ...blankCommunication(), ...value };
   next.security_properties = [...new Set(next.security_properties || [])];
+  next.frequency_band =
+    next.medium === "wireless" ? (next.frequency_band || "").trim() : "";
   const empty =
     next.medium === "unspecified" &&
     !next.technology &&
     next.range === "unspecified" &&
     !next.purpose &&
+    !next.frequency_band &&
     !next.security_properties.length;
   if (empty && !original) return undefined;
   if (
@@ -161,7 +185,25 @@ export function communicationForSave(value, original) {
       JSON.stringify({ ...blankCommunication(), ...original })
   )
     return structuredClone(original);
+  if (!next.frequency_band) delete next.frequency_band;
   return next;
+}
+// Apply deployment fields only. Security scope remains an explicit flow decision.
+// Return a value snapshot so later preset edits cannot change existing flows.
+export function communicationPresetSnapshot(preset, current = {}) {
+  const source = preset?.communication || {};
+  const communication = blankCommunication();
+  for (const key of [
+    "medium",
+    "technology",
+    "range",
+    "frequency_band",
+    "purpose",
+  ])
+    if (typeof source[key] === "string") communication[key] = source[key];
+  communication.security_properties = [...(current.security_properties || [])];
+  if (communication.medium !== "wireless") communication.frequency_band = "";
+  return { communication, protocol: preset?.protocol || "" };
 }
 export function operatingSystemForSave(value, original) {
   const next = { ...blankOperatingSystem(), ...value };
@@ -176,7 +218,11 @@ export function operatingSystemForSave(value, original) {
 }
 export function communicationCaption(flow) {
   const value = communicationForDisplay(flow);
-  const parts = [value.technology, flow.protocol].filter(Boolean);
+  const parts = [
+    value.technology,
+    value.medium === "wireless" ? value.frequency_band : "",
+    flow.protocol,
+  ].filter(Boolean);
   return (
     [...new Set(parts)].join(" · ") ||
     (value.medium !== "unspecified" ? media[value.medium] : "")
@@ -187,6 +233,9 @@ export function communicationDetails(flow) {
   const details = [
     `传输方式：${media[value.medium] || value.medium}${value.inferred ? "（根据原协议识别，仅用于展示）" : ""}`,
     `通信技术：${value.technology || "未指定"}`,
+    ...(value.medium === "wireless"
+      ? [`频段 / 频率：${value.frequency_band || "未指定"}`]
+      : []),
     `覆盖范围：${ranges[value.range] || value.range}`,
     `上层协议 / 通道：${flow.protocol || "未指定"}`,
     `用途：${value.purpose || "未指定"}`,
@@ -208,8 +257,18 @@ export function wirelessBadge(flow, x = 0, y = 0) {
   const value = communicationForDisplay(flow);
   if (value.medium !== "wireless") return "";
   const name = value.technology.toLowerCase();
-  const icon =
-    name === "nfc"
+  const cellular = /\b(?:5g|nr)\b/.test(name)
+    ? "5G"
+    : /\b(?:nb[ -]?iot)\b/.test(name)
+      ? "NB"
+      : /\b(?:lte[ -]?m|cat[ -]?m1)\b/.test(name)
+        ? "LM"
+        : /\b(?:4g|lte)\b/.test(name)
+          ? "4G"
+          : "";
+  const icon = cellular
+    ? `<text x="0" y="3" text-anchor="middle" font-size="8" fill="#536176">${cellular}</text>`
+    : name === "nfc"
       ? '<text x="0" y="3" text-anchor="middle" font-size="7" fill="#536176">NFC</text>'
       : /bluetooth|ble/.test(name)
         ? '<text x="0" y="3" text-anchor="middle" font-size="8" fill="#536176">BT</text>'

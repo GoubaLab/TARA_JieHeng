@@ -8,6 +8,7 @@
 
 - `/workspaces`：项目创建与分页查询。
 - `/workspaces/{id}/item`、`/architecture`、`/assessment-method`：相关项、架构和评估方法。
+- `/workspaces/{id}/communication-settings`：项目通信预设的读取与完整替换。
 - `/workspaces/{id}/assets`、`/scenarios`、`/requirements`：工作产品集合；更新使用对应 `/{record_id}`。
 - `/workspaces/{id}/scenarios/{scenario_id}/attack-feasibility`：单条攻击路径的独立可行性评级。
 - `/workspaces/{id}/scenarios/{scenario_id}/treatment`：风险处置决策。
@@ -78,6 +79,18 @@ Idempotency-Key: b320291b-39d1-44df-800b-c26b8a445731
 目录当前为空。旧参考返回 `withdrawn:true,citable:false` 的空占位，不含原文；校验只允许同一项目记录原字段保留或删除旧键，禁止给新记录或其他字段引用。此检查与写入在同一事务进行。独立法规 `reg:` 条款仍可按实际存在的版本与条款引用。
 
 系数求和仅与 product 配对，`impact_coefficients` 默认 `{safety:1,financial:1,operational:0.1,privacy:0.1}`，总分不归一化，风险分值不加 1。普通方法的 `product_thresholds` 仍为 1–15 的递增整数；系数法可用 0–4800 的递增小数。`residual_impact` 依方法限制：普通方法整数0–3，系数法允许小数且最多为3×系数和。
+
+### 无线频段与通信预设
+
+`Flow.communication.frequency_band` 为可选文本，最长 200 字符，用于记录频段名、频率或范围，例如 `n78`、`433 MHz`、`430–440 MHz`。仅 `medium=wireless` 时允许非空值；空白或 `null` 按缺省处理，旧项目不需要迁移。传输技术仍为开放文本，前端提供 4G/LTE、5G/NR、NB-IoT、LTE-M 与无线电等选项。频段记录项目实际参数，不推断安全能力；非空频段参与评估语义摘要，修改后相关评估需要复核。
+
+`GET /workspaces/{id}/communication-settings` 返回 `{"presets":[]}` 或已保存预设；`PUT` 完整替换，沿用项目角色权限、`If-Match`、`Idempotency-Key` 和原子审计。每项目最多 100 项，单项结构如下：
+
+```json
+{"id":"cellular-telemetry","name":"园区遥测","protocol":"MQTT/TLS","communication":{"medium":"wireless","technology":"5G/NR","frequency_band":"n78","range":"wide_area","purpose":"遥测"}}
+```
+
+`id` 长度为 1–80 且项目内唯一；`name` 长度为 1–200；`protocol` 可选、最长 200。预设不能包含非空 `security_properties`。客户端应用时复制参数到选定数据流并保留该数据流的安全属性，再通过架构接口提交。预设本身不与流建立动态引用；修改预设只更新设置和修订，不改变架构、资产或风险结论。工作区快照保留 `communication_settings`，冻结报告仍使用冻结时的数据流参数。
 
 ### 连线布局（适用于所有通信方式）
 

@@ -4,7 +4,7 @@
 
 界衡是通用威胁建模工作台，汽车领域以 ISO/SAE 21434 工作产品为流程参考。当前提供同一条可追溯链：范围 → 实体/资产 → 损害/威胁/攻击路径 → 风险与处置 → 需求/验证 → 冻结基线/报告。选择互联网、物联网、机器人、充电设施或通用产品，只改变领域上下文，不自动宣称覆盖该领域的标准，也不自动修改风险算法。
 
-当前版本支持直接配置领域、实体类型、通信技术、OS、评分名称/依据、SFOP 权重/系数、风险矩阵及乘积阈值。增加流程步骤、任意数量评分维度或新的报告模板仍需修改源码；尚无运行时插件安装、可执行公式、动态流程设计器。以下接口和扩展点用于可复现的二次开发。
+当前版本支持直接配置领域、实体类型、通信技术与无线频段、项目通信预设、OS、评分名称/依据、SFOP 权重/系数、风险矩阵及乘积阈值。增加流程步骤、任意数量评分维度或新的报告模板仍需修改源码；尚无运行时插件安装、可执行公式、动态流程设计器。以下接口和扩展点用于可复现的二次开发。
 
 ## 开发与约束
 
@@ -36,10 +36,12 @@
 family 还支持 `unknown / bare_metal / rtos / qnx / windows / android / ios / macos / other`。`name` 可写 FreeRTOS、Zephyr 或自有 OS；类型表示家族，版本/架构分字段记录。裸机和未知不是同一状态。实体内部软件与数据存储不作为数据流端点。
 
 ```json
-{"medium":"wireless","technology":"UWB","range":"local","purpose":"测距","security_properties":["integrity","authenticity"]}
+{"medium":"wireless","technology":"5G/NR","frequency_band":"n78","range":"wide_area","purpose":"遥测","security_properties":["integrity","authenticity"]}
 ```
 
 上述对象位于 `Flow.communication`；原 `Flow.protocol` 留作上层协议或通道。medium 为 `unspecified / wired / wireless / logical`；range 为 `unspecified / near_field / local / wide_area`。技术是开放文本，不用新后端版本即可填写新协议。用途也是可选文本。不会根据技术名称推断其安全能力或自动勾选安全属性。Wi-Fi、蓝牙与 NFC 可选择不同范围；DoIP 和 Ethernet 可在技术与上层协议中分层记录。
+
+`frequency_band` 为无线专用的可选自由文本，支持频段名、频率或范围，最长 200 字符；切换为有线或逻辑连接时应清除。项目通信预设通过 `GET/PUT /api/v1/workspaces/{id}/communication-settings` 维护，最多 100 项。客户端用 `communicationPresetSnapshot` 复制参数并保留连线安全属性，随后保存架构；预设不回写已应用连线，也不参与现有评估摘要。接口约束见 [API 开发约定](API_CONVENTIONS.md#无线频段与通信预设)。
 
 前端预置及视觉标识集中在 `client/src/communication.js`；扩展技术建议在这里维护别名、显示名称和中性 SVG 标记。已有协议识别仅供展示，用户确认后才写入新字段。画布 `diagram.js` 可有方向动画；静态导出 `architecture-view.js` 不允许动画或脚本，且应保留文字含义，不能只依赖颜色。
 

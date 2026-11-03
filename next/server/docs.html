@@ -5386,6 +5386,119 @@
       &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
     }
   }
+}</pre></details></section><section><h2><code>PUT /api/v1/workspaces/{id}/communication-settings</code></h2><h3>更新通信预设</h3><p>项目通信预设；旧项目 GET 返回 presets 空数组。PUT 原子替换设置，仅增加修订和审计，不修改已有数据流及评估。应用预设复制通信参数快照，安全属性独立确认；最多 100 项，标识唯一。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;更新通信预设&quot;,
+  &quot;operationId&quot;: &quot;replaceCommunicationSettings&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/MutationResult&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;requestBody&quot;: {
+    &quot;required&quot;: true,
+    &quot;content&quot;: {
+      &quot;application/json&quot;: {
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/components/schemas/CommunicationSettings&quot;
+        }
+      }
+    }
+  },
+  &quot;description&quot;: &quot;项目通信预设；旧项目 GET 返回 presets 空数组。PUT 原子替换设置，仅增加修订和审计，不修改已有数据流及评估。应用预设复制通信参数快照，安全属性独立确认；最多 100 项，标识唯一。&quot;
+}</pre></details></section><section><h2><code>GET /api/v1/workspaces/{id}/communication-settings</code></h2><h3>读取通信预设</h3><p>项目通信预设；旧项目 GET 返回 presets 空数组。PUT 原子替换设置，仅增加修订和审计，不修改已有数据流及评估。应用预设复制通信参数快照，安全属性独立确认；最多 100 项，标识唯一。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;读取通信预设&quot;,
+  &quot;operationId&quot;: &quot;getCommunicationSettings&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;成功&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;Location&quot;: {
+          &quot;description&quot;: &quot;创建的资源地址（仅创建响应）。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/CommunicationSettings&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  },
+  &quot;description&quot;: &quot;项目通信预设；旧项目 GET 返回 presets 空数组。PUT 原子替换设置，仅增加修订和审计，不修改已有数据流及评估。应用预设复制通信参数快照，安全属性独立确认；最多 100 项，标识唯一。&quot;
 }</pre></details></section><section id="schema-Item"><details><summary>Item</summary><pre>{
   &quot;additionalProperties&quot;: false,
   &quot;properties&quot;: {
@@ -8148,6 +8261,9 @@
     },
     &quot;tara_import&quot;: {
       &quot;$ref&quot;: &quot;#/components/schemas/TaraImport&quot;
+    },
+    &quot;communication_settings&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/CommunicationSettings&quot;
     }
   },
   &quot;required&quot;: [
@@ -9208,6 +9324,14 @@
       },
       &quot;default&quot;: [],
       &quot;description&quot;: &quot;显式选择安全需求；不从技术或用途推断。输入去重。&quot;
+    },
+    &quot;frequency_band&quot;: {
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ],
+      &quot;maxLength&quot;: 200,
+      &quot;description&quot;: &quot;无线频段名称、频率或范围；非空值仅适用于 medium=wireless。空白或 null 归一为省略。&quot;
     }
   }
 }</pre></details></section><section id="schema-ImpactWeights"><details><summary>ImpactWeights</summary><pre>{
@@ -11863,4 +11987,49 @@
     }
   },
   &quot;description&quot;: &quot;声明某个安全属性不在分析范围内及其理由。属性必须属于资产已声明的安全属性，且不能与对应威胁场景同时存在；保存资产、威胁及采用自动分析时均检查此约束。完整性检查不再要求已排除属性的威胁场景，报告会列出理由。&quot;
+}</pre></details></section><section id="schema-CommunicationPreset"><details><summary>CommunicationPreset</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;required&quot;: [
+    &quot;id&quot;,
+    &quot;name&quot;,
+    &quot;communication&quot;
+  ],
+  &quot;properties&quot;: {
+    &quot;id&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 80
+    },
+    &quot;name&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 200
+    },
+    &quot;communication&quot;: {
+      &quot;$ref&quot;: &quot;#/components/schemas/Communication&quot;,
+      &quot;description&quot;: &quot;通信参数预设；security_properties 只允许省略或空数组，安全属性由数据流独立确认。&quot;
+    },
+    &quot;protocol&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;maxLength&quot;: 200,
+      &quot;default&quot;: &quot;&quot;
+    }
+  }
+}</pre></details></section><section id="schema-CommunicationSettings"><details><summary>CommunicationSettings</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;required&quot;: [
+    &quot;presets&quot;
+  ],
+  &quot;properties&quot;: {
+    &quot;presets&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;maxItems&quot;: 100,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/CommunicationPreset&quot;
+      },
+      &quot;description&quot;: &quot;项目内 id 必须唯一。&quot;
+    }
+  }
 }</pre></details></section></html>

@@ -1,3 +1,4 @@
+import CommunicationSettings from "./CommunicationSettings.jsx";
 import NumberingSettings from "./NumberingSettings.jsx";
 import React, { useEffect, useState } from "react";
 import {
@@ -91,6 +92,11 @@ export default function AssessmentSettings() {
     <Tabs
       items={[
         { key: "method", label: "评估算法", children: <MethodSettings /> },
+        {
+          key: "communication",
+          label: "通信预设",
+          children: <CommunicationSettings />,
+        },
         {
           key: "numbering",
           label: "编号规则",

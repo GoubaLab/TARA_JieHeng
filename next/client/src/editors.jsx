@@ -1336,9 +1336,12 @@ import {
   blankCommunication,
   communicationForDisplay,
   communicationForSave,
+  communicationPresetSnapshot,
+  frequencyBands,
 } from "./communication.js";
 
 export function FlowEditor({ config, onClose }) {
+  const { ws } = useWorkbench();
   const [form] = Form.useForm();
   const [error, setError] = useState("");
   const medium =
@@ -1419,6 +1422,32 @@ export function FlowEditor({ config, onClose }) {
             </Form.Item>
           </Col>
         </Row>
+        <Form.Item
+          label="应用通信预设"
+          extra="填入通信参数与上层协议，保留当前安全属性；应用到画布后还需保存架构。预设可在项目设置中维护。"
+        >
+          <Select
+            aria-label="应用通信预设"
+            value={null}
+            placeholder="选择项目通信预设"
+            options={(ws?.communication_settings?.presets || []).map((p) => ({
+              value: p.id,
+              label: p.name,
+            }))}
+            onChange={(id) => {
+              const preset = ws?.communication_settings?.presets?.find(
+                (p) => p.id === id,
+              );
+              if (preset)
+                form.setFieldsValue(
+                  communicationPresetSnapshot(
+                    preset,
+                    form.getFieldValue("communication"),
+                  ),
+                );
+            }}
+          />
+        </Form.Item>
         <Form.Item name="show_label" valuePropName="checked">
           <Checkbox>在画布显示连接名称</Checkbox>
         </Form.Item>
@@ -1453,6 +1482,10 @@ export function FlowEditor({ config, onClose }) {
           <Col span={10}>
             <Form.Item name={["communication", "medium"]} label="传输方式">
               <Select
+                onChange={(value) => {
+                  if (value !== "wireless")
+                    form.setFieldValue(["communication", "frequency_band"], "");
+                }}
                 options={Object.entries(media).map(([value, label]) => ({
                   value,
                   label,
@@ -1479,7 +1512,7 @@ export function FlowEditor({ config, onClose }) {
                 }
                 placeholder={
                   medium === "wireless"
-                    ? "例如：Wi-Fi、NFC、Bluetooth/BLE"
+                    ? "例如：4G/LTE、5G/NR、Wi-Fi、自定义无线电"
                     : medium === "wired"
                       ? "例如：Ethernet、CAN FD、UART"
                       : "选择传输方式后可用预置技术"
@@ -1490,6 +1523,20 @@ export function FlowEditor({ config, onClose }) {
             </Form.Item>
           </Col>
         </Row>
+        {medium === "wireless" && (
+          <Form.Item
+            name={["communication", "frequency_band"]}
+            label="频段 / 频率"
+            extra="可填写频段名称、频率或范围；与通信技术分别记录。"
+          >
+            <AutoComplete
+              options={frequencyBands.map((value) => ({ value }))}
+              placeholder="例如：n78、2.4 GHz、433 MHz"
+            >
+              <Input maxLength={200} />
+            </AutoComplete>
+          </Form.Item>
+        )}
         <Row gutter={16}>
           <Col span={10}>
             <Form.Item

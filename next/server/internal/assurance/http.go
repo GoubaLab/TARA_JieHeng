@@ -80,6 +80,8 @@ func (s *HTTPServer) routes() {
 		s.route("GET "+apiPrefix+"/"+v.path, v.fn)
 	}
 	s.route("POST "+apiPrefix+"/workspaces", s.createWorkspace)
+	s.route("GET "+apiPrefix+"/workspaces/{workspace_id}/communication-settings", s.singleton("communication_settings"))
+	s.route("PUT "+apiPrefix+"/workspaces/{workspace_id}/communication-settings", s.mutate("configure-communication", "", false))
 	s.route("POST "+apiPrefix+"/workspaces/{workspace_id}/tara-import-previews", s.taraPreview)
 	s.route("GET "+apiPrefix+"/workspaces/{workspace_id}/tara-imports/{resource_id}", s.taraImportResource)
 	s.route("GET "+apiPrefix+"/workspaces/{workspace_id}/tara-imports/{resource_id}/source", s.taraSource)

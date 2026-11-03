@@ -315,6 +315,10 @@ func automationTechnology(f Object) string {
 		return unicode.ToLower(r)
 	}, value)
 	switch value {
+	case "4glte", "lte":
+		return "4g"
+	case "5gnr", "nr":
+		return "5g"
 	case "eth", "以太网":
 		return "ethernet"
 	case "bt", "蓝牙":

@@ -19,7 +19,7 @@ func (s *HTTPServer) health(w http.ResponseWriter, r *http.Request) error {
 	if s.auth != nil {
 		mode = "enterprise"
 	}
-	return writeJSON(w, r, 200, Object{"application": "jieheng", "mode": mode, "version": "2.5.0", "backend": "go", "outbound_connections": true, "outbound_policy": "configured_models_explicit_requests", "excel_export": ExcelAvailable()})
+	return writeJSON(w, r, 200, Object{"application": "jieheng", "mode": mode, "version": "2.6.0", "backend": "go", "outbound_connections": true, "outbound_policy": "configured_models_explicit_requests", "excel_export": ExcelAvailable()})
 }
 func (s *HTTPServer) document(name, media string) endpoint {
 	return func(w http.ResponseWriter, r *http.Request) error {
@@ -141,6 +141,9 @@ func (s *HTTPServer) singleton(field string) endpoint {
 		}
 		setETag(w, ws)
 		value := ws[field]
+		if field == "communication_settings" && value == nil {
+			value = Object{"presets": []any{}}
+		}
 		if field == "numbering" {
 			value = EffectiveNumbering(dObj(value))
 		}

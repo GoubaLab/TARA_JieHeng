@@ -381,6 +381,9 @@ func dUpsert(ws Object, collection string, value Object, prefix string) (string,
 	return dStr(value["id"]), nil
 }
 func Apply(original Object, action string, payload Object) (Object, string, error) {
+	if action == "configure-communication" {
+		return applyCommunicationSettings(original, payload)
+	}
 	if action == "rate-attack-path" {
 		return applyAttackFeasibility(original, payload)
 	}

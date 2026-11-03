@@ -107,5 +107,9 @@ func reportCommunication(flow Object) string {
 	if len(properties) == 0 {
 		properties = append(properties, "未声明")
 	}
-	return fmt.Sprintf("通信介质：%s；范围：%s\n技术：%s；应用协议：%s\n用途：%s\n安全属性：%s\n%s", medium, reach, libStr(c["technology"]), libStr(flow["protocol"]), libStr(c["purpose"]), strings.Join(properties, "、"), libStr(flow["description"]))
+	frequency := ""
+	if c["medium"] == "wireless" && libStr(c["frequency_band"]) != "" {
+		frequency = "\n频段：" + libStr(c["frequency_band"])
+	}
+	return fmt.Sprintf("通信介质：%s；范围：%s\n技术：%s；应用协议：%s%s\n用途：%s\n安全属性：%s\n%s", medium, reach, libStr(c["technology"]), libStr(flow["protocol"]), frequency, libStr(c["purpose"]), strings.Join(properties, "、"), libStr(flow["description"]))
 }

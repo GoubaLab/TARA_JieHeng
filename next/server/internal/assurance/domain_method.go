@@ -95,6 +95,9 @@ func semanticOptional(model string, value any) (any, bool) {
 		complete[key] = dClone(v)
 	}
 	if model == "Communication" {
+		if dTrim(dStr(complete["frequency_band"])) == "" {
+			delete(complete, "frequency_band")
+		}
 		properties := dUnique(dList(complete["security_properties"]))
 		sort.Slice(properties, func(i, j int) bool { return dStr(properties[i]) < dStr(properties[j]) })
 		complete["security_properties"] = properties

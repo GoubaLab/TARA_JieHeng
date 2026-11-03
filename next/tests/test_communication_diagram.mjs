@@ -89,3 +89,17 @@ test("entity inspector keeps OS absent on unrelated edits and stores all explici
   assert.deepEqual(d.readNodeEditor(node).operating_system, { family: "linux", name: "Debian", version: "12", architecture: "x86_64", notes: "虚拟机" });
   assert.equal(Object.hasOwn(node, "operating_system"), false);
 });
+
+test("cellular names and frequency labels survive save and static export", async () => {
+ const { communicationPresetSnapshot, communicationCaption } = await import('../client/src/communication.js');
+ for(const [protocol,technology] of [['LTE','4G/LTE'],['5G NR','5G/NR'],['NB-IoT','NB-IoT'],['LTE-M','LTE-M']]) assert.equal(communicationForDisplay(flow({protocol})).technology,technology);
+ const preset={protocol:'MQTT/TLS',communication:{medium:'wireless',technology:'5G/NR',frequency_band:'n78',security_properties:['availability']}};
+ const applied=communicationPresetSnapshot(preset,{security_properties:['integrity']});
+ assert.deepEqual(applied.communication.security_properties,['integrity']);
+ preset.communication.frequency_band='n79';assert.equal(applied.communication.frequency_band,'n78');
+ const radio=flow(applied);assert.match(communicationCaption(radio),/5G\/NR · n78/);
+ assert.match(wirelessBadge(radio),/>5G</);
+ const cleaned=communicationForSave({...applied.communication,medium:'wired'});assert.equal(cleaned.frequency_band,undefined);
+ const svg=staticDiagramSvg({nodes:[entity('device'),{...entity('cloud'),x:400}],flows:[radio]}, [route]);
+ assert.match(svg,/n78/);assert.doesNotMatch(svg,/flow-pulse/);
+});
