@@ -11,7 +11,7 @@ var reportProperties = map[string]string{"confidentiality": "机密性", "integr
 var reportImpacts = []string{"可忽略", "中等", "重大", "严重"}
 var reportFeasibility = []string{"很低", "低", "中", "高"}
 var reportTreatments = map[string]string{"reduce": "降低", "avoid": "规避", "share": "分担", "retain": "保留"}
-var reportActions = map[string]string{"rate-attack-path": "评定攻击可行性", "update-workspace-profile": "更新项目基本信息", "open-workspace": "建立工作区", "define-item": "更新相关项定义", "replace-architecture": "保存系统架构", "record-asset": "记录资产", "record-scenario": "更新风险场景", "decide-treatment": "确认风险处置", "specify-requirement": "更新安全需求", "record-evidence": "记录验证证据", "configure-numbering": "更新编号规则", "adopt-method": "确认评估方法", "seal-baseline": "建立评审基线", "select-regulations": "选择项目法规条款", "apply-reference-selection": "批量选用参考知识", "import-tara": "导入完整 TARA", "record-damage": "更新损害场景", "record-goal": "更新安全目标"}
+var reportActions = map[string]string{"delete-asset": "删除资产", "delete-damage": "删除损害场景", "delete-scenario": "删除威胁场景", "delete-requirement": "删除安全需求", "delete-goal": "删除安全目标", "discard-treatment-draft": "放弃处置草案", "rate-attack-path": "评定攻击可行性", "update-workspace-profile": "更新项目基本信息", "open-workspace": "建立工作区", "define-item": "更新相关项定义", "replace-architecture": "保存系统架构", "record-asset": "记录资产", "record-scenario": "更新风险场景", "decide-treatment": "确认风险处置", "specify-requirement": "更新安全需求", "record-evidence": "记录验证证据", "configure-numbering": "更新编号规则", "adopt-method": "确认评估方法", "seal-baseline": "建立评审基线", "select-regulations": "选择项目法规条款", "apply-reference-selection": "批量选用参考知识", "import-tara": "导入完整 TARA", "record-damage": "更新损害场景", "record-goal": "更新安全目标"}
 
 func reportImpact(v any) string {
 	if v == nil {
@@ -185,6 +185,17 @@ func Tables(ws Object, journal []Object, catalog *Catalog) []Object {
 		assetColumns = append(assetColumns, "来源编号", "资产类型", "资产分组", "关联功能")
 		assetWidths = append(assetWidths, 22, 22, 28, 35)
 	}
+	excludedAssets := false
+	for _, a := range libRows(ws["assets"]) {
+		if len(libList(a["excluded_properties"])) > 0 {
+			excludedAssets = true
+			break
+		}
+	}
+	if excludedAssets {
+		assetColumns = append(assetColumns, "不适用属性及理由")
+		assetWidths = append(assetWidths, 60)
+	}
 	for _, a := range libRows(ws["assets"]) {
 		properties, nodeNames := []string{}, []string{}
 		for _, p := range libList(a["properties"]) {
@@ -196,6 +207,13 @@ func Tables(ws Object, journal []Object, catalog *Catalog) []Object {
 		row := []any{code("asset", a["id"]), a["name"], a["description"], strings.Join(properties, "、"), strings.Join(nodeNames, "、"), reportReference(a["reference"], catalog)}
 		if extendedAssets {
 			row = append(row, a["source_code"], a["asset_type"], a["group"], libJoin(a["function_refs"], "、"))
+		}
+		if excludedAssets {
+			notes := []string{}
+			for _, raw := range libRows(a["excluded_properties"]) {
+				notes = append(notes, reportProperties[libStr(raw["property"])]+"："+libStr(raw["reason"]))
+			}
+			row = append(row, strings.Join(notes, "\n"))
 		}
 		rows = append(rows, row)
 	}

@@ -114,6 +114,7 @@ func legacyReviewProjection(ws Object) Object {
 	for _, raw := range dList(result["issues"]) {
 		i := dObj(raw)
 		stage := dStr(i["stage"])
+		delete(i, "property")
 		if stage == "threats" {
 			i["stage"] = "assessment"
 			if i["reference"] == nil {

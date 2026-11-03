@@ -1,3 +1,9 @@
+import { AssetScopeField } from "./AssetScopeField.jsx";
+import {
+  normalizeExclusions,
+  propertyHasScenario,
+  activeAssetProperties,
+} from "./asset-scope.js";
 import AttackPathTemplatePicker from "./AttackPathTemplatePicker.jsx";
 import { appendTemplatePaths } from "./attack-path-templates.js";
 import { TaraFields } from "./TaraFields.jsx";
@@ -198,6 +204,7 @@ export function EntityEditor({ editor, onClose }) {
   const pathValues = Form.useWatch("paths", form);
   const pathProperty = Form.useWatch("property", form);
   const assetId = Form.useWatch("asset_id", form);
+  const assetProperties = Form.useWatch("properties", form) || [];
   const treatment = Form.useWatch("treatment", form);
   const selectedGoalIDs = Form.useWatch("goal_ids", form) || [];
   const scenarioId = Form.useWatch("scenario_id", form);
@@ -221,6 +228,22 @@ export function EntityEditor({ editor, onClose }) {
             node_ids: [],
             reference: editor.source?.key || null,
           };
+      value.excluded_properties = normalizeExclusions(
+        value.properties,
+        value.excluded_properties,
+      );
+      if (
+        editor.excludeProperty &&
+        value.properties.includes(editor.excludeProperty) &&
+        !propertyHasScenario(ws, editor.id, editor.excludeProperty) &&
+        !value.excluded_properties.some(
+          (r) => r.property === editor.excludeProperty,
+        )
+      )
+        value.excluded_properties.push({
+          property: editor.excludeProperty,
+          reason: "",
+        });
       if (editor.source)
         setLabels({ [editor.source.key]: editor.source.title });
     }
@@ -230,9 +253,13 @@ export function EntityEditor({ editor, onClose }) {
         : {
             title: "",
             asset_id: editor.assetId || ws.assets[0]?.id,
-            property: (ws.assets.find(
-              (a) => a.id === (editor.assetId || ws.assets[0]?.id),
-            )?.properties || [])[0],
+            property:
+              editor.property ||
+              activeAssetProperties(
+                ws.assets.find(
+                  (a) => a.id === (editor.assetId || ws.assets[0]?.id),
+                ),
+              )[0],
             damage: "",
             threat: "",
             impact: {
@@ -366,10 +393,16 @@ export function EntityEditor({ editor, onClose }) {
             "group",
             "function_refs",
             "properties",
+            "excluded_properties",
             "reference",
           ]),
           ...(editor.id ? { id: editor.id } : {}),
         };
+      if (kind === "asset")
+        payload.excluded_properties = normalizeExclusions(
+          payload.properties,
+          payload.excluded_properties,
+        );
       if (kind === "scenario") {
         payload = {
           ...pick(values, [
@@ -761,7 +794,7 @@ export function EntityEditor({ editor, onClose }) {
                 </Form.Item>
                 <Form.Item
                   name="properties"
-                  label="需要保护的安全属性"
+                  label="资产相关安全属性"
                   rules={[
                     {
                       required: true,
@@ -771,7 +804,45 @@ export function EntityEditor({ editor, onClose }) {
                     },
                   ]}
                 >
-                  <Checkbox.Group options={propOptions} />
+                  <Checkbox.Group
+                    options={propOptions}
+                    onChange={(selected) => {
+                      form.setFieldValue(
+                        "excluded_properties",
+                        normalizeExclusions(
+                          selected,
+                          form.getFieldValue("excluded_properties"),
+                        ),
+                      );
+                    }}
+                  />
+                </Form.Item>
+                <Form.Item
+                  name="excluded_properties"
+                  label="安全属性分析范围"
+                  rules={[
+                    {
+                      validator: (_, rows = []) => {
+                        const missing = normalizeExclusions(
+                          form.getFieldValue("properties"),
+                          rows,
+                        ).find((r) => !r.reason.trim());
+                        return missing
+                          ? Promise.reject(
+                              new Error(
+                                `${properties[missing.property]}不适用理由不能为空`,
+                              ),
+                            )
+                          : Promise.resolve();
+                      },
+                    },
+                  ]}
+                >
+                  <AssetScopeField
+                    selected={assetProperties}
+                    assetId={editor.id}
+                    ws={ws}
+                  />
                 </Form.Item>
                 <Form.Item
                   name="node_ids"

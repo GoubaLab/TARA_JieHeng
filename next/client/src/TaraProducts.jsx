@@ -1,3 +1,5 @@
+import RecordDeleteButton from "./RecordDeleteButton.jsx";
+import { AssetScopeSummary } from "./AssetScopeField.jsx";
 import { recordCode as businessCode, pathNumberKey } from "./numbering.js";
 import { functionCatalog, recordLabel } from "./tara-guidance.js";
 import React, { useEffect, useState, useRef } from "react";
@@ -81,24 +83,31 @@ const col = (title, key, width = 240, render) => ({
   width,
   render: render || ((v) => v || "—"),
 });
-function Records({ rows, columns, onEdit }) {
+function Records({ rows, columns, onEdit, deleteKind }) {
   return (
     <Table
       rowKey={(r) => r.id || r.scenario_id}
       dataSource={rows || []}
       columns={[
         ...columns,
-        ...(onEdit
+        ...(onEdit || deleteKind
           ? [
               {
                 title: "操作",
                 key: "edit",
-                width: 80,
+                width: deleteKind ? 150 : 80,
                 fixed: "right",
                 render: (_, r) => (
-                  <Button type="link" onClick={() => onEdit(r)}>
-                    编辑
-                  </Button>
+                  <Space size={0}>
+                    {onEdit && (
+                      <Button type="link" onClick={() => onEdit(r)}>
+                        编辑
+                      </Button>
+                    )}
+                    {deleteKind && (
+                      <RecordDeleteButton kind={deleteKind} record={r} />
+                    )}
+                  </Space>
                 ),
               },
             ]
@@ -107,13 +116,14 @@ function Records({ rows, columns, onEdit }) {
       pagination={pagination}
       scroll={{
         x:
-          columns.reduce((s, c) => s + (c.width || 240), 0) + (onEdit ? 80 : 0),
+          columns.reduce((s, c) => s + (c.width || 240), 0) +
+          (deleteKind ? 150 : onEdit ? 80 : 0),
       }}
       size="small"
     />
   );
 }
-function ProductEditor({ record, onClose }) {
+export function ProductEditor({ record, onClose }) {
   const { ws, save, message } = useWorkbench(),
     [form] = Form.useForm(),
     [busy, setBusy] = useState(false),
@@ -460,6 +470,7 @@ export default function TaraProducts() {
               children: (
                 <Records
                   rows={ws.assets}
+                  deleteKind="asset"
                   onEdit={edit("asset")}
                   columns={[
                     baseCode,
@@ -467,7 +478,9 @@ export default function TaraProducts() {
                     col("类型", "asset_type", 120),
                     col("分组", "group", 120),
                     col("关联功能", "function_refs", 300, functionText),
-                    col("安全属性", "properties", 240, propsText),
+                    col("安全属性与范围", "properties", 300, (_, asset) => (
+                      <AssetScopeSummary asset={asset} />
+                    )),
                     col("DFD 关联", "node_ids", 240, joined),
                   ]}
                 />
@@ -486,6 +499,7 @@ export default function TaraProducts() {
                   </Button>
                   <Records
                     rows={ws.damage_scenarios}
+                    deleteKind="damage"
                     onEdit={(record) =>
                       setEditor({ kind: "damage", id: record.id })
                     }
@@ -520,6 +534,7 @@ export default function TaraProducts() {
               children: (
                 <Records
                   rows={ws.scenarios}
+                  deleteKind="scenario"
                   onEdit={edit("scenario")}
                   columns={[
                     baseCode,
@@ -535,7 +550,13 @@ export default function TaraProducts() {
                     col("损害场景", "damage_ids", 300, (v) =>
                       linkText("damage_scenarios", v),
                     ),
-                    col("攻击路径", "paths", 220, (v) => joined(v.map(code))),
+                    col("攻击路径", "paths", 220, (v, scenario) =>
+                      joined(
+                        v.map((path) =>
+                          code(ws, { ...path, scenario_id: scenario.id }),
+                        ),
+                      ),
+                    ),
                   ]}
                 />
               ),
@@ -646,6 +667,7 @@ export default function TaraProducts() {
                   </Button>
                   <Records
                     rows={ws.security_goals}
+                    deleteKind="goal"
                     onEdit={(record) => setEditing({ kind: "goal", record })}
                     columns={[
                       baseCode,
@@ -666,6 +688,7 @@ export default function TaraProducts() {
               children: (
                 <Records
                   rows={ws.requirements}
+                  deleteKind="requirement"
                   onEdit={edit("requirement")}
                   columns={[
                     baseCode,
@@ -767,6 +790,7 @@ export function SecurityGoalsPanel() {
       />
       <Records
         rows={ws.security_goals || []}
+        deleteKind="goal"
         columns={[
           {
             title: "编号",

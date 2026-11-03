@@ -126,6 +126,9 @@ func attackPathTemplateItems(ws Object, assetID, property string) ([]any, error)
 		if e != nil {
 			return nil, ErrNotFound
 		}
+		if property != "" && assetPropertyExcluded(asset, property) {
+			return nil, dError("该安全属性已标记为不适用，请先复核资产的分析范围")
+		}
 	}
 	facts := attackPathTemplateFacts(ws, asset)
 	propertyNames := map[string]string{"confidentiality": "机密性", "integrity": "完整性", "availability": "可用性", "authenticity": "真实性", "authorization": "授权", "non_repudiation": "不可抵赖性", "freshness": "新鲜性", "privacy": "隐私性"}
@@ -133,21 +136,29 @@ func attackPathTemplateItems(ws Object, assetID, property string) ([]any, error)
 	for _, t := range builtinAttackPathTemplates() {
 		score := 0
 		reasons := []any{}
-		for _, signal := range t.signals {
-			if reason := facts[signal]; reason != "" {
-				score += 25
-				reasons = append(reasons, reason)
+		inScope := asset == nil
+		for _, p := range t.properties {
+			if dHas(asset["properties"], p) && !assetPropertyExcluded(asset, p) {
+				inScope = true
 			}
 		}
-		if property != "" && automationIn(property, t.properties...) {
-			score += 10
-			reasons = append(reasons, "与当前关注的"+propertyNames[property]+"属性相关")
-		} else if property == "" && asset != nil {
-			for _, p := range t.properties {
-				if dHas(asset["properties"], p) {
-					score += 5
-					reasons = append(reasons, "资产需要"+propertyNames[p]+"保护")
-					break
+		if inScope {
+			for _, signal := range t.signals {
+				if reason := facts[signal]; reason != "" {
+					score += 25
+					reasons = append(reasons, reason)
+				}
+			}
+			if property != "" && automationIn(property, t.properties...) {
+				score += 10
+				reasons = append(reasons, "与当前关注的"+propertyNames[property]+"属性相关")
+			} else if property == "" && asset != nil {
+				for _, p := range t.properties {
+					if dHas(asset["properties"], p) && !assetPropertyExcluded(asset, p) {
+						score += 5
+						reasons = append(reasons, "资产需要"+propertyNames[p]+"保护")
+						break
+					}
 				}
 			}
 		}

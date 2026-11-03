@@ -182,6 +182,9 @@ func Review(ws Object) Object {
 			issue("architecture", "资产“"+dStr(asset["name"])+"”尚未关联架构组件", asset["id"])
 		}
 		for _, property := range dList(asset["properties"]) {
+			if assetPropertyExcluded(asset, property) {
+				continue
+			}
 			found := false
 			for _, raw := range scenarios {
 				s := dObj(raw)
@@ -191,7 +194,7 @@ func Review(ws Object) Object {
 				}
 			}
 			if !found {
-				issue("threats", "资产“"+dStr(asset["name"])+"”的 "+dStr(property)+" 尚无风险场景", asset["id"])
+				issues = append(issues, Object{"stage": "threats", "message": "资产“" + dStr(asset["name"]) + "”的 " + dStr(property) + " 尚无风险场景", "reference": asset["id"], "property": property})
 			}
 		}
 	}
@@ -474,6 +477,16 @@ func Apply(original Object, action string, payload Object) (Object, string, erro
 			if e := validateFunctionLinks(original, ws, action, value); e != nil {
 				return nil, "", e
 			}
+		case "discard-treatment-draft":
+			if e := discardTreatmentDraft(ws, dStr(value["scenario_id"])); e != nil {
+				return nil, "", e
+			}
+			entityID = dStr(value["scenario_id"])
+		case "delete-asset", "delete-damage", "delete-scenario", "delete-requirement", "delete-goal":
+			if e := deleteRecord(ws, deletionCollections[action], dStr(value["id"])); e != nil {
+				return nil, "", e
+			}
+			entityID = dStr(value["id"])
 		case "record-damage":
 			if e := validateFunctionLinks(original, ws, action, value); e != nil {
 				return nil, "", e
@@ -483,6 +496,9 @@ func Apply(original Object, action string, payload Object) (Object, string, erro
 			entityID, err = dUpsert(ws, "security_goals", value, "goal")
 		case "record-asset":
 			if e := validateFunctionLinks(original, ws, action, value); e != nil {
+				return nil, "", e
+			}
+			if e := validateAssetExclusions(ws, value); e != nil {
 				return nil, "", e
 			}
 			ids := map[string]bool{}
@@ -641,6 +657,8 @@ func Apply(original Object, action string, payload Object) (Object, string, erro
 		if err := refreshTaraLinks(ws); err != nil {
 			return nil, "", err
 		}
+	} else if err := validateAssetScopes(ws); err != nil {
+		return nil, "", err
 	}
 	if action != "seal-baseline" {
 		ensureRecordNumbers(ws)

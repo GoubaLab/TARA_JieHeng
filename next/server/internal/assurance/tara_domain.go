@@ -23,6 +23,7 @@ func taraSchema(model string, schema map[string]dField) map[string]dField {
 		schema["asset_generation"] = dop(de("automatic", "catalog"))
 	case "Asset":
 		schema["asset_type"], schema["group"], schema["function_refs"] = dop(ds(0, 200)), dop(ds(0, 200)), refs()
+		schema["excluded_properties"] = dop(dl(dm("PropertyExclusion", true), 0, 8, false))
 	case "Scenario":
 		schema["asset_ids"], schema["damage_ids"] = refs(), refs()
 		schema["properties"] = dop(dl(de(dProperties...), 1, 8, true))
@@ -205,7 +206,19 @@ func preserveTaraFields(ws Object, action string, payload Object) Object {
 	return out
 }
 
+func validateAssetScopes(ws Object) error {
+	for _, asset := range libRows(ws["assets"]) {
+		if err := validateAssetExclusions(ws, asset); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func refreshTaraLinks(ws Object) error {
+	if err := validateAssetScopes(ws); err != nil {
+		return err
+	}
 	method := EffectiveMethod(dObj(ws["method"]))
 	for _, raw := range dList(ws["damage_scenarios"]) {
 		d := dObj(raw)

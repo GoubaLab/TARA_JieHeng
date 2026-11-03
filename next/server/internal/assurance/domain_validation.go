@@ -118,6 +118,12 @@ func dSchema(model string) map[string]dField {
 		return map[string]dField{"id": f, "name": ds(1, 500), "steps": dsd("", 10000), "feasibility": dnd("int", nil, 1, 4, true), "rationale": dsd("", 6000), "reference": dsn()}
 	case "Scenario":
 		return map[string]dField{"id": dsn(), "title": ds(1, 300), "asset_id": ds(0, 0), "property": de(dProperties...), "damage": ds(1, 10000), "threat": ds(1, 10000), "impact": dm("Impact", false), "paths": dl(dm("AttackPath", true), 0, 100, false), "references": dl(ds(0, 0), 0, 50, false)}
+	case "PropertyExclusion":
+		return map[string]dField{"property": de(dProperties...), "reason": ds(1, 2000)}
+	case "TreatmentDraftDeletion":
+		return map[string]dField{"scenario_id": ds(1, 200)}
+	case "Deletion":
+		return map[string]dField{"id": ds(1, 200)}
 	case "Decision":
 		return map[string]dField{"scenario_id": ds(0, 0), "treatment": de("reduce", "avoid", "share", "retain"), "rationale": ds(1, 8000), "owner": ds(1, 200), "goal": dsd("", 8000), "claim": dsd("", 8000), "residual_impact": dnd("number", nil, 0, 1200, true), "residual_feasibility": dnd("int", nil, 1, 4, true), "residual_rationale": dsd("", 8000)}
 	case "Requirement", "RequirementDraft":
@@ -558,13 +564,16 @@ func dCasefold(s string) string {
 	return b.String()
 }
 func ValidatePayload(action string, payload Object) (Object, error) {
-	models := map[string]string{"update-workspace-profile": "WorkspaceProfile", "configure-numbering": "Numbering", "define-item": "Item", "replace-architecture": "Architecture", "record-asset": "Asset", "record-scenario": "Scenario", "decide-treatment": "Decision", "specify-requirement": "Requirement", "select-regulations": "RegulationSelection", "record-evidence": "Evidence", "adopt-method": "Method", "seal-baseline": "Baseline", "apply-reference-selection": "ReferenceSelection"}
+	models := map[string]string{"update-workspace-profile": "WorkspaceProfile", "configure-numbering": "Numbering", "define-item": "Item", "replace-architecture": "Architecture", "record-asset": "Asset", "record-scenario": "Scenario", "decide-treatment": "Decision", "discard-treatment-draft": "TreatmentDraftDeletion", "specify-requirement": "Requirement", "select-regulations": "RegulationSelection", "record-evidence": "Evidence", "adopt-method": "Method", "seal-baseline": "Baseline", "apply-reference-selection": "ReferenceSelection"}
 	model, ok := models[action]
 	if action == "record-damage" {
 		model, ok = "DamageScenario", true
 	}
 	if action == "record-goal" {
 		model, ok = "SecurityGoal", true
+	}
+	if deletionCollections[action] != "" {
+		model, ok = "Deletion", true
 	}
 	if !ok {
 		return nil, dError("未知领域操作")

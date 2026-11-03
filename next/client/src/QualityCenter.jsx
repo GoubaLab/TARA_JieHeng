@@ -16,7 +16,7 @@ import {
   Tag,
   Typography,
 } from "antd";
-import { PageTitle, useWorkbench } from "./Workbench.jsx";
+import { PageTitle, useWorkbench, IssueActions } from "./Workbench.jsx";
 import { useAuth } from "./AuthGate.jsx";
 import { date, navigate, properties } from "./api.js";
 import { mutateResource, useResource } from "./platform-ui.js";
@@ -166,24 +166,14 @@ export default function QualityCenter() {
                       },
                       {
                         title: "操作",
-                        width: 100,
+                        width: 220,
                         render: (_, i) => (
-                          <Button
-                            type="link"
-                            onClick={() =>
-                              openIssue({
-                                ...i,
-                                message:
-                                  Object.entries(properties).reduce(
-                                    (text, [key, label]) =>
-                                      text.replaceAll(key, label),
-                                    i.message || i.detail || "",
-                                  ) || "",
-                              })
-                            }
-                          >
-                            前往处理
-                          </Button>
+                          <IssueActions
+                            issue={{
+                              ...i,
+                              message: i.message || i.detail || "",
+                            }}
+                          />
                         ),
                       },
                     ]}

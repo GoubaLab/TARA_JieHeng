@@ -1,3 +1,5 @@
+import RecordDeleteButton from "./RecordDeleteButton.jsx";
+import { activeAssetProperties } from "./asset-scope.js";
 import {
   AttackStepsEditor,
   AttackRoutePicker,
@@ -296,7 +298,7 @@ export function ScenarioStageEditor({ editor, onClose }) {
             }
           : {
               asset_ids: editor.assetId ? [editor.assetId] : [],
-              properties: [],
+              properties: editor.property ? [editor.property] : [],
               damage_ids: [],
             },
       );
@@ -442,10 +444,20 @@ export function ScenarioStageEditor({ editor, onClose }) {
             >
               <Select
                 mode="multiple"
-                options={propOptions.filter((o) =>
-                  ws.assets
-                    .filter((a) => assets.includes(a.id))
-                    .some((a) => a.properties.includes(o.value)),
+                options={propOptions.filter(
+                  (o) =>
+                    ws.assets
+                      .filter((a) => assets.includes(a.id))
+                      .some((a) =>
+                        activeAssetProperties(a).includes(o.value),
+                      ) &&
+                    !ws.assets
+                      .filter((a) => assets.includes(a.id))
+                      .some((a) =>
+                        (a.excluded_properties || []).some(
+                          (r) => r.property === o.value,
+                        ),
+                      ),
                 )}
               />
             </Form.Item>
@@ -644,23 +656,28 @@ export default function TaraWorkflow({ stage }) {
         : []),
       {
         title: "操作",
-        width: 120,
+        width: 180,
         fixed: "right",
         render: (_, r) => (
-          <Button
-            type="link"
-            disabled={readOnly}
-            onClick={() =>
-              r.embedded
-                ? setEditor({ kind: "scenario", id: r.id, step: "impact" })
-                : setEditing({
-                    kind: stage === "impacts" ? "impact" : "damage",
-                    id: r.id,
-                  })
-            }
-          >
-            {stage === "impacts" ? "影响评级" : "编辑场景"}
-          </Button>
+          <Space size={0}>
+            <Button
+              type="link"
+              disabled={readOnly}
+              onClick={() =>
+                r.embedded
+                  ? setEditor({ kind: "scenario", id: r.id, step: "impact" })
+                  : setEditing({
+                      kind: stage === "impacts" ? "impact" : "damage",
+                      id: r.id,
+                    })
+              }
+            >
+              {stage === "impacts" ? "影响评级" : "编辑场景"}
+            </Button>
+            {stage === "damages" && !r.embedded && (
+              <RecordDeleteButton kind="damage" record={r} />
+            )}
+          </Space>
         ),
       },
     ];
@@ -717,15 +734,18 @@ export default function TaraWorkflow({ stage }) {
       {
         title: "操作",
         fixed: "right",
-        width: 120,
+        width: 180,
         render: (_, r) => (
-          <Button
-            type="link"
-            disabled={readOnly}
-            onClick={() => open(r, "threat")}
-          >
-            编辑威胁
-          </Button>
+          <Space size={0}>
+            <Button
+              type="link"
+              disabled={readOnly}
+              onClick={() => open(r, "threat")}
+            >
+              编辑威胁
+            </Button>
+            <RecordDeleteButton kind="scenario" record={r} />
+          </Space>
         ),
       },
     ];

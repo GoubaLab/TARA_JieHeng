@@ -2,7 +2,7 @@
   "openapi": "3.1.1",
   "info": {
     "title": "界衡威胁建模工作产品 API",
-    "version": "2.4.0",
+    "version": "2.5.0",
     "description": "通用威胁建模工作产品，汽车领域以 ISO/SAE 21434 为参考流程。Go 本地服务；版本前缀 /api/v1。写入使用 If-Match 与 Idempotency-Key；错误采用 RFC 9457。字段以 snake_case 为主，已有架构 entityType/sourceSide/targetSide/labelOffset 为兼容而保留。应用领域不自动决定法规适用性或评分算法。 企业模式提供会话与项目角色；模型任务为持久异步资源，草案采用需当前修订、幂等键和人工确认。安全方案的空项仅表示本机模式，不表示企业模式可匿名读取。"
   },
   "servers": [
@@ -1103,6 +1103,66 @@
             "$ref": "#/components/responses/Problem"
           }
         }
+      },
+      "delete": {
+        "summary": "删除资产",
+        "operationId": "deleteAsset",
+        "tags": [
+          "工作区"
+        ],
+        "description": "从当前工作版本移除记录。仍被其他工作产品或已采用处置草案引用的记录、自动资产模式下来源仍有效的派生资产以及已有验证记录的需求会被拒绝（422）。资产目录模式允许删除无引用的派生资产。修订号递增并写入操作记录，冻结基线与已分配编号不受影响。请求体可为空。 成功操作与操作前还原点在同一事务保存，响应包含checkpoint_id；失败不建立还原点，幂等重放复用原还原点。",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "已删除",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutationResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
       }
     },
     "/workspaces/{id}/scenarios": {
@@ -1304,6 +1364,66 @@
             "$ref": "#/components/responses/Problem"
           }
         }
+      },
+      "delete": {
+        "summary": "删除威胁场景",
+        "operationId": "deleteScenario",
+        "tags": [
+          "工作区"
+        ],
+        "description": "从当前工作版本移除记录。仍被其他工作产品或已采用处置草案引用的记录、自动资产模式下来源仍有效的派生资产以及已有验证记录的需求会被拒绝（422）。资产目录模式允许删除无引用的派生资产。修订号递增并写入操作记录，冻结基线与已分配编号不受影响。请求体可为空。 成功操作与操作前还原点在同一事务保存，响应包含checkpoint_id；失败不建立还原点，幂等重放复用原还原点。",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "name": "scenario_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "已删除",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutationResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
       }
     },
     "/workspaces/{id}/requirements": {
@@ -1497,6 +1617,66 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RequirementRecord"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      },
+      "delete": {
+        "summary": "删除安全需求",
+        "operationId": "deleteRequirement",
+        "tags": [
+          "工作区"
+        ],
+        "description": "从当前工作版本移除记录。仍被其他工作产品或已采用处置草案引用的记录、自动资产模式下来源仍有效的派生资产以及已有验证记录的需求会被拒绝（422）。资产目录模式允许删除无引用的派生资产。修订号递增并写入操作记录，冻结基线与已分配编号不受影响。请求体可为空。 成功操作与操作前还原点在同一事务保存，响应包含checkpoint_id；失败不建立还原点，幂等重放复用原还原点。",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "name": "requirement_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "已删除",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutationResult"
                 }
               }
             }
@@ -2936,6 +3116,66 @@
             "$ref": "#/components/responses/Problem"
           }
         }
+      },
+      "delete": {
+        "summary": "删除损害场景",
+        "operationId": "deleteDamageScenario",
+        "tags": [
+          "工作区"
+        ],
+        "description": "从当前工作版本移除记录。仍被其他工作产品或已采用处置草案引用的记录、自动资产模式下来源仍有效的派生资产以及已有验证记录的需求会被拒绝（422）。资产目录模式允许删除无引用的派生资产。修订号递增并写入操作记录，冻结基线与已分配编号不受影响。请求体可为空。 成功操作与操作前还原点在同一事务保存，响应包含checkpoint_id；失败不建立还原点，幂等重放复用原还原点。",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "name": "resource_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "已删除",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutationResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
       }
     },
     "/workspaces/{id}/security-goals": {
@@ -3129,6 +3369,66 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SecurityGoalRecord"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      },
+      "delete": {
+        "summary": "删除安全目标",
+        "operationId": "deleteSecurityGoal",
+        "tags": [
+          "工作区"
+        ],
+        "description": "从当前工作版本移除记录。仍被其他工作产品或已采用处置草案引用的记录、自动资产模式下来源仍有效的派生资产以及已有验证记录的需求会被拒绝（422）。资产目录模式允许删除无引用的派生资产。修订号递增并写入操作记录，冻结基线与已分配编号不受影响。请求体可为空。 成功操作与操作前还原点在同一事务保存，响应包含checkpoint_id；失败不建立还原点，幂等重放复用原还原点。",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "name": "resource_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "已删除",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutationResult"
                 }
               }
             }
@@ -5318,6 +5618,68 @@
           }
         }
       }
+    },
+    "/workspaces/{id}/scenarios/{scenario_id}/treatment-draft": {
+      "delete": {
+        "summary": "放弃未确认处置草案",
+        "operationId": "discardTreatmentDraft",
+        "tags": [
+          "工作区"
+        ],
+        "description": "仅移除指定威胁场景的未确认处置草案；保留威胁、目标、需求及已确认处置，无需完成风险评级。不存在草案时返回404。操作要求项目写权限、当前修订和幂等键，记录修订与审计，不改变冻结基线。请求体可为空。 成功操作与操作前还原点在同一事务保存，响应包含checkpoint_id；失败不建立还原点，幂等重放复用原还原点。",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceID"
+          },
+          {
+            "name": "scenario_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Client"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "已删除",
+            "headers": {
+              "X-Request-ID": {
+                "description": "本次请求的追踪标识。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "工作区修订，如 \"4\"。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutationResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -5916,6 +6278,14 @@
               "minLength": 1,
               "maxLength": 200
             }
+          },
+          "excluded_properties": {
+            "type": "array",
+            "maxItems": 8,
+            "items": {
+              "$ref": "#/components/schemas/PropertyExclusion"
+            },
+            "description": "不适用的安全属性及理由；更新时省略保留原值，传空数组明确清除。"
           }
         },
         "required": [
@@ -6906,6 +7276,14 @@
               "minLength": 1,
               "maxLength": 200
             }
+          },
+          "excluded_properties": {
+            "type": "array",
+            "maxItems": 8,
+            "items": {
+              "$ref": "#/components/schemas/PropertyExclusion"
+            },
+            "description": "不适用的安全属性及理由；更新时省略保留原值，传空数组明确清除。"
           }
         },
         "required": [
@@ -7369,6 +7747,10 @@
           },
           "import_summary": {
             "$ref": "#/components/schemas/TaraImportSummary"
+          },
+          "checkpoint_id": {
+            "type": "string",
+            "description": "成功删除或放弃草案时自动建立的操作前还原点。可通过还原接口恢复为新的项目修订。"
           }
         },
         "required": [
@@ -7509,6 +7891,14 @@
               "minLength": 1,
               "maxLength": 200
             }
+          },
+          "excluded_properties": {
+            "type": "array",
+            "maxItems": 8,
+            "items": {
+              "$ref": "#/components/schemas/PropertyExclusion"
+            },
+            "description": "不适用的安全属性及理由；更新时省略保留原值，传空数组明确清除。"
           }
         },
         "required": [
@@ -8208,6 +8598,10 @@
                 },
                 "path_id": {
                   "type": "string"
+                },
+                "property": {
+                  "type": "string",
+                  "description": "资产覆盖类待办对应的安全属性，便于预填处理入口。"
                 }
               },
               "required": [
@@ -8796,6 +9190,14 @@
               "minLength": 1,
               "maxLength": 200
             }
+          },
+          "excluded_properties": {
+            "type": "array",
+            "maxItems": 8,
+            "items": {
+              "$ref": "#/components/schemas/PropertyExclusion"
+            },
+            "description": "不适用的安全属性及理由；更新时省略保留原值，传空数组明确清除。"
           }
         },
         "required": [
@@ -11836,6 +12238,35 @@
             }
           }
         }
+      },
+      "PropertyExclusion": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "property",
+          "reason"
+        ],
+        "properties": {
+          "property": {
+            "type": "string",
+            "enum": [
+              "confidentiality",
+              "integrity",
+              "availability",
+              "authenticity",
+              "authorization",
+              "non_repudiation",
+              "freshness",
+              "privacy"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          }
+        },
+        "description": "声明某个安全属性不在分析范围内及其理由。属性必须属于资产已声明的安全属性，且不能与对应威胁场景同时存在；保存资产、威胁及采用自动分析时均检查此约束。完整性检查不再要求已排除属性的威胁场景，报告会列出理由。"
       }
     },
     "parameters": {

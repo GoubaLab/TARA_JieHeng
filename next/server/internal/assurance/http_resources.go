@@ -19,7 +19,7 @@ func (s *HTTPServer) health(w http.ResponseWriter, r *http.Request) error {
 	if s.auth != nil {
 		mode = "enterprise"
 	}
-	return writeJSON(w, r, 200, Object{"application": "jieheng", "mode": mode, "version": "2.4.0", "backend": "go", "outbound_connections": true, "outbound_policy": "configured_models_explicit_requests", "excel_export": ExcelAvailable()})
+	return writeJSON(w, r, 200, Object{"application": "jieheng", "mode": mode, "version": "2.5.0", "backend": "go", "outbound_connections": true, "outbound_policy": "configured_models_explicit_requests", "excel_export": ExcelAvailable()})
 }
 func (s *HTTPServer) document(name, media string) endpoint {
 	return func(w http.ResponseWriter, r *http.Request) error {
@@ -232,9 +232,11 @@ func (s *HTTPServer) mutate(action, idField string, createID bool) endpoint {
 		if e != nil {
 			return e
 		}
-		payload, e := readPayload(w, r)
-		if e != nil {
-			return e
+		payload := Object{}
+		if r.Method != "DELETE" || r.ContentLength != 0 {
+			if payload, e = readPayload(w, r); e != nil {
+				return e
+			}
 		}
 		if user := principal(r); user != nil && (action == "record-evidence" || action == "seal-baseline") {
 			payload["reviewer"] = user["name"]

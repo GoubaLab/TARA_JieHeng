@@ -101,6 +101,7 @@ func (s *HTTPServer) routes() {
 		{"POST", "scenarios", "record-scenario", "", true}, {"PUT", "scenarios/{resource_id}", "record-scenario", "id", false},
 		{"PUT", "scenarios/{resource_id}/attack-feasibility", "rate-attack-path", "scenario_id", false},
 		{"PUT", "scenarios/{resource_id}/treatment", "decide-treatment", "scenario_id", false},
+		{"DELETE", "scenarios/{resource_id}/treatment-draft", "discard-treatment-draft", "scenario_id", false},
 		{"POST", "requirements", "specify-requirement", "", true}, {"PUT", "requirements/{resource_id}", "specify-requirement", "id", false},
 		{"POST", "evidence", "record-evidence", "", true}, {"PUT", "assessment-method", "adopt-method", "", false},
 		{"POST", "baselines", "seal-baseline", "", false}, {"POST", "reference-imports", "apply-reference-selection", "", false},
@@ -108,6 +109,9 @@ func (s *HTTPServer) routes() {
 		{"POST", "tara-imports", "import-tara", "", false},
 		{"POST", "damage-scenarios", "record-damage", "", true}, {"PUT", "damage-scenarios/{resource_id}", "record-damage", "id", false},
 		{"POST", "security-goals", "record-goal", "", true}, {"PUT", "security-goals/{resource_id}", "record-goal", "id", false},
+		{"DELETE", "assets/{resource_id}", "delete-asset", "id", false}, {"DELETE", "damage-scenarios/{resource_id}", "delete-damage", "id", false},
+		{"DELETE", "scenarios/{resource_id}", "delete-scenario", "id", false}, {"DELETE", "requirements/{resource_id}", "delete-requirement", "id", false},
+		{"DELETE", "security-goals/{resource_id}", "delete-goal", "id", false},
 	} {
 		s.route(v.method+" "+apiPrefix+"/workspaces/{workspace_id}/"+v.path, s.mutate(v.action, v.idField, v.createID))
 	}
@@ -175,7 +179,7 @@ func (s *HTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		_, pattern := s.mux.Handler(r)
 		if pattern == "" {
 			allowed := []string{}
-			for _, method := range []string{"GET", "HEAD", "POST", "PUT"} {
+			for _, method := range []string{"GET", "HEAD", "POST", "PUT", "DELETE"} {
 				copy := r.Clone(r.Context())
 				copy.Method = method
 				_, p := s.mux.Handler(copy)

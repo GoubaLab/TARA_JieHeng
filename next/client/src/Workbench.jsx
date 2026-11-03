@@ -1,3 +1,5 @@
+import RecordDeleteButton from "./RecordDeleteButton.jsx";
+import { AssetScopeSummary } from "./AssetScopeField.jsx";
 import TaraWorkflow, {
   WorkflowSteps,
   ScenarioStageEditor,
@@ -13,7 +15,10 @@ import AIWorkspace from "./AIWorkspace.jsx";
 import QualityCenter from "./QualityCenter.jsx";
 import TeamSettings from "./TeamSettings.jsx";
 import { useAuth } from "./AuthGate.jsx";
-import TaraProducts, { SecurityGoalsPanel } from "./TaraProducts.jsx";
+import TaraProducts, {
+  SecurityGoalsPanel,
+  ProductEditor,
+} from "./TaraProducts.jsx";
 import {
   recordCode,
   pathNumberKey,
@@ -280,6 +285,18 @@ export default function Workbench() {
   const openIssue = (issue) => {
     if (ws?.access_role === "viewer") return navigate(issue.stage, ws.id);
     if (
+      issue.resolution === "exclude" &&
+      issue.property &&
+      ws.assets.some((a) => a.id === issue.reference)
+    ) {
+      navigate("assets", ws.id);
+      return setEditor({
+        kind: "asset",
+        id: issue.reference,
+        excludeProperty: issue.property,
+      });
+    }
+    if (
       ["damages", "impacts", "threats", "paths", "feasibility"].includes(
         issue.stage,
       )
@@ -310,6 +327,7 @@ export default function Workbench() {
         return setEditor({
           kind: "scenario",
           assetId: issue.reference,
+          property: issue.property,
           step: "threat",
         });
       return;
@@ -609,6 +627,11 @@ export default function Workbench() {
           editor={editor}
           onClose={() => setEditor(null)}
         />
+      ) : editor?.kind === "goal" ? (
+        <ProductEditor
+          record={ws.security_goals?.find((r) => r.id === editor.id)}
+          onClose={() => setEditor(null)}
+        />
       ) : (
         <EntityEditor editor={editor} onClose={() => setEditor(null)} />
       )}
@@ -892,16 +915,8 @@ function Overview() {
                 },
                 {
                   title: "操作",
-                  width: 80,
-                  render: (_, i) => (
-                    <Button
-                      size="small"
-                      type="link"
-                      onClick={() => openIssue(i)}
-                    >
-                      去处理
-                    </Button>
-                  ),
+                  width: 220,
+                  render: (_, i) => <IssueActions issue={i} />,
                 },
               ]}
             />
@@ -1165,6 +1180,27 @@ function DiagramPanel({ onAssets }) {
     </>
   );
 }
+export function IssueActions({ issue }) {
+  const { ws, openIssue } = useWorkbench();
+  const scopeIssue =
+    issue.property && ws.assets.some((a) => a.id === issue.reference);
+  return (
+    <Space wrap size={0}>
+      <Button type="link" onClick={() => openIssue(issue)}>
+        {scopeIssue ? "识别威胁" : "去处理"}
+      </Button>
+      {scopeIssue && (
+        <Button
+          type="link"
+          disabled={ws.access_role === "viewer"}
+          onClick={() => openIssue({ ...issue, resolution: "exclude" })}
+        >
+          设为不适用
+        </Button>
+      )}
+    </Space>
+  );
+}
 function AssetTable() {
   const { ws, catalog, setEditor, setAutomation, setReference } =
     useWorkbench();
@@ -1249,13 +1285,7 @@ function AssetTable() {
             title: "安全属性",
             dataIndex: "properties",
             width: 200,
-            render: (v) => (
-              <Space size={[0, 4]} wrap>
-                {v.map((p) => (
-                  <Tag key={p}>{properties[p]}</Tag>
-                ))}
-              </Space>
-            ),
+            render: (_, asset) => <AssetScopeSummary asset={asset} />,
           },
           {
             title: "关联实体",
@@ -1283,7 +1313,7 @@ function AssetTable() {
           },
           {
             title: "操作",
-            width: catalog.categories.length ? 240 : 110,
+            width: catalog.categories.length ? 280 : 180,
             fixed: "right",
             render: (_, a) => (
               <Space>
@@ -1303,6 +1333,7 @@ function AssetTable() {
                 >
                   识别损害
                 </Button>
+                <RecordDeleteButton kind="asset" record={a} />
               </Space>
             ),
           },
@@ -1652,6 +1683,47 @@ function Treatment() {
           </Button>
         }
       />
+      {!!ws.treatment_drafts?.length && (
+        <Card title="待确认处置草案" className="section-card">
+          <Text type="secondary">
+            草案未形成正式处置结论；不再采用时可以放弃，保留已有威胁、目标与需求。
+          </Text>
+          <Table
+            rowKey="scenario_id"
+            size="small"
+            pagination={compactPage}
+            dataSource={ws.treatment_drafts}
+            columns={[
+              {
+                title: "关联威胁",
+                render: (_, draft) => {
+                  const scenario = ws.scenarios.find(
+                    (r) => r.id === draft.scenario_id,
+                  );
+                  return `${recordCode(ws, "scenario", draft.scenario_id)} · ${scenario?.title || "引用缺失"}`;
+                },
+              },
+              {
+                title: "操作",
+                width: 220,
+                render: (_, draft) => (
+                  <Space size={0}>
+                    <Button
+                      type="link"
+                      onClick={() =>
+                        setEditor({ kind: "decision", id: draft.scenario_id })
+                      }
+                    >
+                      查看 / 确认
+                    </Button>
+                    <RecordDeleteButton kind="draft" record={draft} />
+                  </Space>
+                ),
+              },
+            ]}
+          />
+        </Card>
+      )}
       <Tabs
         items={[
           {
@@ -1863,7 +1935,7 @@ function Requirements() {
           {
             title: "操作",
             fixed: "right",
-            width: 185,
+            width: 240,
             render: (_, r) => (
               <Space>
                 <Button
@@ -1879,6 +1951,7 @@ function Requirements() {
                 >
                   记录验证
                 </Button>
+                <RecordDeleteButton kind="requirement" record={r} />
               </Space>
             ),
           },
@@ -2004,12 +2077,8 @@ function Verification() {
                     },
                     {
                       title: "操作",
-                      width: 100,
-                      render: (_, i) => (
-                        <Button type="link" onClick={() => openIssue(i)}>
-                          去处理
-                        </Button>
-                      ),
+                      width: 220,
+                      render: (_, i) => <IssueActions issue={i} />,
                     },
                   ]}
                 />

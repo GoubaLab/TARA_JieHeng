@@ -28,7 +28,12 @@ export const pages = {
   definition: "相关项与功能",
   architecture: "系统架构",
   assessment: "风险确定",
-  assets:"资产识别", damages:"损害场景", impacts:"影响评级", threats:"威胁场景", paths:"攻击路径", feasibility:"攻击可行性",
+  assets: "资产识别",
+  damages: "损害场景",
+  impacts: "影响评级",
+  threats: "威胁场景",
+  paths: "攻击路径",
+  feasibility: "攻击可行性",
   treatment: "风险处置与需求",
   verification: "验证与报告",
   library: "参考资料",
@@ -54,6 +59,12 @@ export const actions = {
   "seal-baseline": "建立评审基线",
   "apply-reference-selection": "批量选用参考资料",
   "select-regulations": "更新项目法规引用",
+  "delete-asset": "删除资产",
+  "delete-damage": "删除损害场景",
+  "delete-scenario": "删除威胁场景",
+  "delete-requirement": "删除安全需求",
+  "delete-goal": "删除安全目标",
+  "discard-treatment-draft": "放弃处置草案",
 };
 export const apiRoot = "/api/v1";
 export async function request(path, options = {}) {
@@ -109,7 +120,10 @@ export function command(ws, action, payload, requestId = crypto.randomUUID()) {
       payload.id ? "PUT" : "POST",
       `/scenarios${payload.id ? "/" + key(payload.id) : ""}`,
     ],
-    "rate-attack-path": ["PUT", `/scenarios/${key(payload.scenario_id)}/attack-feasibility`],
+    "rate-attack-path": [
+      "PUT",
+      `/scenarios/${key(payload.scenario_id)}/attack-feasibility`,
+    ],
     "decide-treatment": [
       "PUT",
       `/scenarios/${key(payload.scenario_id)}/treatment`,
@@ -124,6 +138,15 @@ export function command(ws, action, payload, requestId = crypto.randomUUID()) {
     "seal-baseline": ["POST", "/baselines"],
     "apply-reference-selection": ["POST", "/reference-imports"],
     "select-regulations": ["PUT", "/regulation-references"],
+    "delete-asset": ["DELETE", `/assets/${key(payload.id)}`],
+    "delete-damage": ["DELETE", `/damage-scenarios/${key(payload.id)}`],
+    "delete-scenario": ["DELETE", `/scenarios/${key(payload.id)}`],
+    "delete-requirement": ["DELETE", `/requirements/${key(payload.id)}`],
+    "delete-goal": ["DELETE", `/security-goals/${key(payload.id)}`],
+    "discard-treatment-draft": [
+      "DELETE",
+      `/scenarios/${key(payload.scenario_id)}/treatment-draft`,
+    ],
   };
   const route = routes[action];
   if (!route) throw new Error("未知操作，请刷新页面后重试。");
@@ -136,10 +159,18 @@ export function command(ws, action, payload, requestId = crypto.randomUUID()) {
       "record-evidence",
       "record-damage",
       "record-goal",
-    ].includes(action)
+    ].includes(action) ||
+    action.startsWith("delete-")
   )
     delete body.id;
-  if (["decide-treatment","rate-attack-path"].includes(action)) delete body.scenario_id;
+  if (
+    [
+      "decide-treatment",
+      "rate-attack-path",
+      "discard-treatment-draft",
+    ].includes(action)
+  )
+    delete body.scenario_id;
   return request(`/workspaces/${key(ws.id)}${route[1]}`, {
     method: route[0],
     headers: { "If-Match": `"${ws.revision}"`, "Idempotency-Key": requestId },

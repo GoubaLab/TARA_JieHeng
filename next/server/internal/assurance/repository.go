@@ -306,10 +306,10 @@ func (r *Repository) Change(ctx context.Context, key string, expected int64, req
 	if revision != expected {
 		return nil, false, &RevisionError{Current: revision}
 	}
-	if collection := map[string]string{"record-asset": "assets", "record-scenario": "scenarios", "specify-requirement": "requirements"}[action]; collection != "" {
+	if collection := map[string]string{"record-asset": "assets", "record-scenario": "scenarios", "specify-requirement": "requirements", "delete-asset": "assets", "delete-damage": "damage_scenarios", "delete-scenario": "scenarios", "delete-requirement": "requirements", "delete-goal": "security_goals"}[action]; collection != "" {
 		if id, supplied := payload["id"].(string); supplied && id != "" {
 			found := false
-			for _, raw := range ws[collection].([]any) {
+			for _, raw := range dList(ws[collection]) {
 				if row, ok := raw.(map[string]any); ok && row["id"] == id {
 					found = true
 					break
@@ -336,6 +336,24 @@ func (r *Repository) Change(ctx context.Context, key string, expected int64, req
 	if err != nil {
 		return nil, false, err
 	}
+	var deletionCheckpoint Object
+	if collection := deletionCollections[action]; collection != "" || action == "discard-treatment-draft" {
+		kind := map[string]string{"assets": "asset", "damage_scenarios": "damage", "scenarios": "scenario", "requirements": "requirement", "security_goals": "goal"}[collection]
+		recordID := effective["id"]
+		if action == "discard-treatment-draft" {
+			collection, kind, recordID = "scenarios", "scenario", effective["scenario_id"]
+		}
+		record, _ := dFind(dList(before[collection]), recordID)
+		name := assetText(reportActions[action]+"前 · "+workProductDependencyLabel(before, kind, record), 200)
+		actor := "本地管理员"
+		if user, ok := ctx.Value(principalContextKey{}).(map[string]any); ok && dStr(user["id"]) != "" {
+			actor = dStr(user["id"])
+		}
+		deletionCheckpoint, err = checkpointInTx(ctx, tx, before, name, actor)
+		if err != nil {
+			return nil, false, err
+		}
+	}
 	if _, err = tx.ExecContext(ctx, "UPDATE workspaces SET body=? WHERE id=?", body, key); err != nil {
 		return nil, false, err
 	}
@@ -343,7 +361,11 @@ func (r *Repository) Change(ctx context.Context, key string, expected int64, req
 	if action == "import-tara" {
 		eventPayload = taraSummary(next)
 	}
-	if err = repoEvent(ctx, tx, next, action, Object{"payload": eventPayload, "entity_id": entityID}); err != nil {
+	eventDetails := Object{"payload": eventPayload, "entity_id": entityID}
+	if deletionCheckpoint != nil {
+		eventDetails["checkpoint_id"] = deletionCheckpoint["id"]
+	}
+	if err = repoEvent(ctx, tx, next, action, eventDetails); err != nil {
 		return nil, false, err
 	}
 	if action == "seal-baseline" {
@@ -356,6 +378,9 @@ func (r *Repository) Change(ctx context.Context, key string, expected int64, req
 		}
 	}
 	result := Object{"workspace_id": key, "revision": next["revision"], "entity_id": entityID}
+	if deletionCheckpoint != nil {
+		result["checkpoint_id"] = deletionCheckpoint["id"]
+	}
 	if action == "replace-architecture" {
 		result["asset_sync"] = architectureAssetSummary(before, next)
 	}

@@ -97,7 +97,10 @@ func AutomationPlan(ws Object) Object {
 	add := func(ruleID string, subject Object, facts []any) {
 		rule := byRule[ruleID]
 		id := "ac_" + Digest([]any{ruleID, subject["kind"], subject["id"]})[:24]
-		options, selected := automationAssets(ws, subject, rule.property)
+		options, selected, excluded := automationAssets(ws, subject, rule.property)
+		if excluded {
+			return
+		}
 		title := assetText(dStr(subject["name"])+" · "+rule.title, 300)
 		existing, related := automationCoverage(ws, id, title, rule, selected)
 		warnings := []any{"待核对攻击前提与控制实施情况。"}
@@ -345,8 +348,9 @@ func automationSameSet(a, b []any) bool {
 	return Digest(automationSortedValues(dUnique(a))) == Digest(automationSortedValues(dUnique(b)))
 }
 
-func automationAssets(ws, subject Object, property string) ([]any, []any) {
+func automationAssets(ws, subject Object, property string) ([]any, []any, bool) {
 	preferred, manual := []any{}, []any{}
+	excludedPreferred, excludedManual := 0, 0
 	for _, raw := range dList(ws["assets"]) {
 		a := dObj(raw)
 		if dStr(a["id"]) == "" || !dHas(dList(a["properties"]), property) || !automationSameSet(dList(a["node_ids"]), dList(subject["node_ids"])) {
@@ -359,7 +363,11 @@ func automationAssets(ws, subject Object, property string) ([]any, []any) {
 			// For child subjects require the exact architecture source instead
 			// of associating another asset (for example logs) with key storage.
 			if subject["kind"] != "child" {
-				manual = append(manual, option)
+				if assetPropertyExcluded(a, property) {
+					excludedManual++
+				} else {
+					manual = append(manual, option)
+				}
 			}
 			continue
 		}
@@ -381,20 +389,29 @@ func automationAssets(ws, subject Object, property string) ([]any, []any) {
 			match = source["kind"] == want
 		}
 		if match {
-			preferred = append(preferred, option)
+			if assetPropertyExcluded(a, property) {
+				excludedPreferred++
+			} else {
+				preferred = append(preferred, option)
+			}
 		}
 	}
 	options := append(preferred, manual...)
 	sort.Slice(options, func(i, j int) bool { return dStr(dObj(options[i])["id"]) < dStr(dObj(options[j])["id"]) })
+	// An exact source's exclusion must not be bypassed by falling back to a
+	// different manually linked asset on the same endpoints.
+	if len(preferred) == 0 && excludedPreferred > 0 || len(options) == 0 && excludedManual > 0 {
+		return options, []any{}, true
+	}
 	// Multiple manually linked assets do not establish which business asset the
 	// rule concerns; do not make an arbitrary choice by name or list order.
 	if len(preferred) == 1 {
-		return options, []any{dObj(preferred[0])["id"]}
+		return options, []any{dObj(preferred[0])["id"]}, false
 	}
 	if len(preferred) == 0 && len(manual) == 1 {
-		return options, []any{dObj(manual[0])["id"]}
+		return options, []any{dObj(manual[0])["id"]}, false
 	}
-	return options, []any{}
+	return options, []any{}, false
 }
 func automationCoverage(ws Object, candidateID, title string, rule automationRule, assetIDs []any) ([]any, []any) {
 	existing, related := []any{}, []any{}

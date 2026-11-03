@@ -1024,6 +1024,65 @@
       &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
     }
   }
+}</pre></details></section><section><h2><code>DELETE /api/v1/workspaces/{id}/assets/{asset_id}</code></h2><h3>删除资产</h3><p>从当前工作版本移除记录。仍被其他工作产品或已采用处置草案引用的记录、自动资产模式下来源仍有效的派生资产以及已有验证记录的需求会被拒绝（422）。资产目录模式允许删除无引用的派生资产。修订号递增并写入操作记录，冻结基线与已分配编号不受影响。请求体可为空。 成功操作与操作前还原点在同一事务保存，响应包含checkpoint_id；失败不建立还原点，幂等重放复用原还原点。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;删除资产&quot;,
+  &quot;operationId&quot;: &quot;deleteAsset&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;description&quot;: &quot;从当前工作版本移除记录。仍被其他工作产品或已采用处置草案引用的记录、自动资产模式下来源仍有效的派生资产以及已有验证记录的需求会被拒绝（422）。资产目录模式允许删除无引用的派生资产。修订号递增并写入操作记录，冻结基线与已分配编号不受影响。请求体可为空。 成功操作与操作前还原点在同一事务保存，响应包含checkpoint_id；失败不建立还原点，幂等重放复用原还原点。&quot;,
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;name&quot;: &quot;asset_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1
+      }
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;已删除&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/MutationResult&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
 }</pre></details></section><section><h2><code>POST /api/v1/workspaces/{id}/scenarios</code></h2><h3>创建风险场景</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
   &quot;summary&quot;: &quot;创建风险场景&quot;,
   &quot;operationId&quot;: &quot;createScenario&quot;,
@@ -1218,6 +1277,65 @@
       &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
     }
   }
+}</pre></details></section><section><h2><code>DELETE /api/v1/workspaces/{id}/scenarios/{scenario_id}</code></h2><h3>删除威胁场景</h3><p>从当前工作版本移除记录。仍被其他工作产品或已采用处置草案引用的记录、自动资产模式下来源仍有效的派生资产以及已有验证记录的需求会被拒绝（422）。资产目录模式允许删除无引用的派生资产。修订号递增并写入操作记录，冻结基线与已分配编号不受影响。请求体可为空。 成功操作与操作前还原点在同一事务保存，响应包含checkpoint_id；失败不建立还原点，幂等重放复用原还原点。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;删除威胁场景&quot;,
+  &quot;operationId&quot;: &quot;deleteScenario&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;description&quot;: &quot;从当前工作版本移除记录。仍被其他工作产品或已采用处置草案引用的记录、自动资产模式下来源仍有效的派生资产以及已有验证记录的需求会被拒绝（422）。资产目录模式允许删除无引用的派生资产。修订号递增并写入操作记录，冻结基线与已分配编号不受影响。请求体可为空。 成功操作与操作前还原点在同一事务保存，响应包含checkpoint_id；失败不建立还原点，幂等重放复用原还原点。&quot;,
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;name&quot;: &quot;scenario_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1
+      }
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;已删除&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/MutationResult&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
 }</pre></details></section><section><h2><code>POST /api/v1/workspaces/{id}/requirements</code></h2><h3>创建安全需求</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
   &quot;summary&quot;: &quot;创建安全需求&quot;,
   &quot;operationId&quot;: &quot;createRequirement&quot;,
@@ -1404,6 +1522,65 @@
         &quot;application/json&quot;: {
           &quot;schema&quot;: {
             &quot;$ref&quot;: &quot;#/components/schemas/RequirementRecord&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>DELETE /api/v1/workspaces/{id}/requirements/{requirement_id}</code></h2><h3>删除安全需求</h3><p>从当前工作版本移除记录。仍被其他工作产品或已采用处置草案引用的记录、自动资产模式下来源仍有效的派生资产以及已有验证记录的需求会被拒绝（422）。资产目录模式允许删除无引用的派生资产。修订号递增并写入操作记录，冻结基线与已分配编号不受影响。请求体可为空。 成功操作与操作前还原点在同一事务保存，响应包含checkpoint_id；失败不建立还原点，幂等重放复用原还原点。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;删除安全需求&quot;,
+  &quot;operationId&quot;: &quot;deleteRequirement&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;description&quot;: &quot;从当前工作版本移除记录。仍被其他工作产品或已采用处置草案引用的记录、自动资产模式下来源仍有效的派生资产以及已有验证记录的需求会被拒绝（422）。资产目录模式允许删除无引用的派生资产。修订号递增并写入操作记录，冻结基线与已分配编号不受影响。请求体可为空。 成功操作与操作前还原点在同一事务保存，响应包含checkpoint_id；失败不建立还原点，幂等重放复用原还原点。&quot;,
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;name&quot;: &quot;requirement_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1
+      }
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;已删除&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/MutationResult&quot;
           }
         }
       }
@@ -2785,6 +2962,65 @@
       &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
     }
   }
+}</pre></details></section><section><h2><code>DELETE /api/v1/workspaces/{id}/damage-scenarios/{resource_id}</code></h2><h3>删除损害场景</h3><p>从当前工作版本移除记录。仍被其他工作产品或已采用处置草案引用的记录、自动资产模式下来源仍有效的派生资产以及已有验证记录的需求会被拒绝（422）。资产目录模式允许删除无引用的派生资产。修订号递增并写入操作记录，冻结基线与已分配编号不受影响。请求体可为空。 成功操作与操作前还原点在同一事务保存，响应包含checkpoint_id；失败不建立还原点，幂等重放复用原还原点。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;删除损害场景&quot;,
+  &quot;operationId&quot;: &quot;deleteDamageScenario&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;description&quot;: &quot;从当前工作版本移除记录。仍被其他工作产品或已采用处置草案引用的记录、自动资产模式下来源仍有效的派生资产以及已有验证记录的需求会被拒绝（422）。资产目录模式允许删除无引用的派生资产。修订号递增并写入操作记录，冻结基线与已分配编号不受影响。请求体可为空。 成功操作与操作前还原点在同一事务保存，响应包含checkpoint_id；失败不建立还原点，幂等重放复用原还原点。&quot;,
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;name&quot;: &quot;resource_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1
+      }
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;已删除&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/MutationResult&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
 }</pre></details></section><section><h2><code>POST /api/v1/workspaces/{id}/security-goals</code></h2><h3>创建安全目标</h3><p></p><details><summary>参数、请求与响应</summary><pre>{
   &quot;summary&quot;: &quot;创建安全目标&quot;,
   &quot;operationId&quot;: &quot;createSecurityGoal&quot;,
@@ -2971,6 +3207,65 @@
         &quot;application/json&quot;: {
           &quot;schema&quot;: {
             &quot;$ref&quot;: &quot;#/components/schemas/SecurityGoalRecord&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
+}</pre></details></section><section><h2><code>DELETE /api/v1/workspaces/{id}/security-goals/{resource_id}</code></h2><h3>删除安全目标</h3><p>从当前工作版本移除记录。仍被其他工作产品或已采用处置草案引用的记录、自动资产模式下来源仍有效的派生资产以及已有验证记录的需求会被拒绝（422）。资产目录模式允许删除无引用的派生资产。修订号递增并写入操作记录，冻结基线与已分配编号不受影响。请求体可为空。 成功操作与操作前还原点在同一事务保存，响应包含checkpoint_id；失败不建立还原点，幂等重放复用原还原点。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;删除安全目标&quot;,
+  &quot;operationId&quot;: &quot;deleteSecurityGoal&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;description&quot;: &quot;从当前工作版本移除记录。仍被其他工作产品或已采用处置草案引用的记录、自动资产模式下来源仍有效的派生资产以及已有验证记录的需求会被拒绝（422）。资产目录模式允许删除无引用的派生资产。修订号递增并写入操作记录，冻结基线与已分配编号不受影响。请求体可为空。 成功操作与操作前还原点在同一事务保存，响应包含checkpoint_id；失败不建立还原点，幂等重放复用原还原点。&quot;,
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;name&quot;: &quot;resource_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1
+      }
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;已删除&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/MutationResult&quot;
           }
         }
       }
@@ -5032,6 +5327,65 @@
       &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
     }
   }
+}</pre></details></section><section><h2><code>DELETE /api/v1/workspaces/{id}/scenarios/{scenario_id}/treatment-draft</code></h2><h3>放弃未确认处置草案</h3><p>仅移除指定威胁场景的未确认处置草案；保留威胁、目标、需求及已确认处置，无需完成风险评级。不存在草案时返回404。操作要求项目写权限、当前修订和幂等键，记录修订与审计，不改变冻结基线。请求体可为空。 成功操作与操作前还原点在同一事务保存，响应包含checkpoint_id；失败不建立还原点，幂等重放复用原还原点。</p><details><summary>参数、请求与响应</summary><pre>{
+  &quot;summary&quot;: &quot;放弃未确认处置草案&quot;,
+  &quot;operationId&quot;: &quot;discardTreatmentDraft&quot;,
+  &quot;tags&quot;: [
+    &quot;工作区&quot;
+  ],
+  &quot;description&quot;: &quot;仅移除指定威胁场景的未确认处置草案；保留威胁、目标、需求及已确认处置，无需完成风险评级。不存在草案时返回404。操作要求项目写权限、当前修订和幂等键，记录修订与审计，不改变冻结基线。请求体可为空。 成功操作与操作前还原点在同一事务保存，响应包含checkpoint_id；失败不建立还原点，幂等重放复用原还原点。&quot;,
+  &quot;parameters&quot;: [
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/WorkspaceID&quot;
+    },
+    {
+      &quot;name&quot;: &quot;scenario_id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;required&quot;: true,
+      &quot;schema&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;minLength&quot;: 1
+      }
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/Client&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IdempotencyKey&quot;
+    },
+    {
+      &quot;$ref&quot;: &quot;#/components/parameters/IfMatch&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;已删除&quot;,
+      &quot;headers&quot;: {
+        &quot;X-Request-ID&quot;: {
+          &quot;description&quot;: &quot;本次请求的追踪标识。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;ETag&quot;: {
+          &quot;description&quot;: &quot;工作区修订，如 \&quot;4\&quot;。&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;content&quot;: {
+        &quot;application/json&quot;: {
+          &quot;schema&quot;: {
+            &quot;$ref&quot;: &quot;#/components/schemas/MutationResult&quot;
+          }
+        }
+      }
+    },
+    &quot;default&quot;: {
+      &quot;$ref&quot;: &quot;#/components/responses/Problem&quot;
+    }
+  }
 }</pre></details></section><section id="schema-Item"><details><summary>Item</summary><pre>{
   &quot;additionalProperties&quot;: false,
   &quot;properties&quot;: {
@@ -5619,6 +5973,14 @@
         &quot;minLength&quot;: 1,
         &quot;maxLength&quot;: 200
       }
+    },
+    &quot;excluded_properties&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;maxItems&quot;: 8,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/PropertyExclusion&quot;
+      },
+      &quot;description&quot;: &quot;不适用的安全属性及理由；更新时省略保留原值，传空数组明确清除。&quot;
     }
   },
   &quot;required&quot;: [
@@ -6599,6 +6961,14 @@
         &quot;minLength&quot;: 1,
         &quot;maxLength&quot;: 200
       }
+    },
+    &quot;excluded_properties&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;maxItems&quot;: 8,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/PropertyExclusion&quot;
+      },
+      &quot;description&quot;: &quot;不适用的安全属性及理由；更新时省略保留原值，传空数组明确清除。&quot;
     }
   },
   &quot;required&quot;: [
@@ -7055,6 +7425,10 @@
     },
     &quot;import_summary&quot;: {
       &quot;$ref&quot;: &quot;#/components/schemas/TaraImportSummary&quot;
+    },
+    &quot;checkpoint_id&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;成功删除或放弃草案时自动建立的操作前还原点。可通过还原接口恢复为新的项目修订。&quot;
     }
   },
   &quot;required&quot;: [
@@ -7193,6 +7567,14 @@
         &quot;minLength&quot;: 1,
         &quot;maxLength&quot;: 200
       }
+    },
+    &quot;excluded_properties&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;maxItems&quot;: 8,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/PropertyExclusion&quot;
+      },
+      &quot;description&quot;: &quot;不适用的安全属性及理由；更新时省略保留原值，传空数组明确清除。&quot;
     }
   },
   &quot;required&quot;: [
@@ -7883,6 +8265,10 @@
           },
           &quot;path_id&quot;: {
             &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;property&quot;: {
+            &quot;type&quot;: &quot;string&quot;,
+            &quot;description&quot;: &quot;资产覆盖类待办对应的安全属性，便于预填处理入口。&quot;
           }
         },
         &quot;required&quot;: [
@@ -8458,6 +8844,14 @@
         &quot;minLength&quot;: 1,
         &quot;maxLength&quot;: 200
       }
+    },
+    &quot;excluded_properties&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;maxItems&quot;: 8,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/components/schemas/PropertyExclusion&quot;
+      },
+      &quot;description&quot;: &quot;不适用的安全属性及理由；更新时省略保留原值，传空数组明确清除。&quot;
     }
   },
   &quot;required&quot;: [
@@ -11441,4 +11835,32 @@
       }
     }
   }
+}</pre></details></section><section id="schema-PropertyExclusion"><details><summary>PropertyExclusion</summary><pre>{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;required&quot;: [
+    &quot;property&quot;,
+    &quot;reason&quot;
+  ],
+  &quot;properties&quot;: {
+    &quot;property&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;enum&quot;: [
+        &quot;confidentiality&quot;,
+        &quot;integrity&quot;,
+        &quot;availability&quot;,
+        &quot;authenticity&quot;,
+        &quot;authorization&quot;,
+        &quot;non_repudiation&quot;,
+        &quot;freshness&quot;,
+        &quot;privacy&quot;
+      ]
+    },
+    &quot;reason&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 2000
+    }
+  },
+  &quot;description&quot;: &quot;声明某个安全属性不在分析范围内及其理由。属性必须属于资产已声明的安全属性，且不能与对应威胁场景同时存在；保存资产、威胁及采用自动分析时均检查此约束。完整性检查不再要求已排除属性的威胁场景，报告会列出理由。&quot;
 }</pre></details></section></html>

@@ -165,3 +165,12 @@ Idempotency-Key: b320291b-39d1-44df-800b-c26b8a445731
 `Review.workflow_stages` 提供 11 个细分工作产品阶段的 `key/complete/count/pending`；原 `stages` 保留兼容。`issues.stage` 可以是 `impacts`、`threats`、`paths` 或 `feasibility`，`path_id` 可用于直接定位待评估路径。客户端应按细分阶段导航，不把所有评估缺口归到同一个场景表单。
 
 只读路径搜索接口及 `AttackPath.architecture_route` 见 [拓扑候选契约](ATTACK_PATH_TEMPLATES.md#从架构查找路径)。新建及编辑需求时补全 `scenario_ids/goal_ids`，后续验证摘要绑定相关评估与目标；旧格式未编辑记录保持兼容。`SecurityGoal.cal` 可省略，填写时须为 1～4。
+
+
+## 删除与属性适用范围
+
+五类资源提供 DELETE：`assets/{asset_id}`、`damage-scenarios/{resource_id}`、`scenarios/{scenario_id}`、`security-goals/{resource_id}`、`requirements/{requirement_id}`，路径前缀为 `/api/v1/workspaces/{id}/`。请求体可为空，仍需项目写权限、当前 `If-Match` 和 `Idempotency-Key`。成功返回 200 与 `MutationResult`；不存在返回 404；依赖或有效自动派生来源阻止删除时返回 422；过期修订返回 412。成功删除与操作前还原点在同一事务保存，返回 `checkpoint_id`；幂等重放复用原还原点，不重复递增修订。
+
+安全目标的依赖检查包含未确认处置草案。`DELETE /workspaces/{id}/scenarios/{scenario_id}/treatment-draft` 仅放弃未确认草案，不修改正式处置、威胁、目标或需求，不要求先完成风险评级。所有删除保持冻结基线和历史编号。
+
+`Asset.excluded_properties` 为 `{property, reason}` 数组：属性须已声明且不重复，理由为 1～2,000 字符。更新时省略字段保留原值，传 `[]` 明确清除。保存资产、创建/编辑威胁和采用分析草案均检查排除属性不得与对应威胁共存。规则候选跳过排除属性；模型不可自行将新资产属性设为不适用。字段及理由进入静态报告。

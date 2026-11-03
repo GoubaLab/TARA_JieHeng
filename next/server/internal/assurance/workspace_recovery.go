@@ -261,6 +261,15 @@ func Quality(ws Object) Object {
 	uncovered := []any{}
 	for _, asset := range dList(ws["assets"]) {
 		a := dObj(asset)
+		allExcluded := len(dList(a["properties"])) > 0
+		for _, p := range dList(a["properties"]) {
+			if !assetPropertyExcluded(a, p) {
+				allExcluded = false
+			}
+		}
+		if allExcluded {
+			covered[dStr(a["id"])] = true
+		}
 		if !covered[dStr(a["id"])] {
 			uncovered = append(uncovered, Object{"id": a["id"], "name": a["name"]})
 			issues = append(issues, Object{"stage": "assessment", "reference": a["id"], "detail": "资产尚未关联威胁场景或不适用说明：" + dStr(a["name"]), "code": "asset_coverage"})
