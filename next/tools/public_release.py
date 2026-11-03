@@ -147,7 +147,11 @@ python3 next/tools/test_public_release.py
 
 当前版本支持单企业、单实例内网部署和本机工作台。尚未提供 SSO/MFA、合格电子签名、审批流、分布式高可用或大规模向量服务。集成测试使用固定响应服务验证协议和流程；实际识图与分析质量取决于配置的模型，应使用部署环境中的代表性样例评估。跨行业流程、额外工作簿版式和专用报告可按扩展文档二次开发。接口服务不应直接作为公网多租户服务部署。
 
-源码仓库包含应用代码、测试、公开案例分析、演示截图和开发文档。运行数据库、项目资料和法规正文由部署方管理，不随源码分发。仓库目前未选定开源许可证；公开可见不表示已授予额外的使用、修改或再分发许可，第三方依赖遵循各自许可证。
+源码仓库包含应用代码、测试、公开案例分析、演示截图和开发文档。运行数据库、项目资料和法规正文由部署方管理，不随源码分发。
+
+## 许可证
+
+除另有说明外，本项目采用 [Apache License 2.0](LICENSE)。第三方依赖与引用资料遵循各自的许可证或使用条款。
 '''
 REGULATIONS_README = '''# 本地法规资料接入
 
@@ -247,7 +251,7 @@ def source_allowed(name):
         return False
     if name in SCREENSHOTS:
         return True
-    if name in {'start.sh', 'start.py'}:
+    if name in {'LICENSE', 'start.sh', 'start.py'}:
         return True
     if len(path.parts) < 2 or path.parts[0] != 'next':
         return False
@@ -268,7 +272,7 @@ def source_allowed(name):
 
 def selected_sources(project):
     files = []
-    for name in ('start.sh', 'start.py'):
+    for name in ('LICENSE', 'start.sh', 'start.py'):
         p = project / name
         if p.is_file() and not p.is_symlink(): files.append(p)
     for directory, subdirs, names in os.walk(project / 'next', followlinks=False):
