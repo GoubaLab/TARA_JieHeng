@@ -54,7 +54,7 @@ class SourceReleaseTests(unittest.TestCase):
             release.validate_screenshot(header + ihdr + chunk(b'tEXt', b'private note') + image + end)
         with self.assertRaises(ValueError):
             release.validate_screenshot(header + ihdr + image + end + b'trailing data')
-        self.assertTrue(release.source_allowed('next/docs/screenshots/numbering.png'))
+        self.assertTrue(release.source_allowed('next/docs/screenshots/numbering.jpg'))
         self.assertFalse(release.source_allowed('next/docs/screenshots/unreviewed.png'))
 
     def test_reviewed_jfif_has_no_exif_comments_or_trailing_bytes(self):

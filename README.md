@@ -39,15 +39,15 @@
 
 实体间统一布线，协议直接标在连线上；端点、线段和标签可手工调整。
 
-![实体与数据流](next/docs/screenshots/architecture.png)
+![实体与数据流](next/docs/screenshots/architecture.jpg)
 
 保存架构后自动生成资产；已有目录可保留原编号和人工维护内容。
 
-![自动资产清单](next/docs/screenshots/assets.png)
+![自动资产清单](next/docs/screenshots/assets.jpg)
 
 “项目设置 → 编号规则”支持按类型配置前缀、分隔符与数字位数，画布、清单和报告统一显示。
 
-![自定义编号规则](next/docs/screenshots/numbering.png)
+![自定义编号规则](next/docs/screenshots/numbering.jpg)
 
 模型服务支持统一配置与连接检查；交付检查汇总工作产品完整性和待处理事项。图中的模型连接为演示测试服务。
 

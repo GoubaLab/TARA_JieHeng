@@ -18,7 +18,7 @@ BUILDERS = {'build_gb44495.py', 'build_gb44496.py', 'build_gbt44464.py', 'build_
 TOOLS = {'build-go.sh', 'build-api-docs.py', 'public_release.py', 'test_public_release.py', 'collect_public_knowledge.py', 'test_public_knowledge.py'}
 BLOCKED_PARTS = {'.git', '.work', '.runtime', '.venv', 'node_modules', '__pycache__', 'var', 'bin', 'web', 'dist', 'private', 'backups', 'retired-tests', 'source-snapshot', 'testdata', 'fixtures'}
 BLOCKED_SUFFIXES = {'.pdf', '.docx', '.xlsx', '.zip', '.tar', '.gz', '.tgz', '.sqlite', '.sqlite3', '.db', '.pyc', '.log'}
-SCREENSHOTS = {'next/docs/screenshots/tara-workflow.jpg', 'next/docs/screenshots/architecture.png', 'next/docs/screenshots/assets.png', 'next/docs/screenshots/numbering.png', 'next/docs/screenshots/quality-center.jpg', 'next/docs/screenshots/model-services.jpg', 'next/docs/screenshots/automation-center.jpg', 'next/docs/screenshots/attack-path-presets.jpg', 'next/docs/screenshots/project-management.jpg'}
+SCREENSHOTS = {'next/docs/screenshots/tara-workflow.jpg', 'next/docs/screenshots/architecture.jpg', 'next/docs/screenshots/assets.jpg', 'next/docs/screenshots/numbering.jpg', 'next/docs/screenshots/quality-center.jpg', 'next/docs/screenshots/model-services.jpg', 'next/docs/screenshots/automation-center.jpg', 'next/docs/screenshots/attack-path-presets.jpg', 'next/docs/screenshots/project-management.jpg'}
 SOURCE_SUFFIXES = {'.go', '.json', '.html', '.js', '.jsx', '.mjs', '.cjs', '.ts', '.tsx', '.css', '.svg', '.txt', '.md', '.mod', '.sum', '.sh', '.py'}
 IDENTIFIERS = re.compile(rb'\b(?:systems|losses|patterns|techniques|controls|relationships|checks|methods|criteria|collections|gb|r155):[A-Za-z0-9_-]+')
 # Assembled from parts so this audit pattern cannot match the staging tool's own source.
@@ -68,15 +68,15 @@ PUBLIC_README = '''# 界衡 · 威胁建模平台
 
 实体间统一布线，协议直接标在连线上；端点、线段和标签可手工调整。
 
-![实体与数据流](next/docs/screenshots/architecture.png)
+![实体与数据流](next/docs/screenshots/architecture.jpg)
 
 保存架构后自动生成资产；已有目录可保留原编号和人工维护内容。
 
-![自动资产清单](next/docs/screenshots/assets.png)
+![自动资产清单](next/docs/screenshots/assets.jpg)
 
 “项目设置 → 编号规则”支持按类型配置前缀、分隔符与数字位数，画布、清单和报告统一显示。
 
-![自定义编号规则](next/docs/screenshots/numbering.png)
+![自定义编号规则](next/docs/screenshots/numbering.jpg)
 
 模型服务支持统一配置与连接检查；交付检查汇总工作产品完整性和待处理事项。图中的模型连接为演示测试服务。
 
