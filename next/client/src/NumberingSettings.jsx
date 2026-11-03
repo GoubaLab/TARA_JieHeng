@@ -75,7 +75,7 @@ export default function NumberingSettings() {
         type="info"
         showIcon
         title="仅应用于当前项目"
-        description="修改前缀、分隔符或位数会更新已有记录的显示编号，原序号和关联保留。删除记录不回收序号；冻结报告保留当时的编号规则。"
+        description="图中生成的资产沿用实体、软件、存储或数据流编号；独立资产使用资产前缀，手工或导入的业务编号优先。修改格式保留序号和关联，删除不回收序号；冻结报告使用快照中的规则与业务编号。"
       />
       {error && (
         <Alert className="section-card" type="error" showIcon title={error} />
@@ -120,7 +120,7 @@ export default function NumberingSettings() {
             <Col xs={24} md={10}>
               <Space orientation="vertical">
                 <Typography.Text type="secondary">
-                  示例：资产编号
+                  示例：独立资产编号
                 </Typography.Text>
                 <Tag color="blue" style={{ fontSize: 18, padding: "6px 14px" }}>
                   {formatNumber(rules, "asset", 1)}

@@ -632,7 +632,15 @@ export function EntityEditor({ editor, onClose }) {
             style={{ display: error ? "block" : "none", marginBottom: 16 }}
           />
           <Form form={form} layout="vertical" requiredMark>
-            <TaraFields kind={kind} ws={ws} />
+            <TaraFields
+              kind={kind}
+              ws={ws}
+              record={
+                kind === "asset"
+                  ? ws.assets.find((a) => a.id === editor.id)
+                  : undefined
+              }
+            />
             {kind === "item" && (
               <>
                 <Form.Item

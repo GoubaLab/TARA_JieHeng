@@ -1,6 +1,10 @@
 import RecordDeleteButton from "./RecordDeleteButton.jsx";
 import { AssetScopeSummary } from "./AssetScopeField.jsx";
-import { recordCode as businessCode, pathNumberKey } from "./numbering.js";
+import {
+  recordCode as businessCode,
+  pathNumberKey,
+  nodeNumberKind,
+} from "./numbering.js";
 import { functionCatalog, recordLabel } from "./tara-guidance.js";
 import React, { useEffect, useState, useRef } from "react";
 import {
@@ -283,7 +287,9 @@ export default function TaraProducts() {
     (values || [])
       .map((id) => {
         const r = (ws[collection] || []).find((r) => r.id === id);
-        return r ? recordLabel(r) : id + " · 引用内容缺失";
+        return r
+          ? recordLabel({ ...r, display_code: code(ws, r) })
+          : id + " · 引用内容缺失";
       })
       .join("；");
   const functionText = (values) =>
@@ -481,7 +487,22 @@ export default function TaraProducts() {
                     col("安全属性与范围", "properties", 300, (_, asset) => (
                       <AssetScopeSummary asset={asset} />
                     )),
-                    col("DFD 关联", "node_ids", 240, joined),
+                    col(
+                      "DFD 关联",
+                      "node_ids",
+                      240,
+                      (ids) =>
+                        (ids || [])
+                          .map((id) => {
+                            const node = ws.architecture.nodes.find(
+                              (n) => n.id === id,
+                            );
+                            return node
+                              ? `${businessCode(ws, nodeNumberKind(node), id)} · ${node.name}`
+                              : "来源已移除";
+                          })
+                          .join("；") || "—",
+                    ),
                   ]}
                 />
               ),

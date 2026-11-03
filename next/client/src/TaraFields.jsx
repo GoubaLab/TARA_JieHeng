@@ -8,13 +8,28 @@ const options = (ws, kind, records, text) =>
     value: r.id,
     label: `${r.source_code || businessCode(ws, kind, r.id)} · ${r[text] || ""}`,
   }));
-export function TaraFields({ kind, ws }) {
+export function TaraFields({ kind, ws, record }) {
   const common = ["asset", "scenario", "requirement"].includes(kind);
   return (
     <>
       {common && (
-        <Form.Item name="source_code" label="业务编号">
-          <Input maxLength={100} />
+        <Form.Item
+          name="source_code"
+          label="业务编号"
+          extra={
+            kind === "asset"
+              ? "可自定义；留空时，图中生成的资产沿用 DFD 编号，独立资产按项目编号规则显示。"
+              : undefined
+          }
+        >
+          <Input
+            maxLength={100}
+            placeholder={
+              kind === "asset" && record
+                ? businessCode(ws, "asset", record.id)
+                : undefined
+            }
+          />
         </Form.Item>
       )}
       {kind === "asset" && (

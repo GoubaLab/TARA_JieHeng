@@ -97,11 +97,60 @@ func RecordCodes(ws Object) func(string, any) string {
 	ensureRecordNumbers(copy)
 	state := dObj(copy["numbering_state"])
 	rules := EffectiveNumbering(dObj(ws["numbering"]))
-	return func(kind string, id any) string {
-		n := dInt(dObj(state[kind])[dStr(id)])
-		if n == 0 {
-			return dStr(id)
+	format := func(kind, id string) string {
+		n := dInt(dObj(state[kind])[id])
+		if n <= 0 {
+			return ""
 		}
 		return fmt.Sprintf("%s%s%0*d", dStr(dObj(rules["prefixes"])[kind]), dStr(rules["separator"]), dInt(rules["padding"]), n)
+	}
+	// Source identity is separate from the asset's immutable ID and registry.
+	// Resolve software/store reclassification from the current graph, while
+	// retaining the recorded kind for removed sources and frozen snapshots.
+	sourceKinds := map[string]string{}
+	graph := dObj(copy["architecture"])
+	for _, raw := range dList(graph["nodes"]) {
+		node := dObj(raw)
+		kind := nodeNumberKind(node)
+		if kind != "boundary" {
+			sourceKinds[architectureAssetKey(kind, dStr(node["id"]))] = kind
+		}
+		for _, childRaw := range dList(node["children"]) {
+			child := dObj(childRaw)
+			kind = dStr(child["kind"])
+			sourceKinds[architectureAssetKey(kind, dStr(child["id"]))] = kind
+		}
+	}
+	for _, raw := range dList(graph["flows"]) {
+		sourceKinds[architectureAssetKey("flow", dStr(dObj(raw)["id"]))] = "flow"
+	}
+	assetCodes := map[string]string{}
+	for _, raw := range dList(copy["assets"]) {
+		asset := dObj(raw)
+		id := dStr(asset["id"])
+		if businessCode := dTrim(dStr(asset["source_code"])); businessCode != "" {
+			assetCodes[id] = businessCode
+			continue
+		}
+		source := assetSource(asset)
+		kind, sourceID := dStr(source["kind"]), dStr(source["id"])
+		if kind != "entity" && kind != "software" && kind != "store" && kind != "flow" {
+			continue
+		}
+		if current := sourceKinds[architectureAssetKey(kind, sourceID)]; current != "" {
+			kind = current
+		}
+		if code := format(kind, sourceID); code != "" {
+			assetCodes[id] = code
+		}
+	}
+	return func(kind string, id any) string {
+		if kind == "asset" && assetCodes[dStr(id)] != "" {
+			return assetCodes[dStr(id)]
+		}
+		if code := format(kind, dStr(id)); code != "" {
+			return code
+		}
+		return dStr(id)
 	}
 }

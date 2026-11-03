@@ -4,7 +4,7 @@ export const numberingTypes = [
   ["software", "内部软件", "SW"],
   ["store", "数据存储", "DS"],
   ["flow", "数据流", "DF"],
-  ["asset", "资产", "AS"],
+  ["asset", "独立资产", "AS"],
   ["damage", "损害场景", "DM"],
   ["goal", "安全目标", "CG"],
   ["scenario", "风险场景", "RS"],
@@ -38,6 +38,49 @@ export const nodeNumberKind = (node) =>
       : node.kind === "process_step"
         ? "software"
         : "entity";
+// Resolve by source kind as node and flow IDs occupy separate namespaces.
+export function assetArchitectureSource(ws, asset) {
+  const source = asset?.architecture_source;
+  if (
+    !source?.id ||
+    !["entity", "software", "store", "flow"].includes(source.kind)
+  )
+    return null;
+  const graph = ws.architecture || {};
+  let object,
+    kind = source.kind;
+  if (kind === "flow") {
+    object = graph.flows?.find((flow) => flow.id === source.id);
+  } else {
+    for (const node of graph.nodes || []) {
+      const nodeKind = nodeNumberKind(node);
+      const compatible =
+        source.kind === "entity"
+          ? nodeKind === "entity"
+          : ["software", "store"].includes(nodeKind);
+      if (node.id === source.id && compatible) {
+        object = node;
+        kind = nodeNumberKind(node);
+        break;
+      }
+      if (source.kind !== "entity") {
+        const child = node.children?.find((item) => item.id === source.id);
+        if (child) {
+          object = child;
+          kind = child.kind;
+          break;
+        }
+      }
+    }
+  }
+  return {
+    ...source,
+    kind,
+    name: object?.name || "",
+    missing: !object || source.status === "missing",
+  };
+}
+
 export function buildCodeIndex(ws, draftGraph) {
   const rules = effectiveNumbering(ws.numbering),
     state = new Map();
@@ -78,10 +121,21 @@ export function buildCodeIndex(ws, draftGraph) {
           add("path", pathNumberKey(row.id, path.id));
     }
   }
-  return (kind, id) =>
+  const assets = new Map((ws.assets || []).map((asset) => [asset.id, asset]));
+  const assignedCode = (kind, id) =>
     state.get(kind)?.has(id)
       ? formatNumber(rules, kind, state.get(kind).get(id))
       : id;
+  return (kind, id) => {
+    if (kind === "asset") {
+      const asset = assets.get(id);
+      if (asset?.source_code?.trim()) return asset.source_code.trim();
+      const source = assetArchitectureSource(ws, asset);
+      if (source && state.get(source.kind)?.has(source.id))
+        return assignedCode(source.kind, source.id);
+    }
+    return assignedCode(kind, id);
+  };
 }
 const cache = new WeakMap();
 export function recordCode(ws, kind, id) {

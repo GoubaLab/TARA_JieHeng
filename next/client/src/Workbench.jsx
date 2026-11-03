@@ -23,6 +23,7 @@ import {
   recordCode,
   pathNumberKey,
   buildCodeIndex,
+  assetArchitectureSource,
   displayWorkProductText,
 } from "./numbering.js";
 import React, {
@@ -1218,14 +1219,14 @@ function AssetTable() {
         description={
           ws.architecture.asset_generation === "catalog"
             ? "保留导入或手工维护的资产目录，可关联架构对象并继续识别损害场景。"
-            : "资产按架构来源同步，名称、说明和安全属性支持人工维护。"
+            : "图中生成的资产沿用 DFD 来源编号；自定义业务编号优先。名称、说明和安全属性支持人工维护。"
         }
         className="section-card"
       />
       <div className="table-toolbar">
         <Text strong>受保护资产</Text>
         <Input.Search
-          placeholder="搜索资产名称或描述"
+          placeholder="搜索编号、资产名称或描述"
           aria-label="搜索资产"
           value={q}
           onChange={(e) => setQ(e.target.value)}
@@ -1235,9 +1236,18 @@ function AssetTable() {
       </div>
       <Table
         rowKey="id"
-        dataSource={ws.assets.filter((a) =>
-          match([a, recordCode(ws, "asset", a.id)], q),
-        )}
+        dataSource={ws.assets.filter((a) => {
+          const source = assetArchitectureSource(ws, a);
+          return match(
+            [
+              a,
+              recordCode(ws, "asset", a.id),
+              source?.name,
+              source ? recordCode(ws, source.kind, source.id) : "",
+            ],
+            q,
+          );
+        })}
         pagination={compactPage}
         scroll={{ x: 1120 }}
         columns={[
@@ -1259,9 +1269,10 @@ function AssetTable() {
           {
             title: "识别来源",
             dataIndex: "architecture_source",
-            width: 150,
-            render: (source) =>
-              source ? (
+            width: 230,
+            render: (_, asset) => {
+              const source = assetArchitectureSource(ws, asset);
+              return source ? (
                 <Space orientation="vertical" size={4}>
                   <Tag color="blue">
                     {
@@ -1273,13 +1284,22 @@ function AssetTable() {
                       }[source.kind]
                     }
                   </Tag>
-                  {source.status === "missing" && (
+                  <Text type="secondary">
+                    {recordCode(ws, source.kind, source.id) !== source.id && (
+                      <>{recordCode(ws, source.kind, source.id)} · </>
+                    )}
+                    {source.name || "原架构对象"}
+                  </Text>
+                  {source.missing && (
                     <Tag color="warning">来源已移除 · 待核对</Tag>
                   )}
                 </Space>
               ) : (
-                <Text type="secondary">手工维护</Text>
-              ),
+                <Text type="secondary">
+                  {asset.source_code ? "业务编号 · 独立维护" : "手工维护"}
+                </Text>
+              );
+            },
           },
           {
             title: "安全属性",
